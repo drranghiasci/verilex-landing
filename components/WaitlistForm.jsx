@@ -1,16 +1,7 @@
-HEAD
-const [name, setName] = useState('');
-const [email, setEmail] = useState('');
-
+'use client';
 import React, { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client
-
-import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-b45de9d (Add name field to waitlist form and initial setup for email confirmation)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -21,100 +12,65 @@ export default function WaitlistForm() {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [error, setError] = useState(null);
 
-HEAD
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setError(null);
-
-    if (!email.trim()) {
-      setError('Please enter a valid email.');
+    setMessage('');
+    
+    if (!email.trim() || !name.trim()) {
+      setError('Please enter both your name and a valid email.');
       return;
     }
+
+    setLoading(true);
 
     try {
       // Step 1: Insert into Supabase waitlist table
       const { error: supabaseError } = await supabase
         .from('waitlist')
-        .insert([{ email }]);
+        .insert([{ name, email }]);
 
       if (supabaseError) {
         console.error('Supabase insert error:', supabaseError);
-        setError('Issue adding to waitlist.');
+        setError('Something went wrong. Please try again.');
+        setLoading(false);
         return;
       }
 
-      // Step 2: Call your Edge Function to send confirmation email
-      const res = await fetch('/functions/v1/send-confirmation-email', {
+      // Step 2: Trigger confirmation email
+      const res = await fetch('/api/send-confirmation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email, name }),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        console.error('Edge function error:', data);
-        setError('Email added, but failed to send confirmation.');
-        return;
+        console.error('Email confirmation error:', data);
+        setError('Email confirmation failed.');
+      } else {
+        setMessage('Success! You’ve been added to the waitlist.');
+        setEmail('');
+        setName('');
       }
-
-      setSubmitted(true);
-      setEmail('');
     } catch (err) {
       console.error('Unexpected error:', err);
       setError('Something went wrong.');
-=======
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage('');
-
-    const { error } = await supabase.from('waitlist').insert([{ email, name }]);
-
-    if (error) {
-      setMessage('Something went wrong. Please try again.');
-      console.error(error);
-    } else {
-      setMessage("You're on the list! 🎉 Check your email for confirmation.");
-      setEmail('');
-      setName('');
-b45de9d (Add name field to waitlist form and initial setup for email confirmation)
     }
 
     setLoading(false);
   };
 
   return (
-HEAD
-    <div className="flex flex-col md:flex-row gap-2 items-center justify-center mt-6">
-      {submitted ? (
-        <p className="text-green-600 font-medium">✅ You’re on the waitlist! Check your email 🎉</p>
-      ) : (
-        <>
-          <input
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="px-4 py-2 rounded border border-gray-300 w-80"
-          />
-          <button
-            onClick={handleSubmit}
-            className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
-          >
-            Join Waitlist
-          </button>
-          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-        </>
-      )}
-    </div>
-=======
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-md mx-auto w-full">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-md mx-auto">
       <input
         type="text"
         placeholder="Your name"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="border px-4 py-2 rounded-md"
+        className="p-2 rounded border border-gray-300"
         required
       />
       <input
@@ -122,18 +78,18 @@ HEAD
         placeholder="Your email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className="border px-4 py-2 rounded-md"
+        className="p-2 rounded border border-gray-300"
         required
       />
       <button
         type="submit"
         disabled={loading}
-        className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800"
+        className="bg-black text-white px-4 py-2 rounded"
       >
         {loading ? 'Joining...' : 'Join Waitlist'}
       </button>
-      {message && <p className="text-sm text-center mt-2">{message}</p>}
+      {error && <p className="text-red-600">{error}</p>}
+      {message && <p className="text-green-600">{message}</p>}
     </form>
-b45de9d (Add name field to waitlist form and initial setup for email confirmation)
   );
 }
