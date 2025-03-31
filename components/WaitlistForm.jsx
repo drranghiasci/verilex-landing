@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
@@ -8,8 +9,8 @@ const supabase = createClient(
 );
 
 export default function WaitlistForm() {
-  const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState(null);
@@ -18,13 +19,13 @@ export default function WaitlistForm() {
     e.preventDefault();
     setError(null);
     setMessage('');
-    
+    setLoading(true);
+
     if (!email.trim() || !name.trim()) {
-      setError('Please enter both your name and a valid email.');
+      setError('Please enter a valid name and email.');
+      setLoading(false);
       return;
     }
-
-    setLoading(true);
 
     try {
       // Step 1: Insert into Supabase waitlist table
@@ -40,19 +41,25 @@ export default function WaitlistForm() {
       }
 
       // Step 2: Trigger confirmation email
+      const response = await fetch('/api/send-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email })
+      });
 
-      if (!res.ok) {
-        const data = await res.json();
-        console.error('Email confirmation error:', data);
-        setError('Email confirmation failed.');
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('API error:', data.error);
+        setError('Something went wrong. Please try again.');
       } else {
         setMessage('Success! You’ve been added to the waitlist.');
-        setEmail('');
         setName('');
+        setEmail('');
       }
     } catch (err) {
       console.error('Unexpected error:', err);
-      setError('Something went wrong.');
+      setError('Something went wrong. Please try again.');
     }
 
     setLoading(false);
@@ -65,7 +72,7 @@ export default function WaitlistForm() {
         placeholder="Your name"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="p-2 rounded border border-gray-300"
+        className="border border-gray-300 rounded px-4 py-2"
         required
       />
       <input
@@ -73,7 +80,7 @@ export default function WaitlistForm() {
         placeholder="Your email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className="p-2 rounded border border-gray-300"
+        className="border border-gray-300 rounded px-4 py-2"
         required
       />
       <button
@@ -83,8 +90,8 @@ export default function WaitlistForm() {
       >
         {loading ? 'Joining...' : 'Join Waitlist'}
       </button>
-      {error && <p className="text-red-600">{error}</p>}
-      {message && <p className="text-green-600">{message}</p>}
+      {message && <p className="text-green-600 text-sm">{message}</p>}
+      {error && <p className="text-red-600 text-sm">{error}</p>}
     </form>
   );
 }
