@@ -40,11 +40,6 @@ export default function WaitlistForm() {
       }
 
       // Step 2: Trigger confirmation email
-      const res = await fetch('/api/send-confirmation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name }),
-      });
 
       if (!res.ok) {
         const data = await res.json();
