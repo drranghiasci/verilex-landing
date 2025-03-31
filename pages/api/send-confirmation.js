@@ -2,7 +2,7 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-async function handler(req, res) {
+export default async function handler(req, res) {
   const { email, name } = req.body;
 
   try {
@@ -28,5 +28,3 @@ async function handler(req, res) {
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
-
-export default handler;
