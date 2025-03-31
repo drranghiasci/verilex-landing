@@ -1,13 +1,16 @@
-<<<<<<< HEAD
+HEAD
+const [name, setName] = useState('');
+const [email, setEmail] = useState('');
+
 import React, { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client
-=======
+
 import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
->>>>>>> b45de9d (Add name field to waitlist form and initial setup for email confirmation)
+b45de9d (Add name field to waitlist form and initial setup for email confirmation)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -19,7 +22,7 @@ export default function WaitlistForm() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-<<<<<<< HEAD
+HEAD
   const handleSubmit = async () => {
     setError(null);
 
@@ -74,14 +77,14 @@ export default function WaitlistForm() {
       setMessage("You're on the list! 🎉 Check your email for confirmation.");
       setEmail('');
       setName('');
->>>>>>> b45de9d (Add name field to waitlist form and initial setup for email confirmation)
+b45de9d (Add name field to waitlist form and initial setup for email confirmation)
     }
 
     setLoading(false);
   };
 
   return (
-<<<<<<< HEAD
+HEAD
     <div className="flex flex-col md:flex-row gap-2 items-center justify-center mt-6">
       {submitted ? (
         <p className="text-green-600 font-medium">✅ You’re on the waitlist! Check your email 🎉</p>
@@ -131,6 +134,6 @@ export default function WaitlistForm() {
       </button>
       {message && <p className="text-sm text-center mt-2">{message}</p>}
     </form>
->>>>>>> b45de9d (Add name field to waitlist form and initial setup for email confirmation)
+b45de9d (Add name field to waitlist form and initial setup for email confirmation)
   );
 }
