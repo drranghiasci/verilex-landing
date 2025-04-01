@@ -57,6 +57,38 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Why Join Section */}
+        <section className="mb-20">
+          <h2 className="text-3xl font-bold mb-6">Why You Should Join the Waitlist</h2>
+          <p className="text-gray-700 text-lg mb-6">
+            VeriLex AI isn’t just another legal tech product — it’s a movement toward smarter, leaner, more effective lawyering. As a solo attorney or small firm, you know the grind: endless hours of case review, overwhelming intake, and dense contract language.
+          </p>
+          <p className="text-gray-700 text-lg mb-4">
+            By joining the waitlist, you’re gaining early access to technology designed to eliminate busywork and elevate your legal practice. You'll:
+          </p>
+          <ul className="text-left text-gray-700 text-lg space-y-3 max-w-3xl mx-auto">
+            <li>✔️ Slash hours off research and document review</li>
+            <li>✔️ Impress clients with faster, clearer deliverables</li>
+            <li>✔️ Stay ahead of competitors with tools built on next-gen AI</li>
+            <li>✔️ Help shape features based on real attorney workflows</li>
+            <li>✔️ Get priority onboarding, support, and discounts</li>
+          </ul>
+        </section>
+
+        {/* Brand Story Section */}
+        <section className="mb-20">
+          <h2 className="text-3xl font-bold mb-6">The VeriLex AI Story</h2>
+          <p className="text-gray-700 text-lg">
+            VeriLex AI was born out of frustration — watching brilliant attorneys waste time on tasks that could (and should) be automated. We knew there was a better way: a way to streamline, empower, and modernize the legal profession without sacrificing quality or control.
+          </p>
+          <p className="text-gray-700 text-lg mt-4">
+            Our founding team blends legal expertise, software engineering, and AI innovation. We’re not building just another tech tool — we’re building the legal assistant you’ve always needed, one that never sleeps, never forgets, and always delivers value.
+          </p>
+          <p className="text-gray-700 text-lg mt-4">
+            We believe solo practitioners and small firms deserve better tools — tools that work just as hard as they do.
+          </p>
+        </section>
+
         {/* Features Section */}
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-6">Key Features</h2>
@@ -98,6 +130,16 @@ export default function Home() {
               <p className="text-gray-700">Beta testing begins in May 2025. Sign up now to secure early access before public launch.</p>
             </div>
           </div>
+        </section>
+
+        {/* Contact Section */}
+        <section className="mb-20">
+          <h2 className="text-3xl font-bold mb-6">Contact</h2>
+          <p className="text-gray-700">
+            Got questions, feedback, or partnership ideas? Reach out directly at:
+            <br />
+            <a href="mailto:founder@verilex.us" className="text-blue-600 underline">founder@verilex.us</a>
+          </p>
         </section>
 
         <footer className="text-center text-sm text-gray-400 py-10">
