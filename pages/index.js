@@ -1,5 +1,3 @@
-'use client';
-
 import Image from 'next/image';
 import WaitlistForm from '../components/WaitlistForm';
 import { useEffect, useState } from 'react';
@@ -30,7 +28,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-4">
-      {/* Logo Section (not fixed) */}
+      {/* Centered Top Logo */}
       <div className="flex justify-center pt-10">
         <Image
           src="/verilex-logo-name.png"
@@ -48,6 +46,8 @@ export default function Home() {
         <p className="text-lg md:text-xl text-gray-700 mb-10">
           Automate legal research, summarize cases, and review contracts — built for solo attorneys and small firms.
         </p>
+
+        {/* Waitlist Form */}
         <div className="w-full max-w-md mx-auto mb-12">
           <WaitlistForm />
         </div>
@@ -64,10 +64,10 @@ export default function Home() {
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-6">Why You Should Join the Waitlist</h2>
           <p className="text-gray-700 text-lg mb-6">
-            VeriLex AI isn't just another legal tech product — it's a movement toward smarter, leaner, more effective lawyering. As a solo attorney or small firm, you know the grind: endless hours of case review, overwhelming intake, and dense contract language.
+            VeriLex AI isn&apos;t just another legal tech product — it&apos;s a movement toward smarter, leaner, more effective lawyering. As a solo attorney or small firm, you know the grind: endless hours of case review, overwhelming intake, and dense contract language.
           </p>
           <p className="text-gray-700 text-lg mb-4">
-            By joining the waitlist, you're gaining early access to technology designed to eliminate busywork and elevate your legal practice. You'll:
+            By joining the waitlist, you&apos;re gaining early access to technology designed to eliminate busywork and elevate your legal practice. You&apos;ll:
           </p>
           <ul className="text-left text-gray-700 text-lg space-y-3 max-w-3xl mx-auto">
             <li>✔️ Slash hours off research and document review</li>
@@ -78,21 +78,18 @@ export default function Home() {
           </ul>
         </section>
 
-        {/* Brand Story Section */}
+        {/* Brand Story */}
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-6">The VeriLex AI Story</h2>
           <p className="text-gray-700 text-lg">
             VeriLex AI was born out of frustration — watching brilliant attorneys waste time on tasks that could (and should) be automated. We knew there was a better way: a way to streamline, empower, and modernize the legal profession without sacrificing quality or control.
           </p>
           <p className="text-gray-700 text-lg mt-4">
-            Our founding team blends legal expertise, software engineering, and AI innovation. We're not building just another tech tool — we're building the legal assistant you've always needed, one that never sleeps, never forgets, and always delivers value.
-          </p>
-          <p className="text-gray-700 text-lg mt-4">
-            We believe solo practitioners and small firms deserve better tools — tools that work just as hard as they do.
+            Our founding team blends legal expertise, software engineering, and AI innovation. We&apos;re not building just another tech tool — we&apos;re building the legal assistant you&apos;ve always needed, one that never sleeps, never forgets, and always delivers value.
           </p>
         </section>
 
-        {/* Features Section */}
+        {/* Features */}
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-6">Key Features</h2>
           <ul className="space-y-4 text-left mx-auto max-w-2xl">
@@ -103,7 +100,7 @@ export default function Home() {
           </ul>
         </section>
 
-        {/* Roadmap Section */}
+        {/* Roadmap */}
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-6">Roadmap</h2>
           <ul className="space-y-4 text-left mx-auto max-w-2xl">
@@ -116,7 +113,7 @@ export default function Home() {
           </ul>
         </section>
 
-        {/* FAQ Section */}
+        {/* FAQ */}
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-6">FAQ</h2>
           <div className="space-y-6 text-left mx-auto max-w-2xl">
@@ -135,16 +132,16 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Contact Section */}
+        {/* Contact */}
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-6">Contact</h2>
           <p className="text-gray-700">
-            Got questions, feedback, or partnership ideas? Reach out directly at:
-            <br />
+            Got questions, feedback, or partnership ideas? Reach out directly at:<br />
             <a href="mailto:founder@verilex.us" className="text-blue-600 underline">founder@verilex.us</a>
           </p>
         </section>
 
+        {/* Footer */}
         <footer className="text-center text-sm text-gray-400 py-10">
           VeriLex AI is not a law firm and does not provide legal advice. All information is for informational purposes only.
         </footer>
