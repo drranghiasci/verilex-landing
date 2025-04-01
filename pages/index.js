@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import WaitlistForm from '../components/WaitlistForm';
 import { useEffect, useState } from 'react';
@@ -28,7 +30,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-4">
-      <div className="flex flex-col items-center justify-start pt-10">
+      {/* Logo Section (not fixed) */}
+      <div className="flex justify-center pt-10">
         <Image
           src="/verilex-logo-name.png"
           alt="VeriLex AI Logo"
@@ -61,10 +64,10 @@ export default function Home() {
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-6">Why You Should Join the Waitlist</h2>
           <p className="text-gray-700 text-lg mb-6">
-            VeriLex AI isn’t just another legal tech product — it’s a movement toward smarter, leaner, more effective lawyering. As a solo attorney or small firm, you know the grind: endless hours of case review, overwhelming intake, and dense contract language.
+            VeriLex AI isn't just another legal tech product — it's a movement toward smarter, leaner, more effective lawyering. As a solo attorney or small firm, you know the grind: endless hours of case review, overwhelming intake, and dense contract language.
           </p>
           <p className="text-gray-700 text-lg mb-4">
-            By joining the waitlist, you’re gaining early access to technology designed to eliminate busywork and elevate your legal practice. You'll:
+            By joining the waitlist, you're gaining early access to technology designed to eliminate busywork and elevate your legal practice. You'll:
           </p>
           <ul className="text-left text-gray-700 text-lg space-y-3 max-w-3xl mx-auto">
             <li>✔️ Slash hours off research and document review</li>
@@ -82,7 +85,7 @@ export default function Home() {
             VeriLex AI was born out of frustration — watching brilliant attorneys waste time on tasks that could (and should) be automated. We knew there was a better way: a way to streamline, empower, and modernize the legal profession without sacrificing quality or control.
           </p>
           <p className="text-gray-700 text-lg mt-4">
-            Our founding team blends legal expertise, software engineering, and AI innovation. We’re not building just another tech tool — we’re building the legal assistant you’ve always needed, one that never sleeps, never forgets, and always delivers value.
+            Our founding team blends legal expertise, software engineering, and AI innovation. We're not building just another tech tool — we're building the legal assistant you've always needed, one that never sleeps, never forgets, and always delivers value.
           </p>
           <p className="text-gray-700 text-lg mt-4">
             We believe solo practitioners and small firms deserve better tools — tools that work just as hard as they do.
