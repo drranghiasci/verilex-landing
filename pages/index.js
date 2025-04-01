@@ -1,5 +1,4 @@
 import Head from 'next/head';
-import Image from 'next/image';
 import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
@@ -9,111 +8,137 @@ const supabase = createClient(
 );
 
 export default function Home() {
-  const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    setSuccess(false);
+    setLoading(true);
 
     if (!email.trim() || !name.trim()) {
       setError('Please enter your name and a valid email.');
+      setLoading(false);
       return;
     }
 
-    const { error: supabaseError } = await supabase
-      .from('waitlist')
-      .insert({ name, email });
-
-    if (supabaseError) {
-      console.error('Supabase insert error:', supabaseError);
+    const { error: insertError } = await supabase.from('waitlist').insert({ name, email });
+    if (insertError) {
+      console.error('Supabase error:', insertError);
       setError('Something went wrong. Please try again.');
+      setLoading(false);
       return;
     }
 
-    const res = await fetch('/api/send-confirmation', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, name })
-    });
+    try {
+      const res = await fetch('/api/send-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email }),
+      });
 
-    if (!res.ok) {
-      setError('Something went wrong. Please try again.');
-      return;
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Email confirmation failed');
+      }
+
+      setSuccess(true);
+      setName('');
+      setEmail('');
+    } catch (err) {
+      console.error('Email error:', err);
+      setError('We received your info, but email failed to send.');
     }
 
-    setSuccess(true);
-    setName('');
-    setEmail('');
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-200 text-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-white to-gray-100 flex flex-col items-center justify-center p-6">
       <Head>
-        <title>VeriLex AI – Join the Waitlist</title>
-        <meta name="description" content="VeriLex AI helps automate legal research, summarize cases, and review contracts." />
+        <title>VeriLex AI — Waitlist</title>
       </Head>
 
-      <header className="flex justify-between items-center px-6 py-4">
-        <Image
-          src="/verilex-logo-name.png"
-          alt="VeriLex AI Logo"
-          width={180}
-          height={50}
-          className="object-contain"
+      <img
+        src="/verilex-logo-name.png"
+        alt="VeriLex AI Logo"
+        className="w-48 mb-6 opacity-90"
+      />
+
+      <h1 className="text-4xl font-bold text-center text-gray-900 mb-4 animate-fade-in">
+        Your AI-Powered Legal Assistant
+      </h1>
+      <p className="text-center text-gray-600 max-w-xl animate-fade-in delay-100">
+        Automate legal research, summarize cases, and review contracts — built for solo attorneys and small firms.
+      </p>
+
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-4 mt-8 w-full max-w-md animate-fade-in delay-200"
+      >
+        <input
+          type="text"
+          placeholder="Your Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
-      </header>
+        <input
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 rounded-xl transition-colors disabled:opacity-50"
+        >
+          {loading ? 'Joining...' : 'Join Waitlist'}
+        </button>
+        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+        {success && <p className="text-green-600 text-sm text-center">You're on the waitlist! ✅</p>}
+      </form>
 
-      <main className="flex flex-col items-center justify-center px-4 text-center">
-        <h1 className="text-5xl font-extrabold tracking-tight max-w-2xl">
-          Your AI-Powered Legal Assistant
-        </h1>
-        <p className="mt-4 text-lg text-gray-600 max-w-xl">
-          Automate legal research, summarize cases, and review contracts — built for solo attorneys and small firms.
-        </p>
+      <section className="mt-20 text-center animate-fade-in delay-300">
+        <h2 className="text-2xl font-semibold mb-4">What’s Coming</h2>
+        <ul className="text-gray-700 space-y-2">
+          <li>✅ Automated contract analysis for lawyers</li>
+          <li>✅ Real-time legal case summarization</li>
+          <li>🚀 Draft filing generator (coming soon)</li>
+          <li>🧠 Natural language legal research assistant</li>
+        </ul>
+        <p className="text-gray-500 mt-6 text-sm">We’ll reach out with early access updates soon.</p>
+      </section>
 
-        <form onSubmit={handleSubmit} className="mt-8 w-full max-w-sm space-y-4">
-          <input
-            type="text"
-            placeholder="Your Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg shadow-md transition"
-          >
-            Join Waitlist
-          </button>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          {success && <p className="text-green-600 text-sm">Thanks! You're on the list ✨</p>}
-        </form>
-
-        <section className="mt-16 w-full max-w-4xl text-left">
-          <h2 className="text-2xl font-semibold mb-4">What’s coming next</h2>
-          <ul className="space-y-2 text-gray-700">
-            <li>✅ Automated legal research powered by AI</li>
-            <li>✅ Natural-language contract review & suggestions</li>
-            <li>✅ Early beta access for solo practitioners</li>
-            <li>✅ Priority feedback loop to shape the roadmap</li>
-          </ul>
-        </section>
-      </main>
-
-      <footer className="mt-16 text-xs text-gray-500 px-4 pb-8 text-center">
-        VeriLex AI is not a law firm and does not provide legal advice. All information is for informational purposes only.
-      </footer>
+      <style jsx>{`
+        .animate-fade-in {
+          animation: fadeIn 1s ease-out both;
+        }
+        .delay-100 {
+          animation-delay: 0.1s;
+        }
+        .delay-200 {
+          animation-delay: 0.2s;
+        }
+        .delay-300 {
+          animation-delay: 0.3s;
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }
