@@ -28,18 +28,18 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-4">
-      {/* Centered Top Logo */}
-      <div className="flex justify-center pt-10">
+      {/* Centered Top Logo (Fixed in Flow, Not Header) */}
+      <div className="flex justify-center pt-10 mb-[-40px]">
         <Image
           src="/verilex-logo-name.png"
           alt="VeriLex AI Logo"
-          width={450}
-          height={140}
+          width={500}
+          height={150}
           priority
         />
       </div>
 
-      <main className="text-center max-w-4xl mx-auto pt-10">
+      <main className="text-center max-w-4xl mx-auto pt-6">
         <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-6">
           Your AI-Powered Legal Assistant
         </h1>
@@ -107,7 +107,7 @@ export default function Home() {
             <li><strong>🔒 April 2025:</strong> Secure waitlist opens for early adopters.</li>
             <li><strong>🧪 May 2025:</strong> Beta access begins for legal research and summarization tools.</li>
             <li><strong>📑 June 2025:</strong> Launch of contract analyzer and auto-summary engine.</li>
-            <li><strong>⚖️ July 2025:</strong> Guided AI legal assistant for client Q&A scenarios.</li>
+            <li><strong>⚖️ July 2025:</strong> Guided AI legal assistant for client Q&amp;A scenarios.</li>
             <li><strong>🌐 August 2025:</strong> Expansion to immigration, family, and business law domains.</li>
             <li><strong>🚀 October 1, 2025:</strong> Full public launch with integrated billing and support.</li>
           </ul>
