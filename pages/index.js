@@ -4,29 +4,29 @@ import WaitlistForm from '../components/WaitlistForm';
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900">
-      {/* Logo in top-left */}
-      <header className="absolute top-4 left-4">
-      <Image
-        src="/verilex-logo-name.png"
-        alt="VeriLex AI Logo"
-        width={450} // 180 * 2.5
-        height={150} // 60 * 2.5
-        priority
-      />
-      </header>
+     // Logo/Header — stays top left, no overlap
+<header className="fixed top-6 left-6 z-50">
+  <Image
+    src="/verilex-logo-name.png"
+    alt="VeriLex AI Logo"
+    width={450}
+    height={150}
+    priority
+  />
+</header>
 
-      {/* Hero Section */}
-      <main className="flex flex-col items-center justify-center text-center px-6 py-32">
-        <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-6 animate-fade-in">
-          Your AI-Powered Legal Assistant
-        </h1>
-        <p className="text-lg md:text-xl text-gray-600 max-w-2xl mb-10 animate-fade-in-delay">
-          Automate legal research, summarize cases, and review contracts — built for solo attorneys and small firms.
-        </p>
-        <div className="w-full max-w-md animate-fade-in-delay">
-          <WaitlistForm />
-        </div>
-      </main>
+// Hero Section — shifted down to make room for logo
+<main className="flex flex-col items-center justify-center text-center px-6 pt-48 pb-32">
+  <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-6 animate-fade-in">
+    Your AI-Powered Legal Assistant
+  </h1>
+  <p className="text-lg md:text-xl text-gray-600 max-w-2xl mb-10 animate-fade-in-delay">
+    Automate legal research, summarize cases, and review contracts — built for solo attorneys and small firms.
+  </p>
+  <div className="w-full max-w-md animate-fade-in-delay">
+    <WaitlistForm />
+  </div>
+</main>
 
       {/* Roadmap Section */}
       <section className="px-6 py-20 bg-white animate-slide-up">
