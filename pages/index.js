@@ -6,13 +6,13 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900">
       {/* Logo in top-left */}
       <header className="absolute top-4 left-4">
-        <Image
-          src="/verilex-logo-name.png"
-          alt="VeriLex AI Logo"
-          width={180}
-          height={60}
-          priority
-        />
+      <Image
+        src="/verilex-logo-name.png"
+        alt="VeriLex AI Logo"
+        width={450} // 180 * 2.5
+        height={150} // 60 * 2.5
+        priority
+      />
       </header>
 
       {/* Hero Section */}
