@@ -1,144 +1,57 @@
-import Head from 'next/head';
-import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import Image from 'next/image';
+import WaitlistForm from '../components/WaitlistForm';
 
 export default function Home() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    if (!email.trim() || !name.trim()) {
-      setError('Please enter your name and a valid email.');
-      setLoading(false);
-      return;
-    }
-
-    const { error: insertError } = await supabase.from('waitlist').insert({ name, email });
-    if (insertError) {
-      console.error('Supabase error:', insertError);
-      setError('Something went wrong. Please try again.');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/send-confirmation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Email confirmation failed');
-      }
-
-      setSuccess(true);
-      setName('');
-      setEmail('');
-    } catch (err) {
-      console.error('Email error:', err);
-      setError('We received your info, but email failed to send.');
-    }
-
-    setLoading(false);
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-gray-100 flex flex-col items-center justify-center p-6">
-      <Head>
-        <title>VeriLex AI — Waitlist</title>
-      </Head>
-
-      <img
-        src="/verilex-logo-name.png"
-        alt="VeriLex AI Logo"
-        className="w-48 mb-6 opacity-90"
-      />
-
-      <h1 className="text-4xl font-bold text-center text-gray-900 mb-4 animate-fade-in">
-        Your AI-Powered Legal Assistant
-      </h1>
-      <p className="text-center text-gray-600 max-w-xl animate-fade-in delay-100">
-        Automate legal research, summarize cases, and review contracts — built for solo attorneys and small firms.
-      </p>
-
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-col gap-4 mt-8 w-full max-w-md animate-fade-in delay-200"
-      >
-        <input
-          type="text"
-          placeholder="Your Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900">
+      {/* Logo in top-left */}
+      <header className="absolute top-4 left-4">
+        <Image
+          src="/verilex-logo-name.png"
+          alt="VeriLex AI Logo"
+          width={180}
+          height={60}
+          priority
         />
-        <input
-          type="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 rounded-xl transition-colors disabled:opacity-50"
-        >
-          {loading ? 'Joining...' : 'Join Waitlist'}
-        </button>
-        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-        {success && <p className="text-green-600 text-sm text-center">You're on the waitlist! ✅</p>}
-      </form>
+      </header>
 
-      <section className="mt-20 text-center animate-fade-in delay-300">
-        <h2 className="text-2xl font-semibold mb-4">What’s Coming</h2>
-        <ul className="text-gray-700 space-y-2">
-          <li>✅ Automated contract analysis for lawyers</li>
-          <li>✅ Real-time legal case summarization</li>
-          <li>🚀 Draft filing generator (coming soon)</li>
-          <li>🧠 Natural language legal research assistant</li>
-        </ul>
-        <p className="text-gray-500 mt-6 text-sm">We’ll reach out with early access updates soon.</p>
+      {/* Hero Section */}
+      <main className="flex flex-col items-center justify-center text-center px-6 py-32">
+        <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-6 animate-fade-in">
+          Your AI-Powered Legal Assistant
+        </h1>
+        <p className="text-lg md:text-xl text-gray-600 max-w-2xl mb-10 animate-fade-in-delay">
+          Automate legal research, summarize cases, and review contracts — built for solo attorneys and small firms.
+        </p>
+        <div className="w-full max-w-md animate-fade-in-delay">
+          <WaitlistForm />
+        </div>
+      </main>
+
+      {/* Roadmap Section */}
+      <section className="px-6 py-20 bg-white animate-slide-up">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-10">What's Coming Next</h2>
+          <ul className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+            <li className="p-6 bg-gray-50 rounded-xl shadow-md hover:shadow-xl transition">
+              <h3 className="font-semibold text-lg mb-2">Early Access Beta</h3>
+              <p className="text-gray-600">Start testing VeriLex AI's research and summarization tools before public release.</p>
+            </li>
+            <li className="p-6 bg-gray-50 rounded-xl shadow-md hover:shadow-xl transition">
+              <h3 className="font-semibold text-lg mb-2">Contract Analyzer</h3>
+              <p className="text-gray-600">Upload a contract and get instant risk flags, key terms, and plain-language summaries.</p>
+            </li>
+            <li className="p-6 bg-gray-50 rounded-xl shadow-md hover:shadow-xl transition">
+              <h3 className="font-semibold text-lg mb-2">AI Legal Assistant</h3>
+              <p className="text-gray-600">Ask case-specific questions and get guided responses using smart prompts.</p>
+            </li>
+          </ul>
+        </div>
       </section>
 
-      <style jsx>{`
-        .animate-fade-in {
-          animation: fadeIn 1s ease-out both;
-        }
-        .delay-100 {
-          animation-delay: 0.1s;
-        }
-        .delay-200 {
-          animation-delay: 0.2s;
-        }
-        .delay-300 {
-          animation-delay: 0.3s;
-        }
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
+      <footer className="text-center text-sm text-gray-400 py-10">
+        VeriLex AI is not a law firm and does not provide legal advice. All information is for informational purposes only.
+      </footer>
     </div>
   );
 }
