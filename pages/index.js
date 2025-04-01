@@ -31,11 +31,11 @@ export default function Home() {
       {/* Roadmap Section */}
       <section className="px-6 py-20 bg-white animate-slide-up">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-10">What's Coming Next</h2>
+          <h2 className="text-3xl font-bold text-center mb-10">What&apos;s Coming Next</h2>
           <ul className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
             <li className="p-6 bg-gray-50 rounded-xl shadow-md hover:shadow-xl transition">
               <h3 className="font-semibold text-lg mb-2">Early Access Beta</h3>
-              <p className="text-gray-600">Start testing VeriLex AI's research and summarization tools before public release.</p>
+              <p className="text-gray-600">Start testing VeriLex AI&apos;s research and summarization tools before public release.</p>
             </li>
             <li className="p-6 bg-gray-50 rounded-xl shadow-md hover:shadow-xl transition">
               <h3 className="font-semibold text-lg mb-2">Contract Analyzer</h3>
