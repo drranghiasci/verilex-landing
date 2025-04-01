@@ -18,6 +18,7 @@ export default function WaitlistForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setMessage('');
 
     if (!email.trim() || !name.trim()) {
       setError('Please enter both your name and a valid email.');
@@ -33,8 +34,12 @@ export default function WaitlistForm() {
         .insert([{ email, name }]);
 
       if (supabaseError) {
-        console.error('Supabase insert error:', supabaseError);
-        setError('Something went wrong. Please try again.');
+        if (supabaseError.code === '23505') {
+          setError('This email is already on the waitlist.');
+        } else {
+          console.error('Supabase insert error:', supabaseError);
+          setError('Something went wrong. Please try again.');
+        }
         setLoading(false);
         return;
       }
@@ -56,7 +61,7 @@ export default function WaitlistForm() {
       }
 
       // Success
-      setMessage('You’re on the waitlist! Check your email for confirmation.');
+      setMessage('🎉 You’re on the waitlist! Check your email for confirmation.');
       setEmail('');
       setName('');
     } catch (err) {
@@ -73,7 +78,6 @@ export default function WaitlistForm() {
       <p className="text-lg mb-6">
         Join the waitlist for early access to our legal automation platform — built for solo attorneys and small firms.
       </p>
-
       <p className="text-md mb-6 text-gray-600">
         Be the first to access tools for legal research, contract review, and case summaries.
       </p>
@@ -85,6 +89,7 @@ export default function WaitlistForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full px-4 py-2 border border-gray-300 rounded-md"
+          required
         />
         <input
           type="email"
@@ -92,6 +97,7 @@ export default function WaitlistForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="w-full px-4 py-2 border border-gray-300 rounded-md"
+          required
         />
         <button
           type="submit"
