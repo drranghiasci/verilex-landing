@@ -13,7 +13,7 @@ async function handler(req, res) {
       html: `
         <div style="font-family: 'Helvetica Neue', sans-serif; padding: 40px; background: #f9fafb; color: #1a202c; line-height: 1.6;">
           <div style="max-width: 600px; margin: auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
-            <div style="background: #1a202c; padding: 30px; text-align: center;">
+            <div style="background: #f3f4f6; padding: 30px; text-align: center;">
               <img src="https://verilex.us/verilex-logo-name.png" alt="VeriLex AI Logo" style="max-width: 250px; height: auto;" />
             </div>
             <div style="padding: 30px;">
