@@ -53,7 +53,7 @@ export default function DashboardPage() {
 
           <Link href="/active-cases">
             <div className="p-6 bg-white rounded-xl shadow-md hover:shadow-xl transition cursor-pointer">
-              <h2 className="text-xl font-semibold mb-2">📂 Active Cases</h2>
+              <h2 className="text-xl font-semibold mb-2">📁 Active Cases</h2>
               <p className="text-gray-600">View and manage your open case files and submissions.</p>
             </div>
           </Link>
@@ -65,27 +65,6 @@ export default function DashboardPage() {
             </div>
           </Link>
         </div>
-
-        {/* Active Cases Section */}
-        <section>
-          <h2 className="text-2xl font-bold mb-4">Active Cases</h2>
-          <p className="text-gray-600 mb-4">Manage your ongoing divorce case intakes here.</p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Placeholder for actual case cards */}
-            <div className="p-5 bg-white rounded-xl shadow-sm border">
-              <h3 className="text-lg font-semibold">Jane Doe</h3>
-              <p className="text-gray-600 text-sm">Contested Divorce — Georgia</p>
-              <p className="text-gray-500 text-xs mt-1">Submitted: April 3, 2025</p>
-            </div>
-
-            <div className="p-5 bg-white rounded-xl shadow-sm border">
-              <h3 className="text-lg font-semibold">John Smith</h3>
-              <p className="text-gray-600 text-sm">Uncontested Divorce — Alabama</p>
-              <p className="text-gray-500 text-xs mt-1">Submitted: April 1, 2025</p>
-            </div>
-          </div>
-        </section>
       </div>
     </div>
   );
