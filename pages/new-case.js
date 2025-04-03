@@ -1,151 +1,208 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
-import { supabase } from '../utils/supabaseClient';
+import Link from 'next/link';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 export default function NewCasePage() {
   const [clientName, setClientName] = useState('');
-  const [clientEmail, setClientEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [state, setState] = useState('');
   const [caseType, setCaseType] = useState('');
   const [description, setDescription] = useState('');
-  const [preferredContact, setPreferredContact] = useState('Email');
+  const [contactMethod, setContactMethod] = useState('Email');
   const [file, setFile] = useState(null);
-  const [previewVisible, setPreviewVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState(null);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setMessage('');
+
+    if (!clientName || !email || !phone || !state || !caseType) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+
     setLoading(true);
-    const { data, error } = await supabase.from('cases').insert([
-      {
-        client_name: clientName,
-        client_email: clientEmail,
-        phone_number: phoneNumber,
-        state,
-        case_type: caseType,
-        description,
-        preferred_contact: preferredContact,
-      },
-    ]);
-    if (!error) {
-      alert('Case submitted successfully!');
+
+    try {
+      // Upload file to Supabase Storage if selected
+      let uploadedFileURL = null;
+      if (file) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('case-documents')
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase.storage
+          .from('case-documents')
+          .getPublicUrl(fileName);
+
+        uploadedFileURL = publicUrlData.publicUrl;
+      }
+
+      // Insert case data
+      const { error: insertError } = await supabase.from('cases').insert([
+        {
+          client_name: clientName,
+          client_email: email,
+          client_phone: phone,
+          state,
+          case_type: caseType,
+          description,
+          preferred_contact: contactMethod,
+          file_url: uploadedFileURL,
+        },
+      ]);
+
+      if (insertError) throw insertError;
+
+      setMessage('Case submitted successfully!');
       setClientName('');
-      setClientEmail('');
-      setPhoneNumber('');
+      setEmail('');
+      setPhone('');
       setState('');
       setCaseType('');
       setDescription('');
-      setPreferredContact('Email');
+      setContactMethod('Email');
       setFile(null);
-      setPreviewVisible(false);
-    } else {
-      alert('Error submitting case.');
+    } catch (err) {
+      console.error(err);
+      setError('Submission failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-4 py-12">
-      <div className="flex flex-col md:flex-row md:space-x-10 max-w-6xl mx-auto">
-        {/* Intake Form */}
-        <div className="w-full md:w-1/2 space-y-4">
-          <h1 className="text-3xl font-bold mb-4">New Case Intake</h1>
+    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-4">
+      {/* Top Nav */}
+      <nav className="fixed top-0 left-0 w-full bg-white border-b border-gray-200 shadow-sm z-50 py-3 px-6 flex justify-between items-center">
+        <div className="text-xl font-extrabold tracking-tight text-gray-900">VeriLex AI</div>
+        <div className="space-x-6 text-sm font-medium">
+          <Link href="/">
+            <span className="text-gray-700 hover:text-black transition cursor-pointer">Home</span>
+          </Link>
+          <Link href="/dashboard">
+            <span className="text-gray-700 hover:text-black transition cursor-pointer">Dashboard</span>
+          </Link>
+          <Link href="/settings">
+            <span className="text-gray-700 hover:text-black transition cursor-pointer">Settings</span>
+          </Link>
+        </div>
+      </nav>
+
+      <div className="pt-28 max-w-3xl mx-auto">
+        <h1 className="text-3xl font-extrabold mb-8 text-center">New Case Intake</h1>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
           <input
-            className="w-full border border-gray-400 rounded px-3 py-2"
+            type="text"
             placeholder="Client Full Name"
             value={clientName}
             onChange={(e) => setClientName(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md"
           />
           <input
-            className="w-full border border-gray-400 rounded px-3 py-2"
-            placeholder="Client Email"
             type="email"
-            value={clientEmail}
-            onChange={(e) => setClientEmail(e.target.value)}
+            placeholder="Client Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md"
           />
           <input
-            className="w-full border border-gray-400 rounded px-3 py-2"
+            type="text"
             placeholder="Phone Number"
-            type="tel"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md"
           />
           <select
-            className="w-full border border-gray-400 rounded px-3 py-2"
             value={state}
             onChange={(e) => setState(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md"
           >
             <option value="">Select State</option>
             {[
-              'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming',
-            ].map((s) => (
-              <option key={s} value={s}>{s}</option>
+              "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+              "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
+              "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
+              "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
+              "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
+              "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
+              "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
+              "Wisconsin", "Wyoming"
+            ].map((st) => (
+              <option key={st} value={st}>{st}</option>
             ))}
           </select>
           <select
-            className="w-full border border-gray-400 rounded px-3 py-2"
             value={caseType}
             onChange={(e) => setCaseType(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md"
           >
             <option value="">Select Case Type</option>
             <option value="Uncontested Divorce">Uncontested Divorce</option>
             <option value="Contested Divorce">Contested Divorce</option>
             <option value="Child Custody & Visitation">Child Custody & Visitation</option>
-            <option value="Division of Property">Division of Property</option>
-            <option value="Alimony/Spousal Support">Alimony/Spousal Support</option>
-            <option value="Prenuptial/Postnuptial Agreements">Prenuptial/Postnuptial Agreements</option>
+            <option value="Spousal Support">Spousal Support</option>
+            <option value="Property Division">Property Division</option>
+            <option value="Prenuptial/Postnuptial">Prenuptial/Postnuptial</option>
+            <option value="Other">Other</option>
           </select>
           <textarea
-            className="w-full border border-gray-400 rounded px-3 py-2"
             placeholder="Brief case description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md"
           />
-          <div className="text-left text-gray-700 font-medium mt-2">Preferred Contact Method</div>
-          <div className="flex space-x-4 mb-2">
-            {['Email', 'Phone', 'Either'].map((method) => (
-              <label key={method} className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name="contactMethod"
-                  value={method}
-                  checked={preferredContact === method}
-                  onChange={() => setPreferredContact(method)}
-                />
-                <span>{method}</span>
-              </label>
-            ))}
-          </div>
-          <div className="border border-gray-400 rounded p-2">
-            <label className="block text-sm text-gray-600 mb-1">Upload Related Document (optional)</label>
-            <input type="file" onChange={(e) => setFile(e.target.files[0])} />
-          </div>
-          <button
-            onClick={() => setPreviewVisible(true)}
-            className="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 transition w-full"
-            disabled={loading}
-          >
-            {loading ? 'Saving...' : 'Save & Submit to Active Cases'}
-          </button>
-        </div>
 
-        {/* Live Preview */}
-        {previewVisible && (
-          <div className="w-full md:w-1/2 mt-12 md:mt-0">
-            <h2 className="text-2xl font-semibold mb-4">Case Preview</h2>
-            <div className="bg-white rounded-xl shadow p-4 space-y-2">
-              <p><strong>Name:</strong> {clientName}</p>
-              <p><strong>Email:</strong> {clientEmail}</p>
-              <p><strong>Phone:</strong> {phoneNumber}</p>
-              <p><strong>State:</strong> {state}</p>
-              <p><strong>Case Type:</strong> {caseType}</p>
-              <p><strong>Preferred Contact:</strong> {preferredContact}</p>
-              <p><strong>Description:</strong> {description}</p>
-              {file && <p><strong>Document:</strong> {file.name}</p>}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Contact Method</label>
+            <div className="flex gap-6">
+              <label className="flex items-center gap-2">
+                <input type="radio" name="contactMethod" value="Email" checked={contactMethod === 'Email'} onChange={() => setContactMethod('Email')} />
+                Email
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" name="contactMethod" value="Phone" checked={contactMethod === 'Phone'} onChange={() => setContactMethod('Phone')} />
+                Phone
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" name="contactMethod" value="Either" checked={contactMethod === 'Either'} onChange={() => setContactMethod('Either')} />
+                Either
+              </label>
             </div>
           </div>
-        )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Upload Related Document (optional)</label>
+            <input type="file" onChange={(e) => setFile(e.target.files[0])} className="w-full px-4 py-2 border border-gray-300 rounded-md" />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-black text-white py-2 rounded-md hover:bg-gray-800 transition"
+          >
+            {loading ? 'Submitting...' : 'Submit Case'}
+          </button>
+
+          {error && <p className="text-red-600 text-center mt-4">{error}</p>}
+          {message && <p className="text-green-600 text-center mt-4">{message}</p>}
+        </form>
       </div>
     </div>
   );
