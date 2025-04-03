@@ -1,5 +1,7 @@
+'use client';
+
 import { useState } from 'react';
-import Sidebar from '../components/Sidebar';
+import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -8,100 +10,91 @@ const supabase = createClient(
 );
 
 export default function NewCase() {
-  const [form, setForm] = useState({
-    clientName: '',
-    caseType: '',
-    location: '',
-  });
-
+  const [clientName, setClientName] = useState('');
+  const [caseType, setCaseType] = useState('');
+  const [location, setLocation] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(null);
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const [error, setError] = useState(null);
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage(null);
+    setError(null);
 
-    const { data, error } = await supabase.from('cases').insert([
-      {
-        client_name: form.clientName,
-        case_type: form.caseType,
-        location: form.location,
-      },
-    ]);
+    const { error } = await supabase.from('cases').insert([{ client_name: clientName, case_type: caseType, location }]);
 
     if (error) {
-      console.error('Error inserting case:', error);
-      setMessage('❌ Error creating case.');
+      setError('Error submitting case. Please try again.');
+      console.error(error);
     } else {
-      setMessage('✅ Case submitted successfully!');
-      setForm({ clientName: '', caseType: '', location: '' });
+      router.push('/dashboard');
     }
-
     setLoading(false);
   };
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <main className="flex-1 p-8 bg-gray-50">
-        <h1 className="text-3xl font-bold mb-6">New Divorce Intake</h1>
-        <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
-          <div>
-            <label className="block font-medium mb-1">Client Name</label>
-            <input
-              name="clientName"
-              value={form.clientName}
-              onChange={handleChange}
-              required
-              className="w-full border px-4 py-2 rounded"
-              placeholder="e.g., Jane Doe"
-            />
-          </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <header className="w-full shadow-sm bg-white px-6 py-4 border-b border-gray-200">
+        <h1 className="text-xl font-bold text-gray-900">VeriLex AI</h1>
+      </header>
 
-          <div>
-            <label className="block font-medium mb-1">Case Type</label>
-            <select
-              name="caseType"
-              value={form.caseType}
-              onChange={handleChange}
-              required
-              className="w-full border px-4 py-2 rounded"
+      <div className="flex flex-1">
+        <aside className="w-64 bg-white border-r border-gray-200 p-6 text-gray-700">
+          <nav className="space-y-4">
+            <a href="/dashboard" className="text-lg hover:underline">Dashboard</a>
+            <a href="/new-case" className="text-lg font-semibold text-black">New Case</a>
+            <a href="/settings" className="text-lg hover:underline">Settings</a>
+          </nav>
+        </aside>
+
+        <main className="flex-1 p-10">
+          <h2 className="text-3xl font-bold text-gray-900 mb-6">New Divorce Intake</h2>
+          <form onSubmit={handleSubmit} className="max-w-xl space-y-6">
+            <div>
+              <label className="block text-gray-700 mb-2">Client Name</label>
+              <input
+                type="text"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                placeholder="e.g., Jane Doe"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 mb-2">Case Type</label>
+              <select
+                value={caseType}
+                onChange={(e) => setCaseType(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="">Select one</option>
+                <option value="contested">Contested</option>
+                <option value="uncontested">Uncontested</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-gray-700 mb-2">Location</label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="e.g., Georgia"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-black text-white py-2 rounded-md hover:bg-gray-800 transition"
             >
-              <option value="">Select one</option>
-              <option value="Uncontested Divorce">Uncontested Divorce</option>
-              <option value="Contested Divorce">Contested Divorce</option>
-              <option value="Custody Modification">Custody Modification</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block font-medium mb-1">Location</label>
-            <input
-              name="location"
-              value={form.location}
-              onChange={handleChange}
-              required
-              className="w-full border px-4 py-2 rounded"
-              placeholder="e.g., Georgia"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-black text-white px-6 py-2 rounded hover:bg-gray-800"
-          >
-            {loading ? 'Submitting...' : 'Submit Case'}
-          </button>
-
-          {message && <p className="mt-4 text-sm text-gray-700">{message}</p>}
-        </form>
-      </main>
+              {loading ? 'Submitting...' : 'Submit Case'}
+            </button>
+            {error && <p className="text-red-600 mt-2">{error}</p>}
+          </form>
+        </main>
+      </div>
     </div>
   );
 }
