@@ -1,5 +1,16 @@
-import "@/styles/globals.css";
+// pages/_app.js
+import '../styles/globals.css';
+import NavBar from '../components/NavBar';
 
-export default function App({ Component, pageProps }) {
-  return <Component {...pageProps} />;
+function MyApp({ Component, pageProps }) {
+  return (
+    <>
+      <NavBar />
+      <div className="pt-16"> {/* padding for fixed nav */}
+        <Component {...pageProps} />
+      </div>
+    </>
+  );
 }
+
+export default MyApp;
