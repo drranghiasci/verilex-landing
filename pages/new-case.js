@@ -1,94 +1,92 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 
-export default function NewCasePage() {
+export default function NewCase() {
   const [clientName, setClientName] = useState('');
   const [caseType, setCaseType] = useState('');
   const [location, setLocation] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Placeholder for submission logic
     console.log({ clientName, caseType, location });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 px-6 py-10">
-        <h2 className="text-2xl font-extrabold mb-8 text-gray-800">VeriLex AI</h2>
-        <nav className="flex flex-col space-y-4">
-          <Link href="/dashboard">
-            <span className="text-blue-600 hover:underline">Dashboard</span>
-          </Link>
-          <Link href="/new-case">
-            <span className="text-blue-600 hover:underline">New Case</span>
-          </Link>
-          <Link href="/settings">
-            <span className="text-blue-600 hover:underline">Settings</span>
-          </Link>
-        </nav>
-      </aside>
+    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900">
+      {/* Top Nav */}
+      <nav className="fixed top-0 left-0 w-full bg-white border-b border-gray-200 shadow-sm z-50 py-3 px-6 flex justify-between items-center">
+        <div className="flex items-center space-x-2">
+          <Image
+            src="/verilex-logo-name.png"
+            alt="VeriLex AI Logo"
+            width={140}
+            height={50}
+            className="object-contain"
+            priority
+          />
+        </div>
+        <div className="space-x-6 text-sm font-medium">
+          <Link href="/" className="text-gray-700 hover:text-black transition">Home</Link>
+          <Link href="/dashboard" className="text-gray-700 hover:text-black transition">Dashboard</Link>
+          <Link href="/settings" className="text-gray-700 hover:text-black transition">Settings</Link>
+        </div>
+      </nav>
 
-      {/* Main Content */}
-      <main className="flex-1 px-10 py-12">
-        <h1 className="text-4xl font-bold mb-8">New Divorce Intake</h1>
+      {/* Form */}
+      <main className="pt-32 px-6 max-w-3xl mx-auto text-center">
+        <h1 className="text-3xl font-extrabold mb-2">New Divorce Intake</h1>
+        <p className="text-gray-600 mb-8">Fill in the intake form below to begin a new case.</p>
 
-        <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6 bg-white p-8 rounded-xl shadow-md text-left"
+        >
           <div>
-            <label className="block text-sm font-semibold mb-1" htmlFor="clientName">
-              Client Name
-            </label>
+            <label className="block mb-1 font-medium">Client Name</label>
             <input
-              id="clientName"
               type="text"
+              placeholder="e.g., Jane Doe"
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
-              placeholder="e.g., Jane Doe"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-1" htmlFor="caseType">
-              Case Type
-            </label>
+            <label className="block mb-1 font-medium">Case Type</label>
             <select
-              id="caseType"
               value={caseType}
               onChange={(e) => setCaseType(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
               required
             >
               <option value="">Select one</option>
-              <option value="uncontested">Uncontested Divorce</option>
               <option value="contested">Contested Divorce</option>
-              <option value="custody">Child Custody</option>
-              <option value="support">Spousal Support</option>
+              <option value="uncontested">Uncontested Divorce</option>
+              <option value="modification">Modification</option>
+              <option value="custody">Custody Dispute</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-1" htmlFor="location">
-              Location
-            </label>
+            <label className="block mb-1 font-medium">Location</label>
             <input
-              id="location"
               type="text"
+              placeholder="e.g., Georgia"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g., Georgia"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
               required
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-black text-white py-2 rounded-md hover:bg-gray-800 transition"
+            className="w-full bg-black text-white py-2 rounded-md hover:bg-gray-900 transition"
           >
             Submit Case
           </button>
