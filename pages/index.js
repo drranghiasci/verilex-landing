@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import WaitlistForm from '../components/WaitlistForm';
 import { useEffect, useState } from 'react';
 
@@ -28,8 +29,17 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-4">
-      {/* Centered Top Logo (Fixed in Flow, Not Header) */}
-      <div className="flex justify-center pt-10 mb-[-40px]">
+      {/* Top Nav */}
+      <nav className="fixed top-0 left-0 w-full bg-white border-b border-gray-200 shadow-sm z-50 py-3 px-6 flex justify-between items-center">
+        <div className="text-xl font-extrabold tracking-tight text-gray-900">VeriLex AI</div>
+        <div className="space-x-6 text-sm font-medium">
+          <Link href="#waitlist" className="text-gray-700 hover:text-black transition">Join Waitlist</Link>
+          <Link href="/dashboard" className="text-blue-600 hover:text-blue-800 transition">Beta Test Build</Link>
+        </div>
+      </nav>
+
+      {/* Centered Top Logo (Flow-Based, Not Fixed) */}
+      <div className="flex justify-center pt-24 mb-[-40px]">
         <Image
           src="/verilex-logo-name.png"
           alt="VeriLex AI Logo"
@@ -48,7 +58,7 @@ export default function Home() {
         </p>
 
         {/* Waitlist Form */}
-        <div className="w-full max-w-md mx-auto mb-12">
+        <div id="waitlist" className="w-full max-w-md mx-auto mb-12">
           <WaitlistForm />
         </div>
 
