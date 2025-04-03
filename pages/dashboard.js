@@ -26,6 +26,9 @@ export default function DashboardPage() {
           <Link href="/new-case">
             <span className="text-gray-700 hover:text-black transition cursor-pointer">New Case</span>
           </Link>
+          <Link href="/active-cases">
+            <span className="text-gray-700 hover:text-black transition cursor-pointer">Active Cases</span>
+          </Link>
           <Link href="/settings">
             <span className="text-gray-700 hover:text-black transition cursor-pointer">Settings</span>
           </Link>
@@ -48,17 +51,17 @@ export default function DashboardPage() {
             </div>
           </Link>
 
+          <Link href="/active-cases">
+            <div className="p-6 bg-white rounded-xl shadow-md hover:shadow-xl transition cursor-pointer">
+              <h2 className="text-xl font-semibold mb-2">📂 Active Cases</h2>
+              <p className="text-gray-600">View and manage your open case files and submissions.</p>
+            </div>
+          </Link>
+
           <Link href="/settings">
             <div className="p-6 bg-white rounded-xl shadow-md hover:shadow-xl transition cursor-pointer">
               <h2 className="text-xl font-semibold mb-2">⚙️ Settings</h2>
               <p className="text-gray-600">Manage user preferences and account configuration.</p>
-            </div>
-          </Link>
-
-          <Link href="#">
-            <div className="p-6 bg-white rounded-xl shadow-md hover:shadow-xl transition cursor-pointer">
-              <h2 className="text-xl font-semibold mb-2">📊 Case History</h2>
-              <p className="text-gray-600">(Coming soon) View summaries and client history.</p>
             </div>
           </Link>
         </div>
