@@ -31,25 +31,25 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-4">
       {/* Top Nav */}
       <nav className="fixed top-0 left-0 w-full bg-white border-b border-gray-200 shadow-sm z-50 py-3 px-6 flex justify-between items-center">
-        <div className="text-xl font-extrabold tracking-tight text-gray-900">VeriLex AI</div>
+        <div className="flex items-center space-x-3">
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/verilex-logo-name.png"
+              alt="VeriLex AI Logo"
+              width={170}
+              height={60}
+              priority
+            />
+          </Link>
+        </div>
         <div className="space-x-6 text-sm font-medium">
           <Link href="#waitlist" className="text-gray-700 hover:text-black transition">Join Waitlist</Link>
           <Link href="/dashboard" className="text-blue-600 hover:text-blue-800 transition">Beta Test Build</Link>
         </div>
       </nav>
 
-      {/* Centered Top Logo (Flow-Based, Not Fixed) */}
-      <div className="flex justify-center pt-24 mb-[-40px]">
-        <Image
-          src="/verilex-logo-name.png"
-          alt="VeriLex AI Logo"
-          width={500}
-          height={150}
-          priority
-        />
-      </div>
-
-      <main className="text-center max-w-4xl mx-auto pt-6">
+      {/* Main Content */}
+      <main className="text-center max-w-4xl mx-auto pt-32">
         <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-6">
           Your AI-Powered Legal Assistant
         </h1>
