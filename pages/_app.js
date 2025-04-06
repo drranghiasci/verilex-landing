@@ -1,16 +1,13 @@
-import { useRouter } from 'next/router';
+// pages/_app.js
 
-function MyApp({ Component, pageProps }) {
-  const router = useRouter();
-  const hideNavOn = ['/dashboard', '/new-case', '/active-cases', '/settings'];
-  const shouldShowNav = !hideNavOn.includes(router.pathname);
+import '@/styles/globals.css'; // if you're using a global stylesheet
+import { Analytics } from '@vercel/analytics/react';
 
+export default function MyApp({ Component, pageProps }) {
   return (
     <>
-      {shouldShowNav && <NavBar />}
       <Component {...pageProps} />
+      <Analytics />
     </>
   );
 }
-
-export default MyApp;
