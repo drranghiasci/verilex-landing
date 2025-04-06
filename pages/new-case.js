@@ -1,10 +1,9 @@
 'use client';
 
-import { Analytics } from "@vercel/analytics/react"
 import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import Image from 'next/image';
 import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -59,102 +58,111 @@ export default function NewCasePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900">
-      <div className="pt-28 px-8 max-w-3xl mx-auto">
-        <Link href="/dashboard">
-          <span className="text-blue-600 hover:underline cursor-pointer text-sm">← Back to Dashboard</span>
+    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-6 pt-24 max-w-3xl mx-auto">
+      {/* Back to Dashboard */}
+      <div className="mb-6">
+        <Link href="/dashboard" className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-black transition">
+          <ArrowLeft className="w-4 h-4 mr-1" />
+          Back to Dashboard
         </Link>
-
-        <h1 className="text-3xl font-bold mb-6 mt-6">New Divorce Case Intake</h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block font-medium mb-1">Client Name</label>
-            <input
-              type="text"
-              name="client_name"
-              value={formData.client_name}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
-          </div>
-          <div>
-            <label className="block font-medium mb-1">Client Email</label>
-            <input
-              type="email"
-              name="client_email"
-              value={formData.client_email}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
-          </div>
-          <div>
-            <label className="block font-medium mb-1">Phone Number</label>
-            <input
-              type="tel"
-              name="phone_number"
-              value={formData.phone_number}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
-          </div>
-          <div>
-            <label className="block font-medium mb-1">State</label>
-            <input
-              type="text"
-              name="state"
-              value={formData.state}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
-          </div>
-          <div>
-            <label className="block font-medium mb-1">Case Type</label>
-            <input
-              type="text"
-              name="case_type"
-              value={formData.case_type}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
-          </div>
-          <div>
-            <label className="block font-medium mb-1">Preferred Contact Method</label>
-            <select
-              name="preferred_contact"
-              value={formData.preferred_contact}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            >
-              <option value="">Select</option>
-              <option value="Email">Email</option>
-              <option value="Phone">Phone</option>
-              <option value="Either">Either</option>
-            </select>
-          </div>
-          <div>
-            <label className="block font-medium mb-1">Brief Case Description</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows="4"
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition"
-          >
-            {submitting ? 'Submitting...' : 'Save & Submit to Active Cases'}
-          </button>
-          {successMessage && <p className="text-green-600 mt-4">{successMessage}</p>}
-          {errorMessage && <p className="text-red-600 mt-4">{errorMessage}</p>}
-        </form>
-        <div className="h-20" />
       </div>
+
+      <h1 className="text-3xl font-bold mb-6">New Divorce Case Intake</h1>
+      <form onSubmit={handleSubmit} className="space-y-6 pb-20">
+        <div>
+          <label className="block font-medium mb-1">Client Name</label>
+          <input
+            type="text"
+            name="client_name"
+            value={formData.client_name}
+            onChange={handleChange}
+            required
+            className="w-full border border-gray-300 rounded-md px-4 py-2"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Client Email</label>
+          <input
+            type="email"
+            name="client_email"
+            value={formData.client_email}
+            onChange={handleChange}
+            required
+            className="w-full border border-gray-300 rounded-md px-4 py-2"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Phone Number</label>
+          <input
+            type="tel"
+            name="phone_number"
+            value={formData.phone_number}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-md px-4 py-2"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">State</label>
+          <input
+            type="text"
+            name="state"
+            value={formData.state}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-md px-4 py-2"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Case Type</label>
+          <input
+            type="text"
+            name="case_type"
+            value={formData.case_type}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-md px-4 py-2"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Preferred Contact Method</label>
+          <select
+            name="preferred_contact"
+            value={formData.preferred_contact}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-md px-4 py-2"
+          >
+            <option value="">Select</option>
+            <option value="Email">Email</option>
+            <option value="Phone">Phone</option>
+            <option value="Either">Either</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Brief Case Description</label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            rows="4"
+            className="w-full border border-gray-300 rounded-md px-4 py-2"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition"
+        >
+          {submitting ? 'Submitting...' : 'Save & Submit to Active Cases'}
+        </button>
+
+        {successMessage && <p className="text-green-600 mt-4">{successMessage}</p>}
+        {errorMessage && <p className="text-red-600 mt-4">{errorMessage}</p>}
+      </form>
     </div>
   );
 }
