@@ -13,14 +13,21 @@ const supabase = createClient(
 
 export default function ActiveCasesPage() {
   const [cases, setCases] = useState([]);
+  const [sortOption, setSortOption] = useState('recent');
 
   useEffect(() => {
     const fetchCases = async () => {
-      const { data, error } = await supabase.from('cases').select('*').order('created_at', { ascending: false });
+      let query = supabase.from('cases').select('*');
+      if (sortOption === 'recent') {
+        query = query.order('created_at', { ascending: false });
+      } else if (sortOption === 'alphabetical') {
+        query = query.order('client_name', { ascending: true });
+      }
+      const { data, error } = await query;
       if (!error) setCases(data);
     };
     fetchCases();
-  }, []);
+  }, [sortOption]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900">
@@ -54,7 +61,17 @@ export default function ActiveCasesPage() {
 
       {/* Content */}
       <div className="pt-28 px-6 max-w-6xl mx-auto">
-        <h1 className="text-4xl font-extrabold mb-8">Active Cases</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-4xl font-extrabold">Active Cases</h1>
+          <select
+            className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value)}
+          >
+            <option value="recent">Recently Added</option>
+            <option value="alphabetical">Alphabetical (A-Z)</option>
+          </select>
+        </div>
 
         {cases.length === 0 ? (
           <p className="text-gray-600">No active cases found.</p>

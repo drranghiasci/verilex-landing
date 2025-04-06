@@ -60,36 +60,12 @@ export default function NewCasePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900">
-      {/* Top Nav */}
-      <nav className="fixed top-0 left-0 w-full bg-white border-b border-gray-200 shadow-sm z-50 py-3 px-6 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <Image
-            src="/verilex-logo-name.png"
-            alt="VeriLex AI Logo"
-            width={140}
-            height={50}
-            className="object-contain"
-            priority
-          />
-        </div>
-        <div className="space-x-6 text-sm font-medium">
-          <Link href="/">
-            <span className="text-gray-700 hover:text-black transition cursor-pointer">Home</span>
-          </Link>
-          <Link href="/dashboard">
-            <span className="text-gray-700 hover:text-black transition cursor-pointer">Dashboard</span>
-          </Link>
-          <Link href="/active-cases">
-            <span className="text-gray-700 hover:text-black transition cursor-pointer">Active Cases</span>
-          </Link>
-          <Link href="/settings">
-            <span className="text-gray-700 hover:text-black transition cursor-pointer">Settings</span>
-          </Link>
-        </div>
-      </nav>
-
       <div className="pt-28 px-8 max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">New Divorce Case Intake</h1>
+        <Link href="/dashboard">
+          <span className="text-blue-600 hover:underline cursor-pointer text-sm">← Back to Dashboard</span>
+        </Link>
+
+        <h1 className="text-3xl font-bold mb-6 mt-6">New Divorce Case Intake</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block font-medium mb-1">Client Name</label>
@@ -177,6 +153,7 @@ export default function NewCasePage() {
           {successMessage && <p className="text-green-600 mt-4">{successMessage}</p>}
           {errorMessage && <p className="text-red-600 mt-4">{errorMessage}</p>}
         </form>
+        <div className="h-20" />
       </div>
     </div>
   );
