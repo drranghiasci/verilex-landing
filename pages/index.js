@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import WaitlistForm from '../components/WaitlistForm';
 import { useEffect, useState } from 'react';
+import { Analytics } from "@vercel/analytics/react"
 
 export default function Home() {
   const calculateCountdown = () => {

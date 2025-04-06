@@ -1,5 +1,6 @@
 'use client';
 
+import { Analytics } from "@vercel/analytics/react"
 import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Image from 'next/image';
