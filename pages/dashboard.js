@@ -1,11 +1,51 @@
 'use client';
 
-import { Analytics } from "@vercel/analytics/react"
+import { Analytics } from "@vercel/analytics/react";
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
+const PASSWORD = 'verilex2025'; // Set your desired password here
+
 export default function DashboardPage() {
+  const [enteredPassword, setEnteredPassword] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (enteredPassword === PASSWORD) {
+      setIsAuthenticated(true);
+      setError('');
+    } else {
+      setError('Incorrect password. Please try again.');
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4">
+        <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm">
+          <h2 className="text-2xl font-bold mb-4 text-center">Enter Beta Access Password</h2>
+          <input
+            type="password"
+            value={enteredPassword}
+            onChange={(e) => setEnteredPassword(e.target.value)}
+            placeholder="Password"
+            className="w-full border border-gray-300 rounded-md px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-black"
+          />
+          {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+          <button
+            type="submit"
+            className="w-full bg-black text-white py-2 rounded-md hover:bg-gray-800 transition"
+          >
+            Enter
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900">
       {/* Top Nav */}
