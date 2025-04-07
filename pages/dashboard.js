@@ -54,29 +54,79 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-6 py-12">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-4">(Law Firm’s Name)’s Dashboard</h1>
-        <p className="text-center text-lg font-medium mb-10">Welcome, Good morning. It is Monday, April 7th</p>
+    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-6 py-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-4">
+          <Link href="/" className="text-sm text-black underline">&larr; Back to The VeriLex Webpage</Link>
+          <Image src="/verilex-logo-name.png" alt="VeriLex AI Logo" width={150} height={60} />
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
+        <h1 className="text-3xl font-bold text-center mb-2">(Lawyer’s/Paralegal’s Name)’s Dashboard</h1>
+        <p className="text-center text-xl font-semibold mb-8">Welcome, Goodmorning!<br />Today is Monday April 7th 2025</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 border-y border-gray-300 py-8 mb-10">
           <div>
-            <h2 className="text-xl font-semibold mb-3">To Do List:</h2>
-            <ul className="list-disc list-inside space-y-2 text-gray-700">
-              <li>Follow up with client intake forms</li>
-              <li>Prepare filing for Jones v. Jones</li>
-              <li>Review uploaded documents</li>
+            <h2 className="text-xl font-bold mb-2">To Do List:</h2>
+            <p className="font-semibold mt-4">Today:</p>
+            <ul className="list-disc list-inside text-gray-700 mb-4">
+              <li>Client check-in with Smith</li>
+              <li>Review evidence from Lopez</li>
             </ul>
+            <p className="font-semibold">This Week:</p>
+            <ul className="list-disc list-inside text-gray-700 mb-4">
+              <li>Draft motion for Johnson case</li>
+              <li>Send follow-up to Williams</li>
+            </ul>
+            <p className="font-semibold">This Month:</p>
+            <p className="text-gray-500 italic">add/edit</p>
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold mb-3">Upcoming Events:</h2>
-            <ul className="space-y-3 text-gray-700">
-              <li><strong>10:00 AM:</strong> Mediation - Smith v. Smith</li>
-              <li><strong>1:30 PM:</strong> Zoom Consult - Maria Lopez</li>
-              <li><strong>4:00 PM:</strong> Filing Deadline - County Court</li>
+            <h2 className="text-xl font-bold mb-2">Upcoming Events:</h2>
+            <p className="font-semibold mt-4">Today:</p>
+            <ul className="list-disc list-inside text-gray-700 mb-4">
+              <li>Consult: Maria Lopez @ 1:30 PM</li>
             </ul>
+            <p className="font-semibold">This Week:</p>
+            <ul className="list-disc list-inside text-gray-700 mb-4">
+              <li>Court Hearing: Johnson v. Johnson (in 2 days)</li>
+            </ul>
+            <p className="font-semibold">This Month:</p>
+            <p className="text-gray-500 italic">add/edit</p>
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-white p-6 shadow rounded-xl">
+            <h3 className="font-bold text-lg mb-2">📂 Open Cases</h3>
+            <p className="text-2xl font-bold">14</p>
+          </div>
+          <div className="bg-white p-6 shadow rounded-xl">
+            <h3 className="font-bold text-lg mb-2">💬 Unread Messages</h3>
+            <p className="text-2xl font-bold">5</p>
+          </div>
+          <div className="bg-white p-6 shadow rounded-xl">
+            <h3 className="font-bold text-lg mb-2">🕒 Filings Due</h3>
+            <p className="text-2xl font-bold">2 this week</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 shadow rounded-xl mb-12">
+          <h2 className="text-xl font-bold mb-4">📥 Latest Client Activity</h2>
+          <ul className="space-y-2 text-gray-700">
+            <li><strong>Lopez</strong> submitted a financial affidavit (3 hrs ago)</li>
+            <li><strong>Johnson</strong> uploaded supporting evidence (Yesterday)</li>
+            <li><strong>Williams</strong> signed the retainer agreement</li>
+          </ul>
+        </div>
+
+        <div className="bg-white p-6 shadow rounded-xl mb-12">
+          <h2 className="text-xl font-bold mb-4">✅ Open Follow-Ups</h2>
+          <ul className="space-y-2 text-gray-700">
+            <li>Submit draft filing for Johnson case</li>
+            <li>Client call: Williams (reschedule)</li>
+            <li>Pending doc review: Lopez</li>
+          </ul>
         </div>
 
         <div className="bg-black text-white p-8 rounded-xl">
