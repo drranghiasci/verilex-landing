@@ -1,13 +1,30 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
+import Image from 'next/image';
+import Link from 'next/link';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
+
+const US_STATES = [
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware",
+  "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky",
+  "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi",
+  "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico",
+  "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania",
+  "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont",
+  "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
+];
+
+const COUNTY_MAP = {
+  Georgia: ["Fulton", "Cobb", "DeKalb", "Gwinnett", "Clayton", "Chatham"],
+  California: ["Los Angeles", "San Diego", "Orange", "Riverside", "San Bernardino"],
+  Texas: ["Harris", "Dallas", "Tarrant", "Bexar", "Travis"]
+};
 
 export default function NewCasePage() {
   const [formData, setFormData] = useState({
@@ -15,12 +32,10 @@ export default function NewCasePage() {
     client_email: '',
     phone_number: '',
     state: '',
-    location: '',
+    county: '',
     case_type: '',
-    legal_area: '',
     preferred_contact: '',
-    description: '',
-    uploaded_file: null
+    description: ''
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -28,12 +43,8 @@ export default function NewCasePage() {
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === 'uploaded_file') {
-      setFormData((prev) => ({ ...prev, uploaded_file: files[0] }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -42,83 +53,101 @@ export default function NewCasePage() {
     setSuccessMessage('');
     setErrorMessage('');
 
-    let fileUrl = null;
-    if (formData.uploaded_file) {
-      const { data, error } = await supabase.storage
-        .from('case-documents')
-        .upload(`cases/${Date.now()}_${formData.uploaded_file.name}`, formData.uploaded_file);
-
-      if (error) {
-        setErrorMessage('Failed to upload file.');
-        setSubmitting(false);
-        return;
-      }
-      fileUrl = data.path;
-    }
-
-    const { error } = await supabase.from('cases').insert([
-      { ...formData, uploaded_file: fileUrl }
-    ]);
+    const { error } = await supabase.from('cases').insert([formData]);
 
     if (error) {
-      setErrorMessage('Error submitting case.');
+      console.error(error);
+      setErrorMessage('There was an error submitting the case.');
     } else {
-      setSuccessMessage('Case submitted successfully!');
+      setSuccessMessage('Case submitted successfully and added to Active Cases.');
       setFormData({
         client_name: '',
         client_email: '',
         phone_number: '',
         state: '',
-        location: '',
+        county: '',
         case_type: '',
-        legal_area: '',
         preferred_contact: '',
-        description: '',
-        uploaded_file: null
+        description: ''
       });
     }
+
     setSubmitting(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-6 pt-24 max-w-4xl mx-auto">
-      <Link href="/dashboard" className="text-blue-600 text-sm mb-6 inline-block">← Back to Dashboard</Link>
-      <h1 className="text-3xl font-bold mb-6">Enhanced Client Intake</h1>
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <input name="client_name" placeholder="Client Full Name" value={formData.client_name} onChange={handleChange} required className="w-full border rounded px-4 py-2" />
-        <input name="client_email" placeholder="Client Email" value={formData.client_email} onChange={handleChange} required className="w-full border rounded px-4 py-2" />
-        <input name="phone_number" placeholder="Phone Number" value={formData.phone_number} onChange={handleChange} className="w-full border rounded px-4 py-2" />
-        <select name="state" value={formData.state} onChange={handleChange} required className="w-full border rounded px-4 py-2">
-          <option value="">Select State</option>
-          {['Alabama','Alaska','Arizona','California','New York','Texas'].map((state) => (
-            <option key={state} value={state}>{state}</option>
-          ))}
-        </select>
-        <input name="location" placeholder="City or County" value={formData.location} onChange={handleChange} className="w-full border rounded px-4 py-2" />
-        <select name="legal_area" value={formData.legal_area} onChange={handleChange} required className="w-full border rounded px-4 py-2">
-          <option value="">Select Legal Area</option>
-          <option value="Divorce">Divorce</option>
-          <option value="Custody">Custody</option>
-          <option value="Contracts">Contracts</option>
-          <option value="Estate Planning">Estate Planning</option>
-        </select>
-        <input name="case_type" placeholder="Case Type (e.g. Contested)" value={formData.case_type} onChange={handleChange} className="w-full border rounded px-4 py-2" />
-        <select name="preferred_contact" value={formData.preferred_contact} onChange={handleChange} className="w-full border rounded px-4 py-2">
-          <option value="">Preferred Contact</option>
-          <option value="Email">Email</option>
-          <option value="Phone">Phone</option>
-          <option value="Either">Either</option>
-        </select>
-        <textarea name="description" placeholder="Case Description" value={formData.description} onChange={handleChange} rows="4" className="w-full border rounded px-4 py-2" />
+    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-8 pt-24 max-w-6xl mx-auto">
+      <Link href="/dashboard">
+        <span className="inline-flex items-center text-sm text-blue-600 hover:underline mb-4">
+          ← Back to Dashboard
+        </span>
+      </Link>
+
+      <h1 className="text-4xl font-extrabold mb-6">Client Intake</h1>
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block font-medium mb-1">Upload Related Document</label>
-          <input type="file" name="uploaded_file" onChange={handleChange} className="w-full" />
+          <label className="block font-medium mb-1">Client Name</label>
+          <input type="text" name="client_name" value={formData.client_name} onChange={handleChange} required className="w-full border border-gray-300 rounded-md px-4 py-2" />
         </div>
-        <button type="submit" disabled={submitting} className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800">
-          {submitting ? 'Submitting...' : 'Save & Submit'}
+        <div>
+          <label className="block font-medium mb-1">Client Email</label>
+          <input type="email" name="client_email" value={formData.client_email} onChange={handleChange} required className="w-full border border-gray-300 rounded-md px-4 py-2" />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">Phone Number</label>
+          <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2" />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">State</label>
+          <select name="state" value={formData.state} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2">
+            <option value="">Select a state</option>
+            {US_STATES.map((state) => (
+              <option key={state} value={state}>{state}</option>
+            ))}
+          </select>
+        </div>
+        {formData.state && COUNTY_MAP[formData.state] && (
+          <div>
+            <label className="block font-medium mb-1">County</label>
+            <select name="county" value={formData.county} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2">
+              <option value="">Select a county</option>
+              {COUNTY_MAP[formData.state].map((county) => (
+                <option key={county} value={county}>{county}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        <div>
+          <label className="block font-medium mb-1">Case Type</label>
+          <input type="text" name="case_type" value={formData.case_type} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2" />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">Preferred Contact Method</label>
+          <select name="preferred_contact" value={formData.preferred_contact} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2">
+            <option value="">Select</option>
+            <option value="Email">Email</option>
+            <option value="Phone">Phone</option>
+            <option value="Either">Either</option>
+          </select>
+        </div>
+        <div>
+          <label className="block font-medium mb-1">Brief Case Description</label>
+          <textarea name="description" value={formData.description} onChange={handleChange} rows="4" className="w-full border border-gray-300 rounded-md px-4 py-2" />
+        </div>
+
+        {/* File Upload Placeholder */}
+        <div className="border border-gray-300 p-4 rounded-lg">
+          <label className="block font-medium mb-2">Upload Documents</label>
+          <div className="border border-dashed border-gray-400 p-4 rounded-md text-center text-sm text-gray-600">
+            Choose file
+          </div>
+        </div>
+
+        <button type="submit" disabled={submitting} className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition">
+          {submitting ? 'Submitting...' : 'Save & Submit to Active Cases'}
         </button>
-        {successMessage && <p className="text-green-600">{successMessage}</p>}
-        {errorMessage && <p className="text-red-600">{errorMessage}</p>}
+        {successMessage && <p className="text-green-600 mt-4">{successMessage}</p>}
+        {errorMessage && <p className="text-red-600 mt-4">{errorMessage}</p>}
       </form>
     </div>
   );
