@@ -12,6 +12,7 @@ export default function CaseDetailsPage() {
   const { id } = router.query;
   const [caseDetails, setCaseDetails] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -20,6 +21,7 @@ export default function CaseDetailsPage() {
         const { data, error } = await supabase.from('cases').select('*').eq('id', id).single();
         if (error) {
           console.error('Error fetching case details:', error);
+          setErrorMessage('Failed to fetch case details. Please try again.');
         } else {
           setCaseDetails(data);
         }
@@ -32,6 +34,10 @@ export default function CaseDetailsPage() {
 
   if (loading) {
     return <p>Loading...</p>;
+  }
+
+  if (errorMessage) {
+    return <p className="text-red-600">{errorMessage}</p>;
   }
 
   if (!caseDetails) {
@@ -49,6 +55,7 @@ export default function CaseDetailsPage() {
       <p><strong>Case Type:</strong> {caseDetails.case_type}</p>
       <p><strong>Preferred Contact:</strong> {caseDetails.preferred_contact}</p>
       <p><strong>Description:</strong> {caseDetails.description}</p>
+      <p><strong>Submitted:</strong> {new Date(caseDetails.created_at).toLocaleDateString()}</p>
     </div>
   );
 }

@@ -59,7 +59,7 @@ export default function ActiveCasesPage() {
           {cases.map((caseItem) => (
             <div
               key={caseItem.id}
-              onClick={() => router.push(`/case/${caseItem.id}`)}
+              onClick={() => router.push(`/cases/${caseItem.id}`)} // Updated URL
               className="p-6 bg-white rounded-xl shadow-sm border hover:shadow-md transition cursor-pointer"
             >
               <div className="flex justify-between items-center mb-2">

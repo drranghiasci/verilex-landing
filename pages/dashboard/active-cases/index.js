@@ -39,7 +39,7 @@ export default function ActiveCasesPage() {
         <ul className="space-y-4">
           {cases.map((caseItem) => (
             <li key={caseItem.id} className="border border-gray-300 p-4 rounded-md">
-              <Link href={`/dashboard/active-cases/${caseItem.id}`}>
+              <Link href={`/cases/${caseItem.id}`}>
                 <a className="text-blue-600 hover:underline">
                   {caseItem.client_name} - {caseItem.case_type}
                 </a>
