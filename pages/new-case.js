@@ -20,11 +20,7 @@ const US_STATES = [
   "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
 ];
 
-const COUNTY_MAP = {
-  Georgia: ["Fulton", "Cobb", "DeKalb", "Gwinnett", "Clayton", "Chatham"],
-  California: ["Los Angeles", "San Diego", "Orange", "Riverside", "San Bernardino"],
-  Texas: ["Harris", "Dallas", "Tarrant", "Bexar", "Travis"]
-};
+import { COUNTY_MAP } from '../utils/countyMap';
 
 export default function NewCasePage() {
   const [formData, setFormData] = useState({
@@ -44,7 +40,11 @@ export default function NewCasePage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === 'state' && { county: '' }) // Reset county when state changes
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -74,6 +74,10 @@ export default function NewCasePage() {
 
     setSubmitting(false);
   };
+
+  const filteredCounties = formData.state && COUNTY_MAP[formData.state] ? COUNTY_MAP[formData.state].filter(county =>
+    county.toLowerCase().includes(formData.county.toLowerCase())
+  ) : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-8 pt-24 max-w-6xl mx-auto">
@@ -106,17 +110,31 @@ export default function NewCasePage() {
             ))}
           </select>
         </div>
+
         {formData.state && COUNTY_MAP[formData.state] && (
           <div>
             <label className="block font-medium mb-1">County</label>
-            <select name="county" value={formData.county} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2">
+            <input
+              type="text"
+              name="county"
+              value={formData.county}
+              onChange={handleChange}
+              placeholder="Start typing to search..."
+              className="w-full border border-gray-300 rounded-md px-4 py-2 mb-2"
+            />
+            <select
+              name="county"
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-md px-4 py-2"
+            >
               <option value="">Select a county</option>
-              {COUNTY_MAP[formData.state].map((county) => (
+              {filteredCounties.map((county) => (
                 <option key={county} value={county}>{county}</option>
               ))}
             </select>
           </div>
         )}
+
         <div>
           <label className="block font-medium mb-1">Case Type</label>
           <input type="text" name="case_type" value={formData.case_type} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2" />
@@ -135,7 +153,6 @@ export default function NewCasePage() {
           <textarea name="description" value={formData.description} onChange={handleChange} rows="4" className="w-full border border-gray-300 rounded-md px-4 py-2" />
         </div>
 
-        {/* File Upload Placeholder */}
         <div className="border border-gray-300 p-4 rounded-lg">
           <label className="block font-medium mb-2">Upload Documents</label>
           <div className="border border-dashed border-gray-400 p-4 rounded-md text-center text-sm text-gray-600">
