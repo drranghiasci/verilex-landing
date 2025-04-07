@@ -31,15 +31,13 @@ export default function ActiveCasesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900">
-      <div className="pt-28 px-6 max-w-6xl mx-auto">
+      <div className="pt-28 px-8 max-w-6xl mx-auto">
         {/* Back to Dashboard */}
-        <div className="mb-6">
-          <Link href="/dashboard">
-            <div className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition cursor-pointer">
-              <span className="mr-1">←</span> Back to Dashboard
-            </div>
-          </Link>
-        </div>
+        <Link href="/dashboard">
+          <span className="text-sm text-gray-700 hover:text-black transition mb-4 inline-block">
+            ← Back to Dashboard
+          </span>
+        </Link>
 
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-4xl font-extrabold">Active Cases</h1>
@@ -67,23 +65,13 @@ export default function ActiveCasesPage() {
                   <h2 className="text-lg font-semibold">{caseItem.client_name}</h2>
                   <span className="text-sm text-blue-600 hover:underline">View →</span>
                 </div>
-                <p className="text-sm text-gray-700">
-                  {caseItem.case_type} — {caseItem.state}
-                </p>
+                <p className="text-sm text-gray-700">{caseItem.case_type} — {caseItem.state}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <span className="text-xs bg-gray-200 text-gray-800 px-2 py-1 rounded">
-                    Preferred: {caseItem.preferred_contact}
-                  </span>
-                  <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
-                    Email: {caseItem.client_email}
-                  </span>
+                  <span className="text-xs bg-gray-200 text-gray-800 px-2 py-1 rounded">Preferred: {caseItem.preferred_contact}</span>
+                  <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">Email: {caseItem.client_email}</span>
                 </div>
-                <p className="text-sm text-gray-600 mt-2 italic line-clamp-2">
-                  {caseItem.description}
-                </p>
-                <p className="text-xs text-gray-400 mt-3">
-                  Submitted: {new Date(caseItem.created_at).toLocaleDateString()}
-                </p>
+                <p className="text-sm text-gray-600 mt-2 italic line-clamp-2">{caseItem.description}</p>
+                <p className="text-xs text-gray-400 mt-3">Submitted: {new Date(caseItem.created_at).toLocaleDateString()}</p>
               </div>
             ))}
           </div>
