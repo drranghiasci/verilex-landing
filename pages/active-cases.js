@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-import { useRouter } from 'next/router';
+import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -31,20 +30,20 @@ export default function ActiveCasesPage() {
   }, [sortOption]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-6 py-12 max-w-6xl mx-auto">
-      <div className="flex items-center mb-8">
-        <button
-          onClick={() => router.push('/dashboard')}
-          className="flex items-center text-sm text-blue-600 hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" /> Back to Dashboard
-        </button>
+    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-6 pt-24 max-w-6xl mx-auto">
+      {/* Back to Dashboard */}
+      <div className="mb-8">
+        <Link href="/dashboard">
+          <div className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition cursor-pointer">
+            <span className="mr-1">←</span> Back to Dashboard
+          </div>
+        </Link>
       </div>
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <h1 className="text-4xl font-extrabold">Active Cases</h1>
         <select
-          className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+          className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white"
           value={sortOption}
           onChange={(e) => setSortOption(e.target.value)}
         >
@@ -56,20 +55,24 @@ export default function ActiveCasesPage() {
       {cases.length === 0 ? (
         <p className="text-gray-600">No active cases found.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-16">
           {cases.map((caseItem) => (
             <div
               key={caseItem.id}
               onClick={() => router.push(`/case/${caseItem.id}`)}
-              className="p-6 bg-white rounded-xl shadow-sm border hover:shadow-md transition cursor-pointer"
+              className="p-6 bg-white rounded-xl shadow hover:shadow-lg transition cursor-pointer border border-gray-200"
             >
-              <h2 className="text-lg font-semibold">{caseItem.client_name}</h2>
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-lg font-semibold text-gray-900 truncate">{caseItem.client_name}</h2>
+                <span className="text-sm text-blue-600 hover:underline">View →</span>
+              </div>
               <p className="text-sm text-gray-700">{caseItem.case_type} — {caseItem.state}</p>
-              <p className="text-sm text-gray-500 mt-1">Preferred Contact: {caseItem.preferred_contact}</p>
-              <p className="text-sm text-gray-500">Email: {caseItem.client_email}</p>
-              <p className="text-sm text-gray-500">Phone: {caseItem.phone_number}</p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">Preferred: {caseItem.preferred_contact}</span>
+                <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">Email: {caseItem.client_email}</span>
+              </div>
               <p className="text-sm text-gray-600 mt-2 italic line-clamp-2">{caseItem.description}</p>
-              <p className="text-xs text-gray-400 mt-2">Submitted: {new Date(caseItem.created_at).toLocaleDateString()}</p>
+              <p className="text-xs text-gray-400 mt-3">Submitted: {new Date(caseItem.created_at).toLocaleDateString()}</p>
             </div>
           ))}
         </div>
