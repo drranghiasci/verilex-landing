@@ -16,6 +16,7 @@ export default function CaseDetailsPage() {
   useEffect(() => {
     if (id) {
       const fetchCaseDetails = async () => {
+        console.log(`Fetching case details for ID: ${id}`); // Debugging log
         const { data, error } = await supabase.from('cases').select('*').eq('id', id).single();
         if (error) {
           console.error('Error fetching case details:', error);

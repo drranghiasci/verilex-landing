@@ -76,9 +76,12 @@ export default function NewCasePage() {
 
         // Upload files if any
         if (uploadedFiles.length > 0) {
-          const uploadPromises = uploadedFiles.map((file) =>
-            supabase.storage.from('cases').upload(`documents/${newCaseId}/${Date.now()}_${file.name}`, file)
-          );
+          const uploadPromises = uploadedFiles.map((file) => {
+            const filePath = `documents/${newCaseId}/${Date.now()}_${file.name}`;
+            console.log(`Uploading file to: ${filePath}`); // Debugging log
+            return supabase.storage.from('cases').upload(filePath, file);
+          });
+
           const uploadResults = await Promise.all(uploadPromises);
           const uploadErrors = uploadResults.filter((result) => result.error);
 
@@ -102,6 +105,7 @@ export default function NewCasePage() {
         setUploadedFiles([]);
 
         // Redirect to the active case dashboard
+        console.log(`Redirecting to: /dashboard/active-cases/${newCaseId}`); // Debugging log
         router.push(`/dashboard/active-cases/${newCaseId}`);
       }
     } catch (err) {

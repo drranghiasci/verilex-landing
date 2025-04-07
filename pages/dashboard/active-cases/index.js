@@ -13,6 +13,7 @@ export default function ActiveCasesPage() {
 
   useEffect(() => {
     const fetchCases = async () => {
+      console.log('Fetching all active cases'); // Debugging log
       const { data, error } = await supabase.from('cases').select('*');
       if (error) {
         console.error('Error fetching cases:', error);
