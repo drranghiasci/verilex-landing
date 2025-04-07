@@ -20,16 +20,25 @@ export default function CaseDetailPage() {
   useEffect(() => {
     if (!id) return;
     const fetchCase = async () => {
-      const { data, error } = await supabase
-        .from('cases')
-        .select('*')
-        .eq('id', id)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('cases')
+          .select('*')
+          .eq('id', id)
+          .single();
 
-      if (!error) {
-        setCaseDetails(data);
+        if (error) {
+          console.error('Error fetching case:', error.message);
+          setCaseDetails(null);
+        } else {
+          setCaseDetails(data);
+        }
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        setCaseDetails(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchCase();
   }, [id]);
@@ -39,7 +48,13 @@ export default function CaseDetailPage() {
   };
 
   if (loading) return <p className="pt-28 px-8 text-center">Loading...</p>;
-  if (!caseDetails) return <p className="pt-28 px-8 text-center">Case not found.</p>;
+  if (!caseDetails && !loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-center text-gray-500">Case not found. Please check the URL or try again later.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-8">
