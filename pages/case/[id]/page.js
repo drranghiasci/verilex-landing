@@ -4,7 +4,6 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
-import Image from 'next/image';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -39,20 +38,22 @@ export default function CaseDetailPage() {
     window.print();
   };
 
-  if (loading) return <p className="pt-28 px-6 text-center">Loading...</p>;
-  if (!caseDetails) return <p className="pt-28 px-6 text-center">Case not found.</p>;
+  if (loading) return <p className="pt-28 px-8 text-center">Loading...</p>;
+  if (!caseDetails) return <p className="pt-28 px-8 text-center">Case not found.</p>;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-4">
-      <div className="pt-28 max-w-3xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-8">
+      <div className="pt-28 max-w-4xl mx-auto">
+        {/* Back Button */}
         <Link href="/active-cases">
-          <span className="inline-flex items-center text-blue-600 hover:underline text-sm mb-6">
+          <span className="inline-flex items-center text-sm text-gray-700 hover:text-black transition mb-6">
             ← Back to Active Cases
           </span>
         </Link>
 
         <h1 className="text-3xl font-extrabold mb-6">Case Details</h1>
 
+        {/* Case Info */}
         <div className="space-y-4 bg-white p-6 rounded-xl shadow-md">
           <p><strong>Client Name:</strong> {caseDetails.client_name}</p>
           <p><strong>Email:</strong> {caseDetails.client_email}</p>
@@ -60,12 +61,17 @@ export default function CaseDetailPage() {
           <p><strong>State:</strong> {caseDetails.state}</p>
           <p><strong>Case Type:</strong> {caseDetails.case_type}</p>
           <p><strong>Preferred Contact:</strong> {caseDetails.preferred_contact}</p>
+          {caseDetails.location && (
+            <p><strong>Location:</strong> {caseDetails.location}</p>
+          )}
           <p><strong>Case Description:</strong> {caseDetails.description}</p>
-          <p className="text-sm text-gray-500">Submitted: {new Date(caseDetails.created_at).toLocaleString()}</p>
+          <p className="text-sm text-gray-500">
+            Submitted: {new Date(caseDetails.created_at).toLocaleString()}
+          </p>
         </div>
 
-        {/* Notes Section */}
-        <div className="mt-8">
+        {/* Internal Notes */}
+        <div className="mt-10">
           <label className="block font-semibold mb-2">Internal Notes</label>
           <textarea
             className="w-full border border-gray-300 rounded-md px-4 py-2"
@@ -76,14 +82,14 @@ export default function CaseDetailPage() {
           />
         </div>
 
-        {/* File Preview Placeholder */}
-        <div className="mt-8">
+        {/* File Upload Preview Placeholder */}
+        <div className="mt-10">
           <h3 className="text-lg font-semibold mb-2">File Uploads</h3>
           <p className="text-gray-500 italic">File preview coming soon...</p>
         </div>
 
-        {/* Export/Print */}
-        <div className="mt-8 flex justify-between items-center">
+        {/* Print/Export */}
+        <div className="mt-10">
           <button
             onClick={handlePrint}
             className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition"

@@ -1,11 +1,8 @@
 'use client';
 
-import { Analytics } from "@vercel/analytics/react";
 import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowLeft } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -18,9 +15,12 @@ export default function NewCasePage() {
     client_email: '',
     phone_number: '',
     state: '',
+    location: '',
     case_type: '',
+    legal_area: '',
     preferred_contact: '',
     description: '',
+    uploaded_file: null
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -28,8 +28,12 @@ export default function NewCasePage() {
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, files } = e.target;
+    if (name === 'uploaded_file') {
+      setFormData((prev) => ({ ...prev, uploaded_file: files[0] }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -38,137 +42,84 @@ export default function NewCasePage() {
     setSuccessMessage('');
     setErrorMessage('');
 
-    const { error } = await supabase.from('cases').insert([formData]);
+    let fileUrl = null;
+    if (formData.uploaded_file) {
+      const { data, error } = await supabase.storage
+        .from('case-documents')
+        .upload(`cases/${Date.now()}_${formData.uploaded_file.name}`, formData.uploaded_file);
+
+      if (error) {
+        setErrorMessage('Failed to upload file.');
+        setSubmitting(false);
+        return;
+      }
+      fileUrl = data.path;
+    }
+
+    const { error } = await supabase.from('cases').insert([
+      { ...formData, uploaded_file: fileUrl }
+    ]);
 
     if (error) {
-      console.error(error);
-      setErrorMessage('There was an error submitting the case.');
+      setErrorMessage('Error submitting case.');
     } else {
-      setSuccessMessage('Case submitted successfully and added to Active Cases.');
+      setSuccessMessage('Case submitted successfully!');
       setFormData({
         client_name: '',
         client_email: '',
         phone_number: '',
         state: '',
+        location: '',
         case_type: '',
+        legal_area: '',
         preferred_contact: '',
         description: '',
+        uploaded_file: null
       });
     }
-
     setSubmitting(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900">
-      {/* Page Content */}
-      <div className="pt-28 px-6 sm:px-10 max-w-5xl mx-auto w-full">
-        {/* Back Link */}
-        <Link href="/dashboard" className="flex items-center text-sm text-gray-600 hover:text-black mb-6">
-          <ArrowLeft size={16} className="mr-1" />
-          Back to Dashboard
-        </Link>
-
-        <h1 className="text-3xl font-bold mb-6">New Divorce Case Intake</h1>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block font-medium mb-1">Client Name</label>
-            <input
-              type="text"
-              name="client_name"
-              value={formData.client_name}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium mb-1">Client Email</label>
-            <input
-              type="email"
-              name="client_email"
-              value={formData.client_email}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium mb-1">Phone Number</label>
-            <input
-              type="tel"
-              name="phone_number"
-              value={formData.phone_number}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium mb-1">State</label>
-            <input
-              type="text"
-              name="state"
-              value={formData.state}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium mb-1">Case Type</label>
-            <input
-              type="text"
-              name="case_type"
-              value={formData.case_type}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium mb-1">Preferred Contact Method</label>
-            <select
-              name="preferred_contact"
-              value={formData.preferred_contact}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            >
-              <option value="">Select</option>
-              <option value="Email">Email</option>
-              <option value="Phone">Phone</option>
-              <option value="Either">Either</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block font-medium mb-1">Brief Case Description</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows="4"
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition"
-          >
-            {submitting ? 'Submitting...' : 'Save & Submit to Active Cases'}
-          </button>
-
-          {successMessage && <p className="text-green-600 mt-4">{successMessage}</p>}
-          {errorMessage && <p className="text-red-600 mt-4">{errorMessage}</p>}
-        </form>
-
-        <div className="h-20" /> {/* Footer Padding Space */}
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-6 pt-24 max-w-4xl mx-auto">
+      <Link href="/dashboard" className="text-blue-600 text-sm mb-6 inline-block">← Back to Dashboard</Link>
+      <h1 className="text-3xl font-bold mb-6">Enhanced Client Intake</h1>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <input name="client_name" placeholder="Client Full Name" value={formData.client_name} onChange={handleChange} required className="w-full border rounded px-4 py-2" />
+        <input name="client_email" placeholder="Client Email" value={formData.client_email} onChange={handleChange} required className="w-full border rounded px-4 py-2" />
+        <input name="phone_number" placeholder="Phone Number" value={formData.phone_number} onChange={handleChange} className="w-full border rounded px-4 py-2" />
+        <select name="state" value={formData.state} onChange={handleChange} required className="w-full border rounded px-4 py-2">
+          <option value="">Select State</option>
+          {['Alabama','Alaska','Arizona','California','New York','Texas'].map((state) => (
+            <option key={state} value={state}>{state}</option>
+          ))}
+        </select>
+        <input name="location" placeholder="City or County" value={formData.location} onChange={handleChange} className="w-full border rounded px-4 py-2" />
+        <select name="legal_area" value={formData.legal_area} onChange={handleChange} required className="w-full border rounded px-4 py-2">
+          <option value="">Select Legal Area</option>
+          <option value="Divorce">Divorce</option>
+          <option value="Custody">Custody</option>
+          <option value="Contracts">Contracts</option>
+          <option value="Estate Planning">Estate Planning</option>
+        </select>
+        <input name="case_type" placeholder="Case Type (e.g. Contested)" value={formData.case_type} onChange={handleChange} className="w-full border rounded px-4 py-2" />
+        <select name="preferred_contact" value={formData.preferred_contact} onChange={handleChange} className="w-full border rounded px-4 py-2">
+          <option value="">Preferred Contact</option>
+          <option value="Email">Email</option>
+          <option value="Phone">Phone</option>
+          <option value="Either">Either</option>
+        </select>
+        <textarea name="description" placeholder="Case Description" value={formData.description} onChange={handleChange} rows="4" className="w-full border rounded px-4 py-2" />
+        <div>
+          <label className="block font-medium mb-1">Upload Related Document</label>
+          <input type="file" name="uploaded_file" onChange={handleChange} className="w-full" />
+        </div>
+        <button type="submit" disabled={submitting} className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800">
+          {submitting ? 'Submitting...' : 'Save & Submit'}
+        </button>
+        {successMessage && <p className="text-green-600">{successMessage}</p>}
+        {errorMessage && <p className="text-red-600">{errorMessage}</p>}
+      </form>
     </div>
   );
 }
