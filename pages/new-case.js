@@ -61,18 +61,21 @@ export default function NewCasePage() {
     setErrorMessage('');
 
     try {
+      console.log('Submitting form data:', formData); // Debugging log
+
       // Insert the case data into the 'cases' table
       const { data, error } = await supabase.from('cases').insert([formData]).select();
 
       if (error) {
-        console.error('Error inserting case:', error);
+        console.error('Error inserting case into Supabase:', error); // Log the error
         setErrorMessage('There was an error submitting the case. Please try again.');
         setSubmitting(false);
         return;
       }
 
-      if (data.length > 0) {
+      if (data && data.length > 0) {
         const newCaseId = data[0].id; // Get the newly created case ID
+        console.log('New case created with ID:', newCaseId); // Debugging log
 
         // Upload files if any
         if (uploadedFiles.length > 0) {
@@ -86,7 +89,7 @@ export default function NewCasePage() {
           const uploadErrors = uploadResults.filter((result) => result.error);
 
           if (uploadErrors.length > 0) {
-            console.error('File upload errors:', uploadErrors);
+            console.error('File upload errors:', uploadErrors); // Log upload errors
             setErrorMessage('Some files could not be uploaded. Please check your files and try again.');
           }
         }
@@ -107,9 +110,12 @@ export default function NewCasePage() {
         // Redirect to the active case dashboard
         console.log(`Redirecting to: /dashboard/active-cases/${newCaseId}`); // Debugging log
         router.push(`/dashboard/active-cases/${newCaseId}`);
+      } else {
+        console.error('No data returned from Supabase after insert.'); // Log unexpected behavior
+        setErrorMessage('There was an error submitting the case. Please try again.');
       }
     } catch (err) {
-      console.error('Unexpected error:', err);
+      console.error('Unexpected error during submission:', err); // Log unexpected errors
       setErrorMessage('An unexpected error occurred. Please try again.');
     } finally {
       setSubmitting(false);
