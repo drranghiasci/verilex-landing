@@ -1,4 +1,4 @@
-const COUNTY_MAP = {
+export const COUNTY_MAP = {
   "Alabama": [
     "Autauga County",
     "Baldwin County",
