@@ -60,45 +60,56 @@ export default function NewCasePage() {
     setSuccessMessage('');
     setErrorMessage('');
 
-    const { data, error } = await supabase.from('cases').insert([formData]).select();
+    try {
+      // Insert the case data into the 'cases' table
+      const { data, error } = await supabase.from('cases').insert([formData]).select();
 
-    if (!error && data.length > 0) {
-      const newCaseId = data[0].id; // Get the newly created case ID
-
-      if (uploadedFiles.length > 0) {
-        const uploadPromises = uploadedFiles.map((file) =>
-          supabase.storage.from('cases').upload(`documents/${newCaseId}/${Date.now()}_${file.name}`, file)
-        );
-        const uploadResults = await Promise.all(uploadPromises);
-        const uploadErrors = uploadResults.filter((result) => result.error);
-
-        if (uploadErrors.length > 0) {
-          console.error('File upload errors:', uploadErrors);
-          setErrorMessage('Some files could not be uploaded.');
-        }
+      if (error) {
+        console.error('Error inserting case:', error);
+        setErrorMessage('There was an error submitting the case. Please try again.');
+        setSubmitting(false);
+        return;
       }
 
-      setSuccessMessage('Case submitted successfully and added to Active Cases.');
-      setFormData({
-        client_name: '',
-        client_email: '',
-        phone_number: '',
-        state: '',
-        county: '',
-        case_type: '',
-        preferred_contact: '',
-        description: ''
-      });
-      setUploadedFiles([]);
+      if (data.length > 0) {
+        const newCaseId = data[0].id; // Get the newly created case ID
 
-      // Redirect to the active case dashboard
-      router.push(`/dashboard/active-cases/${newCaseId}`);
-    } else {
-      console.error(error);
-      setErrorMessage('There was an error submitting the case.');
+        // Upload files if any
+        if (uploadedFiles.length > 0) {
+          const uploadPromises = uploadedFiles.map((file) =>
+            supabase.storage.from('cases').upload(`documents/${newCaseId}/${Date.now()}_${file.name}`, file)
+          );
+          const uploadResults = await Promise.all(uploadPromises);
+          const uploadErrors = uploadResults.filter((result) => result.error);
+
+          if (uploadErrors.length > 0) {
+            console.error('File upload errors:', uploadErrors);
+            setErrorMessage('Some files could not be uploaded. Please check your files and try again.');
+          }
+        }
+
+        setSuccessMessage('Case submitted successfully and added to Active Cases.');
+        setFormData({
+          client_name: '',
+          client_email: '',
+          phone_number: '',
+          state: '',
+          county: '',
+          case_type: '',
+          preferred_contact: '',
+          description: ''
+        });
+        setUploadedFiles([]);
+
+        // Redirect to the active case dashboard
+        router.push(`/dashboard/active-cases/${newCaseId}`);
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setErrorMessage('An unexpected error occurred. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
-
-    setSubmitting(false);
   };
 
   const filteredCounties = formData.state && COUNTY_MAP[formData.state]
