@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { COUNTY_MAP } from '../utils/countyMap';
+import { useRouter } from 'next/router'; // Add this import
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -23,6 +24,7 @@ const US_STATES = [
 ];
 
 export default function NewCasePage() {
+  const router = useRouter(); // Initialize router
   const [formData, setFormData] = useState({
     client_name: '',
     client_email: '',
@@ -33,7 +35,7 @@ export default function NewCasePage() {
     preferred_contact: '',
     description: ''
   });
-
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -47,18 +49,35 @@ export default function NewCasePage() {
     }));
   };
 
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setUploadedFiles((prev) => [...prev, ...files]);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setSuccessMessage('');
     setErrorMessage('');
 
-    const { error } = await supabase.from('cases').insert([formData]);
+    const { data, error } = await supabase.from('cases').insert([formData]).select();
 
-    if (error) {
-      console.error(error);
-      setErrorMessage('There was an error submitting the case.');
-    } else {
+    if (!error && data.length > 0) {
+      const newCaseId = data[0].id; // Get the newly created case ID
+
+      if (uploadedFiles.length > 0) {
+        const uploadPromises = uploadedFiles.map((file) =>
+          supabase.storage.from('cases').upload(`documents/${newCaseId}/${Date.now()}_${file.name}`, file)
+        );
+        const uploadResults = await Promise.all(uploadPromises);
+        const uploadErrors = uploadResults.filter((result) => result.error);
+
+        if (uploadErrors.length > 0) {
+          console.error('File upload errors:', uploadErrors);
+          setErrorMessage('Some files could not be uploaded.');
+        }
+      }
+
       setSuccessMessage('Case submitted successfully and added to Active Cases.');
       setFormData({
         client_name: '',
@@ -70,6 +89,13 @@ export default function NewCasePage() {
         preferred_contact: '',
         description: ''
       });
+      setUploadedFiles([]);
+
+      // Redirect to the active case dashboard
+      router.push(`/dashboard/active-cases/${newCaseId}`);
+    } else {
+      console.error(error);
+      setErrorMessage('There was an error submitting the case.');
     }
 
     setSubmitting(false);
@@ -83,7 +109,7 @@ export default function NewCasePage() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-8 pt-24 max-w-6xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-4 pt-24 max-w-full mx-auto">
         <Link href="/dashboard">
           <span className="inline-flex items-center text-sm text-blue-600 hover:underline mb-4">
             ← Back to Dashboard
@@ -201,9 +227,26 @@ export default function NewCasePage() {
 
           <div className="border border-gray-300 p-4 rounded-lg">
             <label className="block font-medium mb-2">Upload Documents</label>
-            <div className="border border-dashed border-gray-400 p-4 rounded-md text-center text-sm text-gray-600">
+            <input
+              type="file"
+              multiple
+              onChange={handleFileChange}
+              className="hidden"
+              id="file-upload"
+            />
+            <label
+              htmlFor="file-upload"
+              className="border border-dashed border-gray-400 p-4 rounded-md text-center text-sm text-gray-600 cursor-pointer"
+            >
               Choose file
-            </div>
+            </label>
+            {uploadedFiles.length > 0 && (
+              <ul className="mt-2 text-sm text-gray-600">
+                {uploadedFiles.map((file, index) => (
+                  <li key={index}>{file.name}</li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <button
