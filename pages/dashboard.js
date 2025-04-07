@@ -1,56 +1,36 @@
 "use client";
 
-import { Analytics } from "@vercel/analytics/react";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
 import Image from 'next/image';
 
-const PASSWORD = 'verilex2025';
-
 export default function DashboardPage() {
-  const [enteredPassword, setEnteredPassword] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [error, setError] = useState('');
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (enteredPassword === PASSWORD) {
-      setIsAuthenticated(true);
-      setError('');
-    } else {
-      setError('Incorrect password. Please try again.');
-    }
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUser(data.user);
+      } else {
+        router.push('/login');
+      }
+      setLoading(false);
+    };
+    checkUser();
+  }, [router]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 flex flex-col items-center justify-center px-4">
-        <Image
-          src="/verilex-logo-name.png"
-          alt="VeriLex AI Logo"
-          width={200}
-          height={80}
-          className="mb-6"
-        />
-        <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm border border-gray-200">
-          <h2 className="text-2xl font-extrabold mb-4 text-center">Enter Beta Access Password</h2>
-          <input
-            type="password"
-            value={enteredPassword}
-            onChange={(e) => setEnteredPassword(e.target.value)}
-            placeholder="Password"
-            className="w-full border border-gray-300 rounded-md px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-black"
-          />
-          {error && <p className="text-red-500 text-sm mb-3 text-center">{error}</p>}
-          <button
-            type="submit"
-            className="w-full bg-black text-white py-2 rounded-md hover:bg-gray-800 transition"
-          >
-            Enter
-          </button>
-        </form>
-      </div>
-    );
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center text-gray-700 text-lg">Loading...</div>;
   }
 
   return (
@@ -58,10 +38,18 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-4">
           <Link href="/" className="text-sm text-black underline">&larr; Back to The VeriLex Webpage</Link>
-          <Image src="/verilex-logo-name.png" alt="VeriLex AI Logo" width={150} height={60} />
+          <div className="flex items-center gap-4">
+            <Image src="/verilex-logo-name.png" alt="VeriLex AI Logo" width={150} height={60} />
+            <button
+              onClick={handleLogout}
+              className="text-sm bg-black text-white px-3 py-1 rounded-md hover:bg-gray-800"
+            >
+              Log Out
+            </button>
+          </div>
         </div>
 
-        <h1 className="text-3xl font-bold text-center mb-2">(Lawyer’s/Paralegal’s Name)’s Dashboard</h1>
+        <h1 className="text-3xl font-bold text-center mb-2">{user?.email}&apos;s Dashboard</h1>
         <p className="text-center text-xl font-semibold mb-8">Welcome, Goodmorning!<br />Today is Monday April 7th 2025</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 border-y border-gray-300 py-8 mb-10">

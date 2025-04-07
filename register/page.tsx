@@ -5,19 +5,19 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signUp({
       email,
       password
     });
@@ -32,8 +32,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <form onSubmit={handleLogin} className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">Login to VeriLex AI</h1>
+      <form onSubmit={handleRegister} className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h1 className="text-2xl font-bold mb-6 text-center">Register for VeriLex AI</h1>
 
         <label className="block text-sm font-medium text-gray-700">Email</label>
         <input
@@ -60,11 +60,11 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full bg-black text-white py-2 rounded-md hover:bg-gray-800"
         >
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? 'Registering...' : 'Register'}
         </button>
 
         <p className="text-sm text-center mt-4">
-          Don&apos;t have an account? <a href="/register" className="text-blue-600 underline">Register</a>
+          Already have an account? <a href="/login" className="text-blue-600 underline">Login</a>
         </p>
       </form>
     </div>

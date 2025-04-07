@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Image from 'next/image';
 import Link from 'next/link';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { COUNTY_MAP } from '../utils/countyMap';
-import { useRouter } from 'next/router'; // Add this import
+import { useRouter } from 'next/router';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -24,7 +24,7 @@ const US_STATES = [
 ];
 
 export default function NewCasePage() {
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
   const [formData, setFormData] = useState({
     client_name: '',
     client_email: '',
@@ -33,19 +33,29 @@ export default function NewCasePage() {
     county: '',
     case_type: '',
     preferred_contact: '',
-    description: ''
+    description: '',
+    court_date: '',
+    status: 'open',
+    is_starred: false
   });
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUser(user);
+    });
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-      ...(name === 'state' && { county: '' }) // Reset county when state changes
+      ...(name === 'state' && { county: '' })
     }));
   };
 
@@ -61,27 +71,31 @@ export default function NewCasePage() {
     setErrorMessage('');
 
     try {
-      console.log('Submitting form data:', formData); // Debugging log
+      if (!user) {
+        setErrorMessage('User not authenticated.');
+        return;
+      }
 
-      // Insert the case data into the 'cases' table
-      const { data, error } = await supabase.from('cases').insert([formData]).select();
+      const fullData = {
+        ...formData,
+        court_date: formData.court_date ? new Date(formData.court_date) : null,
+        user_id: user.id
+      };
+
+      const { data, error } = await supabase.from('cases').insert([fullData]).select();
 
       if (error) {
-        console.error('Error inserting case into Supabase:', error); // Log the error
         setErrorMessage('There was an error submitting the case. Please try again.');
         setSubmitting(false);
         return;
       }
 
       if (data && data.length > 0) {
-        const newCaseId = data[0].id; // Get the newly created case ID
-        console.log('New case created with ID:', newCaseId); // Debugging log
+        const newCaseId = data[0].id;
 
-        // Upload files if any
         if (uploadedFiles.length > 0) {
           const uploadPromises = uploadedFiles.map((file) => {
             const filePath = `documents/${newCaseId}/${Date.now()}_${file.name}`;
-            console.log(`Uploading file to: ${filePath}`); // Debugging log
             return supabase.storage.from('cases').upload(filePath, file);
           });
 
@@ -89,33 +103,23 @@ export default function NewCasePage() {
           const uploadErrors = uploadResults.filter((result) => result.error);
 
           if (uploadErrors.length > 0) {
-            console.error('File upload errors:', uploadErrors); // Log upload errors
             setErrorMessage('Some files could not be uploaded. Please check your files and try again.');
           }
         }
 
         setSuccessMessage('Case submitted successfully and added to Active Cases.');
         setFormData({
-          client_name: '',
-          client_email: '',
-          phone_number: '',
-          state: '',
-          county: '',
-          case_type: '',
-          preferred_contact: '',
-          description: ''
+          client_name: '', client_email: '', phone_number: '', state: '', county: '',
+          case_type: '', preferred_contact: '', description: '', court_date: '',
+          status: 'open', is_starred: false
         });
         setUploadedFiles([]);
-
-        // Redirect to the active case dashboard
-        console.log(`Redirecting to: /dashboard/active-cases/${newCaseId}`); // Debugging log
         router.push(`/dashboard/active-cases/${newCaseId}`);
       } else {
-        console.error('No data returned from Supabase after insert.'); // Log unexpected behavior
         setErrorMessage('There was an error submitting the case. Please try again.');
       }
     } catch (err) {
-      console.error('Unexpected error during submission:', err); // Log unexpected errors
+      console.error('Unexpected error during submission:', err);
       setErrorMessage('An unexpected error occurred. Please try again.');
     } finally {
       setSubmitting(false);
@@ -141,44 +145,19 @@ export default function NewCasePage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block font-medium mb-1">Client Name</label>
-            <input
-              type="text"
-              name="client_name"
-              value={formData.client_name}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
+            <input type="text" name="client_name" value={formData.client_name} onChange={handleChange} required className="w-full border border-gray-300 rounded-md px-4 py-2" />
           </div>
           <div>
             <label className="block font-medium mb-1">Client Email</label>
-            <input
-              type="email"
-              name="client_email"
-              value={formData.client_email}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
+            <input type="email" name="client_email" value={formData.client_email} onChange={handleChange} required className="w-full border border-gray-300 rounded-md px-4 py-2" />
           </div>
           <div>
             <label className="block font-medium mb-1">Phone Number</label>
-            <input
-              type="tel"
-              name="phone_number"
-              value={formData.phone_number}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
+            <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2" />
           </div>
           <div>
             <label className="block font-medium mb-1">State</label>
-            <select
-              name="state"
-              value={formData.state}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            >
+            <select name="state" value={formData.state} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2">
               <option value="">Select a state</option>
               {US_STATES.map((state) => (
                 <option key={state} value={state}>{state}</option>
@@ -189,20 +168,8 @@ export default function NewCasePage() {
           {formData.state && COUNTY_MAP[formData.state] && (
             <div>
               <label className="block font-medium mb-1">County</label>
-              <input
-                type="text"
-                name="county"
-                value={formData.county}
-                onChange={handleChange}
-                placeholder="Start typing to search..."
-                className="w-full border border-gray-300 rounded-md px-4 py-2 mb-2"
-              />
-              <select
-                name="county"
-                value={formData.county}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-4 py-2"
-              >
+              <input type="text" name="county" value={formData.county} onChange={handleChange} placeholder="Start typing to search..." className="w-full border border-gray-300 rounded-md px-4 py-2 mb-2" />
+              <select name="county" value={formData.county} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2">
                 <option value="">Select a county</option>
                 {filteredCounties.map((county) => (
                   <option key={county} value={county}>{county}</option>
@@ -213,22 +180,11 @@ export default function NewCasePage() {
 
           <div>
             <label className="block font-medium mb-1">Case Type</label>
-            <input
-              type="text"
-              name="case_type"
-              value={formData.case_type}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
+            <input type="text" name="case_type" value={formData.case_type} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2" />
           </div>
           <div>
             <label className="block font-medium mb-1">Preferred Contact Method</label>
-            <select
-              name="preferred_contact"
-              value={formData.preferred_contact}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            >
+            <select name="preferred_contact" value={formData.preferred_contact} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2">
               <option value="">Select</option>
               <option value="Email">Email</option>
               <option value="Phone">Phone</option>
@@ -237,28 +193,17 @@ export default function NewCasePage() {
           </div>
           <div>
             <label className="block font-medium mb-1">Brief Case Description</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows="4"
-              className="w-full border border-gray-300 rounded-md px-4 py-2"
-            />
+            <textarea name="description" value={formData.description} onChange={handleChange} rows="4" className="w-full border border-gray-300 rounded-md px-4 py-2" />
+          </div>
+          <div>
+            <label className="block font-medium mb-1">Court Date</label>
+            <input type="date" name="court_date" value={formData.court_date} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2" />
           </div>
 
           <div className="border border-gray-300 p-4 rounded-lg">
             <label className="block font-medium mb-2">Upload Documents</label>
-            <input
-              type="file"
-              multiple
-              onChange={handleFileChange}
-              className="hidden"
-              id="file-upload"
-            />
-            <label
-              htmlFor="file-upload"
-              className="border border-dashed border-gray-400 p-4 rounded-md text-center text-sm text-gray-600 cursor-pointer"
-            >
+            <input type="file" multiple onChange={handleFileChange} className="hidden" id="file-upload" />
+            <label htmlFor="file-upload" className="border border-dashed border-gray-400 p-4 rounded-md text-center text-sm text-gray-600 cursor-pointer">
               Choose file
             </label>
             {uploadedFiles.length > 0 && (
@@ -270,11 +215,7 @@ export default function NewCasePage() {
             )}
           </div>
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition"
-          >
+          <button type="submit" disabled={submitting} className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition">
             {submitting ? 'Submitting...' : 'Save & Submit to Active Cases'}
           </button>
           {successMessage && <p className="text-green-600 mt-4">{successMessage}</p>}
