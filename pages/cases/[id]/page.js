@@ -10,15 +10,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-export default function CasePage() {
-  return (
-    <div>
-      <h1>Case Page</h1>
-      <p>This is a placeholder page for case details.</p>
-    </div>
-  );
-}
-
 export default function CaseDetailPage() {
   const router = useRouter();
   const { id } = router.query;
