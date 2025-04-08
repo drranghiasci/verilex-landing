@@ -1,39 +1,36 @@
-'use client';
-
-import React from 'react';
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+// app/active-cases/[id]/page.tsx
 import Link from 'next/link';
+import React from 'react';
 
-export default function CaseDetailsPage({ params }: { params: { id: string } }) {
-  const [caseData, setCaseData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
-  useEffect(() => {
-    const fetchCase = async () => {
-      const { data, error } = await supabase
-        .from('cases')
-        .select('*')
-        .eq('id', params.id)
-        .single();
+export function createClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  return createSupabaseClient(supabaseUrl, supabaseKey);
+}
 
-      if (error) {
-        console.error('Error fetching case:', error);
-      } else {
-        setCaseData(data);
-      }
-      setLoading(false);
-    };
+interface PageProps {
+  params: {
+    id: string;
+  };
+}
 
-    fetchCase();
-  }, [params.id]);
+export default async function CaseDetailsPage({ params }: PageProps) {
+  const supabase = createClient();
 
-  if (loading) {
-    return <p className="p-8 text-center text-gray-600">Loading case details...</p>;
-  }
+  const { data: caseData, error } = await supabase
+    .from('cases')
+    .select('*')
+    .eq('id', params.id)
+    .single();
 
-  if (!caseData) {
-    return <p className="p-8 text-center text-red-600">Case not found.</p>;
+  if (error || !caseData) {
+    return (
+      <div className="min-h-screen p-8 text-center text-red-600">
+        Error loading case details or case not found.
+      </div>
+    );
   }
 
   return (
