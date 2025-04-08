@@ -1,9 +1,10 @@
-import React from 'react';
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+'use client';
 
-export default function ProtectedLayout({ children }) {
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
+
+export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
