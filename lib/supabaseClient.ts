@@ -1,11 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+// lib/supabaseClient.ts
+import { createClient } from '@supabase/supabase-js'
 
-export const createServerClient = () =>
-  createServerComponentClient({ cookies });
-
-const supabaseUrl = 'https://nlyuskhbjpeiebtfmbcb.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5seXVza2hianBlaWVidGZtYmNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMzNzYyNjcsImV4cCI6MjA1ODk1MjI2N30.-88rXdVH4wq642DtUlwV8PUGjPjUCOy3mXhCORRM8bw';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
