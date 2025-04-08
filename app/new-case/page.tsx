@@ -1,42 +1,30 @@
 'use client';
 
+import React from 'react';
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
 import Image from 'next/image';
 import Link from 'next/link';
-import ErrorBoundary from '../components/ErrorBoundary';
-import { COUNTY_MAP } from '../utils/countyMap';
-import { useRouter } from 'next/router';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { COUNTY_MAP } from '@/utils/countyMap';
 
 const US_STATES = [
-  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware",
-  "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky",
-  "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi",
-  "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico",
-  "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania",
-  "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont",
-  "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
+  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware',
+  'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky',
+  'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi',
+  'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico',
+  'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania',
+  'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont',
+  'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'
 ];
 
-export default function NewCasePage() {
+export default function Page() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    client_name: '',
-    client_email: '',
-    phone_number: '',
-    state: '',
-    county: '',
-    case_type: '',
-    preferred_contact: '',
-    description: '',
-    court_date: '',
-    status: 'open',
-    is_starred: false
+    client_name: '', client_email: '', phone_number: '', state: '', county: '',
+    case_type: '', preferred_contact: '', description: '', court_date: '',
+    status: 'open', is_starred: false
   });
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
@@ -135,10 +123,8 @@ export default function NewCasePage() {
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-4 pt-24 max-w-full mx-auto">
-        <Link href="/dashboard">
-          <span className="inline-flex items-center text-sm text-blue-600 hover:underline mb-4">
-            ← Back to Dashboard
-          </span>
+        <Link href="/dashboard" className="inline-flex items-center text-sm text-blue-600 hover:underline mb-4">
+          ← Back to Dashboard
         </Link>
 
         <h1 className="text-4xl font-extrabold mb-6">Client Intake</h1>
@@ -193,7 +179,7 @@ export default function NewCasePage() {
           </div>
           <div>
             <label className="block font-medium mb-1">Brief Case Description</label>
-            <textarea name="description" value={formData.description} onChange={handleChange} rows="4" className="w-full border border-gray-300 rounded-md px-4 py-2" />
+            <textarea name="description" value={formData.description} onChange={handleChange} rows={4} className="w-full border border-gray-300 rounded-md px-4 py-2" />
           </div>
           <div>
             <label className="block font-medium mb-1">Court Date</label>
