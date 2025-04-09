@@ -18,7 +18,7 @@ export default function Page() {
       const { data, error } = await supabase.auth.getUser();
       if (data?.user) {
         setUser(data.user);
-        setEmail(data.user.email);
+        setEmail(data.user.email || ''); // Ensure email is a string
       } else {
         router.push('/login');
       }
