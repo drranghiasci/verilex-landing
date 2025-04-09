@@ -12,7 +12,7 @@ const supabase = createClient(
 );
 
 export default function ActiveCasesPage() {
-  const [cases, setCases] = useState([]);
+  const [cases, setCases] = useState<any[]>([]);
   const [sortOption, setSortOption] = useState('recent');
   const router = useRouter();
 
