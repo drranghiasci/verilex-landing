@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
 import Image from 'next/image';
+import { User } from '@supabase/supabase-js';
 
 export default function Page() {
   const [user, setUser] = useState<User | null>(null);
