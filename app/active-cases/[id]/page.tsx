@@ -10,24 +10,26 @@ import React from 'react';
 export const dynamic = 'force-dynamic';
 
 type Props = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const resolvedParams = await params;
   return {
-    title: `Case #${params.id} | VeriLex AI`,
+    title: `Case #${resolvedParams.id} | VeriLex AI`,
   };
 }
 
 export default async function Page({ params }: Props) {
-  const supabase = createServerClient<Database>();
+  const resolvedParams = await params;
+  const supabase = createServerClient();
 
   const { data: caseData, error } = await supabase
     .from('cases')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', resolvedParams.id)
     .single();
 
   if (error || !caseData) {
