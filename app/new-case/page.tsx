@@ -27,7 +27,7 @@ export default function Page() {
     case_type: '', preferred_contact: '', description: '', court_date: '',
     status: 'open', is_starred: false
   });
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]); // Explicitly type as File[]
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
