@@ -3,16 +3,26 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createServerClient } from '@/lib/supabaseServerClient';
-import { Database } from '@/types/supabase'; // Make sure this exists
-import React = require('react');
-interface CaseDetailsPageProps {
+import { Database } from '@/types/supabase';
+import { Metadata } from 'next';
+import React from 'react';
+
+export const dynamic = 'force-dynamic';
+
+type Props = {
   params: {
     id: string;
   };
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  return {
+    title: `Case #${params.id} | VeriLex AI`,
+  };
 }
 
-export default async function CaseDetailsPage({ params }: CaseDetailsPageProps) {
-  const supabase = createServerClient();
+export default async function Page({ params }: Props) {
+  const supabase = createServerClient<Database>();
 
   const { data: caseData, error } = await supabase
     .from('cases')
@@ -21,7 +31,7 @@ export default async function CaseDetailsPage({ params }: CaseDetailsPageProps) 
     .single();
 
   if (error || !caseData) {
-    notFound(); // this will trigger the 404 page
+    notFound();
   }
 
   return (
