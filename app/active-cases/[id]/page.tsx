@@ -28,6 +28,20 @@ const getEnv = (key: string) => {
   return val;
 };
 
+// Define the type for caseData based on your Supabase schema
+type CaseData = {
+  client_name: string;
+  client_email: string;
+  phone_number?: string;
+  state: string;
+  county: string;
+  case_type: string;
+  preferred_contact: string;
+  status?: string;
+  court_date?: string;
+  description: string;
+};
+
 export default async function Page({ params }: Props) {
   const resolvedParams = await params;
 
@@ -46,8 +60,12 @@ export default async function Page({ params }: Props) {
     notFound();
   }
 
+  // Explicitly type caseData to avoid type inference issues
+  const typedCaseData: CaseData = caseData;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 px-6 pt-24 max-w-4xl mx-auto">
+      {/* Use typedCaseData instead of caseData */}
       <Link
         href="/dashboard/active-cases"
         className="text-sm text-blue-600 hover:underline mb-6 inline-block"
@@ -57,32 +75,32 @@ export default async function Page({ params }: Props) {
 
       <h1 className="text-3xl font-bold mb-2">Case Details</h1>
       <p className="text-gray-600 mb-8">
-        Client: <strong>{caseData.client_name}</strong>
+        Client: <strong>{typedCaseData.client_name}</strong>
       </p>
 
       <div className="bg-white border border-gray-200 rounded-xl shadow p-6 space-y-4">
         <div>
           <h2 className="font-semibold text-lg">Client Info</h2>
-          <p><strong>Email:</strong> {caseData.client_email}</p>
-          <p><strong>Phone:</strong> {caseData.phone_number || '—'}</p>
+          <p><strong>Email:</strong> {typedCaseData.client_email}</p>
+          <p><strong>Phone:</strong> {typedCaseData.phone_number || '—'}</p>
         </div>
 
         <div>
           <h2 className="font-semibold text-lg">Case Info</h2>
-          <p><strong>State:</strong> {caseData.state}</p>
-          <p><strong>County:</strong> {caseData.county}</p>
-          <p><strong>Case Type:</strong> {caseData.case_type}</p>
-          <p><strong>Preferred Contact:</strong> {caseData.preferred_contact}</p>
-          <p><strong>Status:</strong> {caseData.status || 'open'}</p>
-          {caseData.court_date && (
-            <p><strong>Court Date:</strong> {new Date(caseData.court_date).toLocaleDateString()}</p>
+          <p><strong>State:</strong> {typedCaseData.state}</p>
+          <p><strong>County:</strong> {typedCaseData.county}</p>
+          <p><strong>Case Type:</strong> {typedCaseData.case_type}</p>
+          <p><strong>Preferred Contact:</strong> {typedCaseData.preferred_contact}</p>
+          <p><strong>Status:</strong> {typedCaseData.status || 'open'}</p>
+          {typedCaseData.court_date && (
+            <p><strong>Court Date:</strong> {new Date(typedCaseData.court_date).toLocaleDateString()}</p>
           )}
         </div>
 
         <div>
           <h2 className="font-semibold text-lg">Description</h2>
           <p className="whitespace-pre-wrap text-gray-700">
-            {caseData.description}
+            {typedCaseData.description}
           </p>
         </div>
       </div>
