@@ -12,7 +12,7 @@ const supabase = createClient(
 );
 
 export default function ActiveCasesPage() {
-  const [cases, setCases] = useState<any[]>([]);
+  const [cases, setCases] = useState<{ [key: string]: any }[] | null>([]);
   const [sortOption, setSortOption] = useState('recent');
   const router = useRouter();
 
@@ -28,7 +28,11 @@ export default function ActiveCasesPage() {
       if (error) {
         console.error('Error fetching cases:', error.message);
       } else {
-        setCases(data);
+        if (data) {
+          setCases(data);
+        } else {
+          setCases(null);
+        }
       }
     };
     fetchCases();
@@ -58,11 +62,11 @@ export default function ActiveCasesPage() {
           </select>
         </div>
 
-        {cases.length === 0 ? (
+        {cases && cases.length === 0 ? (
           <p className="text-gray-600">No active cases found.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-16">
-            {cases.map((caseItem) => {
+            {cases?.map((caseItem) => {
               const clientName: string = caseItem.client_name ?? '';
               const clientEmail: string = caseItem.client_email ?? '';
               const caseType: string = caseItem.case_type ?? '';

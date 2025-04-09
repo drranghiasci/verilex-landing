@@ -8,7 +8,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 export default function Page() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
