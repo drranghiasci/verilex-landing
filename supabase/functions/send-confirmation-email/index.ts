@@ -1,9 +1,9 @@
 // supabase/functions/send-confirmation-email/index.ts
 
 import { createServer } from "http";
-import { Resend } from "npm:resend";
+import { Resend } from "resend"; // Updated import statement
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const resend = new Resend(process.env.RESEND_API_KEY); // Use process.env for Node.js
 
 const server = createServer(async (req, res) => {
   if (req.method === "POST") {
