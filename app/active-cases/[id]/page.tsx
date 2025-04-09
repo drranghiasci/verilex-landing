@@ -1,18 +1,17 @@
 // app/active-cases/[id]/page.tsx
 
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { createServerClient } from '@/lib/supabaseServerClient';
-import { Database } from '@/types/supabase'; // Adjust if needed
+import { Database } from '@/types/supabase'; // Make sure this exists
 import React = require('react');
-
-interface PageProps {
+interface CaseDetailsPageProps {
   params: {
     id: string;
   };
 }
 
-export default async function CaseDetailsPage({ params }: PageProps) {
+export default async function CaseDetailsPage({ params }: CaseDetailsPageProps) {
   const supabase = createServerClient();
 
   const { data: caseData, error } = await supabase
@@ -22,7 +21,7 @@ export default async function CaseDetailsPage({ params }: PageProps) {
     .single();
 
   if (error || !caseData) {
-    return notFound();
+    notFound(); // this will trigger the 404 page
   }
 
   return (
@@ -52,15 +51,9 @@ export default async function CaseDetailsPage({ params }: PageProps) {
           <p><strong>County:</strong> {caseData.county}</p>
           <p><strong>Case Type:</strong> {caseData.case_type}</p>
           <p><strong>Preferred Contact:</strong> {caseData.preferred_contact}</p>
-          <p>
-            <strong>Status:</strong>{' '}
-            <span className="capitalize">{caseData.status || 'open'}</span>
-          </p>
+          <p><strong>Status:</strong> {caseData.status || 'open'}</p>
           {caseData.court_date && (
-            <p>
-              <strong>Court Date:</strong>{' '}
-              {new Date(caseData.court_date).toLocaleDateString()}
-            </p>
+            <p><strong>Court Date:</strong> {new Date(caseData.court_date).toLocaleDateString()}</p>
           )}
         </div>
 
