@@ -15,6 +15,7 @@ export default function RegisterPage() {
     confirmPassword: '',
   });
 
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -26,6 +27,11 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!agreedToTerms) {
+      setError('You must agree to the Terms of Use.');
+      return;
+    }
 
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match.');
@@ -59,7 +65,7 @@ export default function RegisterPage() {
         <h1 className="text-2xl font-bold text-gray-900">Register for VeriLex AI</h1>
         <p className="text-sm text-gray-700">Create your firm’s account to access the legal assistant dashboard.</p>
 
-        <form onSubmit={handleRegister} className="space-y-4">
+        <form onSubmit={handleRegister} className="space-y-4 text-gray-900">
           <div>
             <label className="block text-sm font-medium text-gray-800">Full Name</label>
             <input
@@ -68,7 +74,7 @@ export default function RegisterPage() {
               value={form.fullName}
               onChange={handleChange}
               required
-              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-black focus:outline-none text-gray-900"
             />
           </div>
 
@@ -80,7 +86,7 @@ export default function RegisterPage() {
               value={form.firmName}
               onChange={handleChange}
               required
-              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-black focus:outline-none text-gray-900"
             />
           </div>
 
@@ -92,7 +98,7 @@ export default function RegisterPage() {
               value={form.email}
               onChange={handleChange}
               required
-              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-black focus:outline-none text-gray-900"
             />
           </div>
 
@@ -104,7 +110,7 @@ export default function RegisterPage() {
               value={form.password}
               onChange={handleChange}
               required
-              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-black focus:outline-none text-gray-900"
             />
           </div>
 
@@ -116,8 +122,25 @@ export default function RegisterPage() {
               value={form.confirmPassword}
               onChange={handleChange}
               required
-              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-black focus:outline-none text-gray-900"
             />
+          </div>
+
+          <div className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              id="terms"
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              className="mt-1"
+              required
+            />
+            <label htmlFor="terms" className="text-sm text-gray-700">
+              I agree to the{' '}
+              <Link href="/terms" target="_blank" className="underline text-blue-600 hover:text-blue-800">
+                Terms of Use
+              </Link>
+            </label>
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
@@ -125,7 +148,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+            className="w-full bg-black text-white py-2 rounded-md hover:opacity-90 transition"
           >
             {loading ? 'Creating account...' : 'Register'}
           </button>
@@ -133,7 +156,7 @@ export default function RegisterPage() {
 
         <p className="text-sm text-gray-600 text-center">
           Already have an account?{' '}
-          <Link href="/login" className="text-blue-600 hover:underline">
+          <Link href="/login" className="text-black hover:underline font-medium">
             Login
           </Link>
         </p>

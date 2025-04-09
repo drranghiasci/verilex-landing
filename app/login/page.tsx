@@ -39,9 +39,9 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white shadow-xl rounded-xl p-8 space-y-6">
         <h1 className="text-2xl font-bold text-gray-900">Log in to VeriLex AI</h1>
-        <p className="text-sm text-gray-700">Welcome back — secure login for attorneys and staff.</p>
+        <p className="text-sm text-gray-700">Secure login for attorneys and legal teams.</p>
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4 text-gray-900">
           <div>
             <label className="block text-sm font-medium text-gray-800">Email</label>
             <input
@@ -50,7 +50,7 @@ export default function LoginPage() {
               value={form.email}
               onChange={handleChange}
               required
-              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-black focus:outline-none text-gray-900"
             />
           </div>
 
@@ -62,7 +62,7 @@ export default function LoginPage() {
               value={form.password}
               onChange={handleChange}
               required
-              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-black focus:outline-none text-gray-900"
             />
           </div>
 
@@ -71,7 +71,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+            className="w-full bg-black text-white py-2 rounded-md hover:opacity-90 transition"
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>
@@ -80,13 +80,11 @@ export default function LoginPage() {
         <div className="text-sm text-gray-600 text-center space-y-1">
           <p>
             Forgot your password?{' '}
-            <span className="text-blue-600 cursor-pointer hover:underline">
-              (Coming Soon)
-            </span>
+            <span className="text-gray-800 font-medium cursor-not-allowed">(Coming Soon)</span>
           </p>
           <p>
-            Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-blue-600 hover:underline">
+            Don’t have an account?{' '}
+            <Link href="/register" className="text-black font-medium hover:underline">
               Register
             </Link>
           </p>
