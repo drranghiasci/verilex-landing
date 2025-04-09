@@ -49,7 +49,7 @@ export default function Page() {
   };
 
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files) as File[]; // Explicitly cast to File[]
     setUploadedFiles((prev) => [...prev, ...files]);
   };
 
