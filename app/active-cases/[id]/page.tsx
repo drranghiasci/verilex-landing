@@ -22,15 +22,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+const getEnv = (key: string) => {
+  const val = process.env[key];
+  if (!val) throw new Error(`Missing env var: ${key}`);
+  return val;
+};
+
 export default async function Page({ params }: Props) {
   const resolvedParams = await params;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase environment variables');
-  }
+  const supabaseUrl = getEnv('NEXT_PUBLIC_SUPABASE_URL') as string;
+  const supabaseAnonKey = getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY') as string;
 
   const supabase = createServerClient();
 
