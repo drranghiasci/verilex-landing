@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 
+// Initialize Supabase client
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
 export default function ActiveCasesPage() {
@@ -24,7 +25,11 @@ export default function ActiveCasesPage() {
         query = query.order('client_name', { ascending: true });
       }
       const { data, error } = await query;
-      if (!error) setCases(data);
+      if (error) {
+        console.error('Error fetching cases:', error.message);
+      } else {
+        setCases(data);
+      }
     };
     fetchCases();
   }, [sortOption]);
@@ -58,13 +63,13 @@ export default function ActiveCasesPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-16">
             {cases.map((caseItem) => {
-              const clientName: string = caseItem.client_name ?? "";
-              const clientEmail: string = caseItem.client_email ?? "";
-              const caseType: string = caseItem.case_type ?? "";
-              const state: string = caseItem.state ?? "";
-              const preferredContact: string = caseItem.preferred_contact ?? "";
-              const location: string = caseItem.location ?? "";
-              const description: string = caseItem.description ?? "";
+              const clientName: string = caseItem.client_name ?? '';
+              const clientEmail: string = caseItem.client_email ?? '';
+              const caseType: string = caseItem.case_type ?? '';
+              const state: string = caseItem.state ?? '';
+              const preferredContact: string = caseItem.preferred_contact ?? '';
+              const location: string = caseItem.location ?? '';
+              const description: string = caseItem.description ?? '';
 
               return (
                 <div
