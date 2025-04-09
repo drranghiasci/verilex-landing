@@ -8,6 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { COUNTY_MAP } from '@/utils/countyMap';
+import type { User } from '@supabase/supabase-js'; // Import the User type
 
 const US_STATES = [
   'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware',
@@ -30,7 +31,7 @@ export default function Page() {
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null); // Update the type to User | null
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
