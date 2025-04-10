@@ -1,19 +1,22 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
-export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data?.session) router.push('/login');
-    };
-    checkSession();
-  }, [router]);
-
-  return <>{children}</>;
+    (async () => {
+      const { data, error } = await supabase.auth.getSession();
+      console.log("Dashboard Layout Session:", data?.session);
+      if (error) {
+        console.log("Session error:", error.message);
+      }
+    })();
+  }, []);
+  
+  return (
+    <div>
+      {children}
+    </div>
+  );
 }

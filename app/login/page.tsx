@@ -21,10 +21,14 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
+    console.log("Attempting login for:", form.email);
+    
     const { error: loginError } = await supabase.auth.signInWithPassword({
       email: form.email,
       password: form.password,
     });
+
+    console.log("Login result for", form.email, ":", loginError ? loginError.message : "Success");
 
     if (loginError) {
       setError('Invalid email or password.');
