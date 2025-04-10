@@ -12,9 +12,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data /*, error */ }) => {
-      // Removed redirect to login on error or missing session
-      setSession(data?.session ?? null);
+    supabase.auth.getSession().then(({ data, error }) => {
+      console.log('Layout session check: data=', data, 'error=', error);
+      if (!data?.session) {
+        router.push('/login');
+      } else {
+        setSession(data.session);
+      }
       setLoading(false);
     });
   }, [router]);
