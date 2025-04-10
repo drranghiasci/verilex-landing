@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
 import QuickAccessSidebar from '@/components/dashboard/QuickAccessSidebar'; // or wherever yours is
@@ -9,6 +9,7 @@ import '@/styles/globals.css'; // Ensure dark mode classes are in your CSS
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
@@ -17,13 +18,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Check Supabase auth session on mount
     supabase.auth.getSession().then(({ data, error }) => {
       if (error || !data?.session) {
-        router.push('/login');
+        if (pathname !== '/login') {
+          router.push('/login');
+        }
       } else {
         setSession(data.session);
       }
       setLoading(false);
     });
-  }, [router]);
+  }, [router, pathname]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -39,7 +42,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   if (!session) {
-    // If there's no session, user is redirected to /login above
+    // When on /login, don't render the secure layout
     return null;
   }
 
