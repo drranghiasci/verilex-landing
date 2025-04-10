@@ -9,6 +9,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data, error }) => {
@@ -22,20 +23,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [router]);
 
   if (loading) {
-    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Checking session...
+      </div>
+    );
   }
 
   if (!session) {
-    return null; // redirected to /login
+    // no session, already redirecting
+    return null;
   }
 
+  // Now just your side nav, maybe a top nav if you want
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 text-gray-900 relative">
-      {/* Left Sidebar */}
-      <QuickAccessSidebar />
+    <div className={darkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}>
+      {/* If you do want a top nav, place it here. Otherwise remove */}
+      {/* <header>
+        <button onClick={() => setDarkMode(!darkMode)}>Toggle Dark Mode</button>
+      </header> */}
 
-      {/* Main content with sidebar offset */}
-      <main className="ml-16 md:ml-64 p-6">{children}</main>
+      <div className="min-h-screen flex">
+        <QuickAccessSidebar />
+        <main className="ml-16 md:ml-64 p-4 md:p-8 flex-1">{children}</main>
+      </div>
     </div>
   );
 }
