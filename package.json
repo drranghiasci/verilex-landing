@@ -9,16 +9,20 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
     "@vercel/analytics": "^1.5.0",
+    "@vercel/speed-insights": "^1.2.0",
     "canvas-confetti": "^1.9.3",
+    "clsx": "^2.1.1",
     "framer-motion": "^12.6.3",
     "lucide-react": "^0.487.0",
     "next": "15.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-tooltip": "^5.28.1",
     "resend": "^4.2.0"
   },
   "devDependencies": {
