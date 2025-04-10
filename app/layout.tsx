@@ -1,5 +1,5 @@
 // app/layout.tsx
-import './globals.css';
+import '@/styles/globals.css';
 export const metadata = { title: "Default Title", description: "Default description" };
 
 export default function RootLayout({
