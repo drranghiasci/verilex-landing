@@ -1,7 +1,7 @@
 // app/layout.tsx (Global Minimal)
 'use client';
 
-import '@styles/globals.css'; // correct path to your CSS
+import '@styles/globals.css';
 import React from 'react';
 
 export default function RootLayout({
