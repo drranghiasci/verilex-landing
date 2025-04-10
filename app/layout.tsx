@@ -3,6 +3,7 @@
 
 import '@styles/globals.css';
 import React from 'react';
+import { supabase } from '@/lib/supabaseClient';
 
 console.log('Root layout rendering: no session check here!');
 export default function RootLayout({
