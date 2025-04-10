@@ -12,12 +12,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data, error }) => {
-      if (error || !data?.session) {
-        router.push('/login');
-      } else {
-        setSession(data.session);
-      }
+    supabase.auth.getSession().then(({ data /*, error */ }) => {
+      // Removed redirect to login on error or missing session
+      setSession(data?.session ?? null);
       setLoading(false);
     });
   }, [router]);
@@ -30,12 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  if (!session) {
-    // no session, already redirecting
-    return null;
-  }
-
-  // Now just your side nav, maybe a top nav if you want
+  // Removed check of !session to render children regardless of auth state
   return (
     <div className={darkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}>
       {/* If you do want a top nav, place it here. Otherwise remove */}
