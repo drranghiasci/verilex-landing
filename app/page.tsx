@@ -1,3 +1,12 @@
+// Project: verilex-ai
+// Created by: [Your Name]
+// Date: 2023-10-01
+// Description: This is the main landing page for the VeriLex AI application. It includes a countdown timer, waitlist form, and various sections explaining the product features and roadmap.
+//
+// Note: This code is a simplified version and may not include all necessary imports or configurations.
+// Note: Ensure to replace the placeholder text and links with actual content and URLs as needed..
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import WaitlistForm from '../components/WaitlistForm';
