@@ -9,35 +9,39 @@ import BillingOverview from '@/components/dashboard/BillingOverview';
 
 export default function DashboardPage() {
   return (
-    <div className="p-6 min-h-screen">
+    <div className="min-h-screen px-6 py-6">
       {/* 
-        A single grid with 6 modules, each in its own card. 
-        On md+ screens, we have 3 columns, so 2 rows total. 
+        3 rows × 2 columns on md+ screens 
+        For smaller screens, it’s 1 column stacked 
       */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* 1st Row of Modules */}
-        <div className="bg-white shadow rounded-xl p-4 flex flex-col justify-center">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Row 1, Col 1 */}
+        <div className="bg-white shadow rounded-xl p-6">
           <TodaySnapshot />
         </div>
 
-        <div className="bg-white shadow rounded-xl p-4 flex flex-col justify-center">
+        {/* Row 1, Col 2 */}
+        <div className="bg-white shadow rounded-xl p-6">
           <TaskEngine />
         </div>
 
-        <div className="bg-white shadow rounded-xl p-4 flex flex-col justify-center">
+        {/* Row 2, Col 1 */}
+        <div className="bg-white shadow rounded-xl p-6">
           <ClientPortalNotifications />
         </div>
 
-        {/* 2nd Row of Modules */}
-        <div className="bg-white shadow rounded-xl p-4 flex flex-col justify-center">
+        {/* Row 2, Col 2 */}
+        <div className="bg-white shadow rounded-xl p-6">
           <SmartCaseFeed />
         </div>
 
-        <div className="bg-white shadow rounded-xl p-4 flex flex-col justify-center">
+        {/* Row 3, Col 1 */}
+        <div className="bg-white shadow rounded-xl p-6">
           <ProToolcards />
         </div>
 
-        <div className="bg-white shadow rounded-xl p-4 flex flex-col justify-center">
+        {/* Row 3, Col 2 */}
+        <div className="bg-white shadow rounded-xl p-6">
           <BillingOverview />
         </div>
       </div>
