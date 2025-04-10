@@ -1,4 +1,5 @@
 // app/layout.tsx (Global Minimal)
+console.log('Root layout rendering: no session check here!');
 'use client';
 
 import '@styles/globals.css';
