@@ -19,11 +19,10 @@
       }
     ],
     "strictNullChecks": true,
-
-    // 👇 Add these two lines:
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@styles/*": ["styles/*"]
     }
   },
   "include": [
