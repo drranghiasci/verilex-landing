@@ -1,12 +1,10 @@
-// app/layout.tsx
-import '@/styles/globals.css';
-export const metadata = { title: "Default Title", description: "Default description" };
+// app/layout.tsx (Global Minimal)
+'use client';
 
-export default function RootLayout({
-  children
-}: {
-  children: React.ReactNode;
-}) {
+import '@/styles/globals.css'; // correct path to your CSS
+import React from 'react';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>{children}</body>
