@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
+  const supabase = createClientComponentClient();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,7 +31,6 @@ export default function LoginPage() {
     console.log('Sign-In Data:', data);
     console.log('Sign-In Error:', error);
     
-
     console.log("Login result for", form.email, ":", error ? error.message : "Success");
 
     if (error) {
