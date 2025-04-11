@@ -2,26 +2,45 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import QuickAccessSidebar from '@/components/dashboard/QuickAccessSidebar';
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
+  const supabase = createClientComponentClient();
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
+    // Fetch the session from Supabase
     supabase.auth.getSession().then(({ data, error }) => {
-      console.log('Layout session check: data=', data, 'error=', error);
+      if (!isMounted) return;
+
+      if (error) {
+        console.error('Supabase session error:', error);
+      }
+
       if (!data?.session) {
+        // If no session, redirect to the login page
         router.push('/login');
       } else {
+        // If a session exists, store it locally
         setSession(data.session);
       }
       setLoading(false);
     });
-  }, [router]);
+
+    // Cleanup to prevent state updates on unmounted component
+    return () => {
+      isMounted = false;
+    };
+  }, [router, supabase]);
 
   if (loading) {
     return (
@@ -31,18 +50,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  // Removed check of !session to render children regardless of auth state
-  return (
-    <div className={darkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}>
-      {/* If you do want a top nav, place it here. Otherwise remove */}
-      {/* <header>
-        <button onClick={() => setDarkMode(!darkMode)}>Toggle Dark Mode</button>
-      </header> */}
+  // If session is missing, we've already redirected. 
+  // But in case the redirect was slow:
+  if (!session) return null;
 
-      <div className="min-h-screen flex">
-        <QuickAccessSidebar />
-        <main className="p-4 md:p-8 flex-1">{children}</main>
-      </div>
+  return (
+    <div className="bg-gray-50 text-gray-900 min-h-screen flex">
+      <QuickAccessSidebar />
+      <main className="p-4 md:p-8 flex-1">{children}</main>
     </div>
   );
 }
