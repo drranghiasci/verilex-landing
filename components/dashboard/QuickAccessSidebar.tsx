@@ -21,8 +21,8 @@ type MenuItem = {
 
 const menuItems: MenuItem[] = [
   {
-    name: 'New Cases',
-    href: '/new-cases',
+    name: 'New Case',
+    href: '/new-case',
     icon: <FolderPlusIcon className="h-5 w-5" />,
     available: true,
   },

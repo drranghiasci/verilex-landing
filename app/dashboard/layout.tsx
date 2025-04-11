@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import QuickAccessSidebar from '@/components/dashboard/QuickAccessSidebar';
+import TopMenu from '@/components/dashboard/TopMenu';
 
 export default function DashboardLayout({
   children,
@@ -50,14 +51,17 @@ export default function DashboardLayout({
     );
   }
 
-  // If session is missing, we've already redirected. 
-  // But in case the redirect was slow:
   if (!session) return null;
 
   return (
+    <div className="min-h-screen bg-gray-50 text-gray-900 relative">
+    {/* Top Menu (with Lexi search and avatar) */}
+    <TopMenu />
+    
     <div className="bg-gray-50 text-gray-900 min-h-screen flex">
       <QuickAccessSidebar />
       <main className="p-4 md:p-8 flex-1">{children}</main>
+    </div>
     </div>
   );
 }
