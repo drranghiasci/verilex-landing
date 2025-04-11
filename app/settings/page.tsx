@@ -3,29 +3,28 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
-import type { User } from '@supabase/supabase-js';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default function Page() {
-  const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
+  const supabase = createClientComponentClient();
+  const [user, setUser] = useState<{ email?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
-  const router = useRouter();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (data?.user) {
-        setUser(data.user);
-        setEmail(data.user.email || ''); // Ensure email is a string
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (data?.session) {
+        const user = data.session.user;
+        setUser(user);
+        setEmail(user.email || ''); // Ensure email is a string
       } else {
         router.push('/login');
       }
       setLoading(false);
-    };
-    fetchUser();
-  }, [router]);
+    });
+  }, [router, supabase]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
