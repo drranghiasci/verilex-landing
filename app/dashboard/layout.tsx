@@ -41,7 +41,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <div className="min-h-screen flex">
         <QuickAccessSidebar />
-        <main className="ml-16 md:ml-64 p-4 md:p-8 flex-1">{children}</main>
+        <main className="p-4 md:p-8 flex-1">{children}</main>
       </div>
     </div>
   );
