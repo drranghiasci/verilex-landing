@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import QuickAccessSidebar from '@/components/dashboard/QuickAccessSidebar';
-import TopMenu from '@/components/dashboard/TopMenu';
+import TopMenu from '@/components/dashboard/topmenu';
 
 export default function DashboardLayout({
   children,
