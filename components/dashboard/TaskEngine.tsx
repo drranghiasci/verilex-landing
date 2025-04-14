@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
-import AddTaskModal from './AddTaskModal';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import AddTaskModal from '@/components/dashboard/AddTaskModal';
 
 export default function TaskEngine() {
+  const supabase = createClientComponentClient();
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);

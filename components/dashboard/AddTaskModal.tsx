@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default function AddTaskModal({
   onClose,
@@ -10,6 +10,7 @@ export default function AddTaskModal({
   onClose: () => void;
   onTaskCreated: () => void;
 }) {
+  const supabase = createClientComponentClient();
   const [title, setTitle] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [error, setError] = useState('');
