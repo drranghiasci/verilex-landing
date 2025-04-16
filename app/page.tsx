@@ -156,8 +156,14 @@ export default function Home() {
         {/* Main Content */}
         <main className="mx-auto max-w-4xl px-4 pt-32 text-center">
           {/* Hero */}
-          <section id="hero" className="mb-12" aria-label="Hero">
-            <h1 className="text-5xl font-extrabold tracking-tight md:text-7xl">Your AI‑Powered Legal Assistant</h1>
+          <section
+            id="hero"
+            className="flex flex-col items-center justify-center text-center min-h-screen"
+            aria-label="Hero"
+          >
+            <h1 className="text-5xl font-extrabold tracking-tight md:text-7xl">
+              Your AI‑Powered Legal Assistant
+            </h1>
             <p className="mt-6 text-lg md:text-xl text-gray-700">
               Automate research, summarize cases, manage intake, and review contracts — all in one secure platform.
             </p>
@@ -243,12 +249,22 @@ export default function Home() {
         </main>
 
         {/* Footer */}
-        <footer className="text-center text-sm text-gray-400 py-10 space-y-1">
-  <p>
-    VeriLex AI is not a law firm and does not provide legal advice.
-    All information is for informational purposes only.
+        {/* CONTACT SECTION ---------------------------------------------- */}
+<section className="mb-20 text-center">
+  <h2 className="text-3xl font-bold mb-6">Contact</h2>
+  <p className="text-gray-700">
+    Questions or partnership ideas? Reach us at&nbsp;
+    <a href="mailto:founder@verilex.us" className="text-blue-600 underline">
+      founder@verilex.us
+    </a>
   </p>
+</section>
 
+{/* FOOTER  ------------------------------------------------------- */}
+<footer className="py-10 text-center text-sm text-gray-400">
+  VeriLex AI is <span className="whitespace-nowrap">not a law firm</span> and does not provide legal advice.  
+  All information is for informational purposes only.  
+  <br />
   <Link
     href="/privacy"
     className="underline decoration-1 underline-offset-2 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
@@ -256,6 +272,8 @@ export default function Home() {
     Privacy&nbsp;Policy
   </Link>
 </footer>
+
+
 
       {/* --- Cookie / Privacy Banner --- */}
       <CookieBanner />
