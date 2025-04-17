@@ -37,20 +37,20 @@ function useCountdown(target: Date) {
 /* Static Roadmap Data                                                       */
 /* ------------------------------------------------------------------------- */
 const ROADMAP = [
-  { date: 'Apr 2025',     title: 'Waitlist Opens',           desc: 'Gather early‑adopter attorneys & gauge feature priorities.',               icon: '🔒' },
-  { date: 'Aug 2025',     title: 'Private Alpha',            desc: 'Research & summary engine available to internal testers.',                 icon: '🧪' },
-  { date: '1 Oct 2025',   title: 'Closed Beta',              desc: 'Invite‑only beta for 50 firms. Feedback loops & bug fixes.',               icon: '🚧' },
-  { date: 'Nov 2025',     title: 'Contract Analyzer Alpha',  desc: 'Risk‑clause detection and key‑term extraction.',                           icon: '📑' },
-  { date: 'Dec 2025',     title: 'Smart Assistant Preview',  desc: 'Natural‑language Q&A on statutes, rulings, and firm docs.',                icon: '🤖' },
-    { date: '1 Jan 2026',   title: 'Public Launch',            desc: 'Self‑serve onboarding, billing, and live support.',                        icon: '🚀' },
-    { date: 'Q1 2026',      title: 'Practice‑Area Expansion',  desc: 'Immigration, family, and business‑law playbooks.',                         icon: '🌐' },
+  { date: 'Apr 2025',   title: 'Waitlist Opens',          desc: 'Gather early‑adopter attorneys & gauge feature priorities.',         icon: '🔒' },
+  { date: 'Aug 2025',   title: 'Private Alpha',           desc: 'Research & summary engine available to internal testers.',            icon: '🧪' },
+  { date: '1 Oct 2025', title: 'Closed Beta',             desc: 'Invite‑only beta for 50 firms. Feedback loops & bug fixes.',          icon: '🚧' },
+  { date: 'Nov 2025',   title: 'Contract Analyzer Alpha', desc: 'Risk‑clause detection and key‑term extraction.',                     icon: '📑' },
+  { date: 'Dec 2025',   title: 'Smart Assistant Preview', desc: 'Natural‑language Q&A on statutes, rulings, and firm docs.',          icon: '🤖' },
+  { date: '1 Jan 2026', title: 'Public Launch',           desc: 'Self‑serve onboarding, billing, and live support.',                  icon: '🚀' },
+  { date: 'Q1 2026',    title: 'Practice‑Area Expansion', desc: 'Immigration, family, and business‑law playbooks.',                   icon: '🌐' },
 ] as const;
 
 /* ------------------------------------------------------------------------- */
 /* Page Component                                                            */
 /* ------------------------------------------------------------------------- */
 export default function Home() {
-  const launchDate = new Date('2026-01-01T05:00:00Z');          // 00:00 EST
+  const launchDate = new Date('2026-01-01T05:00:00Z'); // 00:00 EST
   const countdown  = useCountdown(launchDate);
 
   return (
@@ -67,8 +67,8 @@ export default function Home() {
           content="Legal AI Software, Legal AI, Legal task manager, AI Client intake, Law firm automation, VeriLex AI"
         />
         <link rel="canonical" href="https://verilex.ai/" />
-        <meta property="og:type"        content="website" />
-        <meta property="og:title"       content="VeriLex AI | AI‑Powered Legal Assistant" />
+        <meta property="og:type"  content="website" />
+        <meta property="og:title" content="VeriLex AI | AI‑Powered Legal Assistant" />
         <meta
           property="og:description"
           content="Automate legal research, summarize cases, and review contracts — built for solo attorneys and small firms."
@@ -109,7 +109,7 @@ export default function Home() {
         {/* ----------------------------------------------------------------- */}
         <header className="fixed inset-x-0 top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-200">
           <nav
-            className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3"
+            className="flex w-full items-center justify-between px-4 sm:px-6 py-3"
             aria-label="Main Navigation"
           >
             <Link
@@ -146,7 +146,6 @@ export default function Home() {
         {/* Main                                                              */}
         {/* ----------------------------------------------------------------- */}
         <main className="mx-auto max-w-4xl px-4 pt-28 text-center">
-
           {/* Hero */}
           <section id="hero" aria-label="Hero" className="flex flex-col items-center py-28">
             <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight">
