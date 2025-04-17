@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import WaitlistForm from '@/components/WaitlistForm';
+import WaitlistForm  from '@/components/WaitlistForm';
 import CookieBanner   from '@/components/CookieBanner';
 import { Analytics }  from '@vercel/analytics/react';
 
@@ -76,30 +76,6 @@ export default function Home() {
         <meta property="og:url"   content="https://verilex.ai/" />
         <meta property="og:image" content="https://verilex.ai/og-cover.png" />
         <meta name="twitter:card" content="summary_large_image" />
-
-        {/* JSON‑LD */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'SoftwareApplication',
-              name: 'VeriLex AI',
-              operatingSystem: 'Web',
-              applicationCategory: 'LegalService',
-              offers: {
-                '@type': 'Offer',
-                price: '0',
-                priceCurrency: 'USD',
-                availability: 'https://schema.org/PreOrder',
-              },
-              url:  'https://verilex.ai/',
-              logo: 'https://verilex.ai/verilex-logo-name.png',
-              description:
-                'AI‑powered legal assistant for research, summaries, contract analysis, and client intake.',
-            }),
-          }}
-        />
       </Head>
 
       {/* Shell */}
@@ -127,16 +103,24 @@ export default function Home() {
 
             <div className="flex items-center gap-6 text-sm font-medium">
               <Link
-                href="#waitlist"
+                href="/login"
                 className="hover:text-black transition focus-visible:ring-2 focus-visible:ring-indigo-600"
               >
-                Join Waitlist
+                Log In
               </Link>
+
               <Link
-                href="/dashboard"
-                className="text-blue-600 hover:text-blue-800 transition focus-visible:ring-2 focus-visible:ring-indigo-600"
+                href="#contact"
+                className="hover:text-black transition focus-visible:ring-2 focus-visible:ring-indigo-600"
               >
-                Beta Test Build
+                Contact
+              </Link>
+
+              <Link
+                href="/register"   /*  <-- routes to app/register/page.tsx  */
+                className="rounded border border-gray-900 px-4 py-1.5 hover:bg-gray-900 hover:text-white transition focus-visible:ring-2 focus-visible:ring-indigo-600"
+              >
+                Sign Up
               </Link>
             </div>
           </nav>
@@ -155,7 +139,7 @@ export default function Home() {
               Automate research, summarize cases, manage intake, and review contracts — all in one secure platform.
             </p>
 
-            {/* Security statement */}
+            {/* Security */}
             <div className="mt-4 flex items-center justify-center text-sm text-gray-500">
               <ShieldCheck className="mr-2 h-4 w-4" aria-hidden="true" />
               256‑bit encryption • SOC 2 Type II (in progress)
