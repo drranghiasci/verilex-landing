@@ -3,25 +3,28 @@
 import Head from 'next/head';
 import Link from 'next/link';
 
-export default function TermsPage() {
-  /* ──────────────────────────────────
-     Update this array only if you add,
-     remove, or rename sections. The
-     sidebar + IDs stay in sync.
-  ─────────────────────────────────── */
+export const metadata = {
+  title: 'Terms of Use | VeriLex AI',
+  description:
+    'Review the Terms of Use for VeriLex AI, the secure AI‑powered legal assistant platform.',
+  robots: { index: true, follow: true },
+};
+
+export default function TermsOfUse() {
+  const updated = 'April 17, 2025';
   const toc = [
-    { id: 'about',                title: '1. About VeriLex AI' },
-    { id: 'eligibility',          title: '2. Eligibility & Account Registration' },
-    { id: 'permitted-use',        title: '3. Permitted Use' },
-    { id: 'data',                 title: '4. Data & Confidentiality' },
-    { id: 'beta',                 title: '5. Beta Access & Waitlist' },
-    { id: 'ip',                   title: '6. Intellectual Property' },
-    { id: 'termination',          title: '7. Termination' },
-    { id: 'disclaimers',          title: '8. Disclaimers' },
-    { id: 'liability',            title: '9. Limitation of Liability' },
-    { id: 'changes',              title: '10. Changes to These Terms' },
-    { id: 'law',                  title: '11. Governing Law & Venue' },
-    { id: 'contact',              title: '12. Contact Us' },
+    { id: 'about',       title: '1. About VeriLex AI' },
+    { id: 'eligibility', title: '2. Eligibility & Account Registration' },
+    { id: 'use',         title: '3. Permitted Use' },
+    { id: 'data',        title: '4. Data & Confidentiality' },
+    { id: 'beta',        title: '5. Beta Access & Waitlist' },
+    { id: 'ip',          title: '6. Intellectual Property' },
+    { id: 'termination', title: '7. Termination' },
+    { id: 'disclaimers', title: '8. Disclaimers' },
+    { id: 'liability',   title: '9. Limitation of Liability' },
+    { id: 'changes',     title: '10. Changes to These Terms' },
+    { id: 'law',         title: '11. Governing Law & Venue' },
+    { id: 'contact',     title: '12. Contact' },
   ];
 
   return (
@@ -31,17 +34,14 @@ export default function TermsPage() {
       </Head>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        {/* Page heading */}
-        <header className="mb-10">
+        <header className="mb-10 text-center">
           <h1 className="text-4xl font-extrabold tracking-tight">Terms of Use</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Last updated: <time dateTime="2025-04-17">April&nbsp;17, 2025</time>
-          </p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Last updated: {updated}</p>
         </header>
 
-        {/* Content grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-10">
-          {/* ────── Sticky sidebar (desktop) ────── */}
+        {/* ─── centred two‑column grid ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(auto,1fr)] justify-center lg:gap-16 gap-10">
+          {/* Sidebar */}
           <nav className="hidden lg:block sticky top-24 self-start">
             <ul className="space-y-2 text-sm leading-6">
               {toc.map(({ id, title }) => (
@@ -57,8 +57,8 @@ export default function TermsPage() {
             </ul>
           </nav>
 
-          {/* ────── Main article ────── */}
-          <article className="space-y-12 text-base leading-relaxed lg:pr-8">
+          {/* Main article */}
+          <article className="space-y-12 text-base leading-relaxed lg:pr-8 lg:max-w-3xl lg:mx-auto">
             {/* 1. About */}
             <section id="about" className="scroll-mt-28">
               <h2 className="text-2xl font-semibold mb-4">1. About VeriLex AI</h2>

@@ -4,29 +4,27 @@ import Link from 'next/link';
 export const metadata = {
   title: 'Privacy Policy | VeriLex AI',
   description:
-    'Learn how VeriLex AI collects, uses, and protects your information in compliance with GDPR, CPRA, and legal‑industry standards.',
+    'Learn how VeriLex AI collects, uses, and protects your data in compliance with GDPR, CPRA, and legal‑industry standards.',
   robots: { index: true, follow: true },
 };
 
 export default function PrivacyPolicy() {
   const effectiveDate = 'April 16, 2025';
-
-  /* ——— Update TOC when adding/removing sections ——— */
   const toc = [
-    { id: 'intro',          title: '1. Introduction' },
-    { id: 'scope',          title: '2. Scope' },
-    { id: 'collect',        title: '3. Information We Collect' },
-    { id: 'cookies',        title: '4. Cookies & Tracking' },
-    { id: 'use',            title: '5. How We Use Your Data' },
-    { id: 'legal-bases',    title: '6. Legal Bases (GDPR)' },
-    { id: 'retention',      title: '7. Data Retention' },
-    { id: 'security',       title: '8. Security Measures' },
-    { id: 'rights',         title: '9. Your Rights' },
-    { id: 'third',          title: '10. Third‑Party Services' },
-    { id: 'transfers',      title: '11. International Transfers' },
-    { id: 'children',       title: '12. Children’s Privacy' },
-    { id: 'updates',        title: '13. Policy Updates' },
-    { id: 'contact',        title: '14. Contact' },
+    { id: 'intro',       title: '1. Introduction' },
+    { id: 'scope',       title: '2. Scope' },
+    { id: 'collect',     title: '3. Information We Collect' },
+    { id: 'cookies',     title: '4. Cookies & Tracking' },
+    { id: 'use',         title: '5. How We Use Your Data' },
+    { id: 'legal-bases', title: '6. Legal Bases (GDPR)' },
+    { id: 'retention',   title: '7. Data Retention' },
+    { id: 'security',    title: '8. Security Measures' },
+    { id: 'rights',      title: '9. Your Rights' },
+    { id: 'third',       title: '10. Third‑Party Services' },
+    { id: 'transfers',   title: '11. International Transfers' },
+    { id: 'children',    title: '12. Children’s Privacy' },
+    { id: 'updates',     title: '13. Policy Updates' },
+    { id: 'contact',     title: '14. Contact' },
   ];
 
   return (
@@ -36,7 +34,6 @@ export default function PrivacyPolicy() {
       </Head>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
         <header className="mb-10 text-center">
           <h1 className="text-4xl font-extrabold tracking-tight">Privacy Policy</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -44,8 +41,8 @@ export default function PrivacyPolicy() {
           </p>
         </header>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-10">
+        {/* ─── centred two‑column grid ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(auto,1fr)] justify-center lg:gap-16 gap-10">
           {/* Sidebar */}
           <nav className="hidden lg:block sticky top-24 self-start">
             <ul className="space-y-2 text-sm leading-6">
@@ -63,7 +60,7 @@ export default function PrivacyPolicy() {
           </nav>
 
           {/* Main article */}
-          <article className="space-y-12 text-base leading-relaxed lg:pr-8">
+          <article className="space-y-12 text-base leading-relaxed lg:pr-8 lg:max-w-3xl lg:mx-auto">
             {/* 1. Introduction */}
             <section id="intro" className="scroll-mt-28">
               <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
