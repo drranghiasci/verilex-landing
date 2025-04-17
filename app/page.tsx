@@ -42,8 +42,8 @@ const ROADMAP = [
   { date: '1 Oct 2025',   title: 'Closed Beta',              desc: 'Invite‑only beta for 50 firms. Feedback loops & bug fixes.',               icon: '🚧' },
   { date: 'Nov 2025',     title: 'Contract Analyzer Alpha',  desc: 'Risk‑clause detection and key‑term extraction.',                           icon: '📑' },
   { date: 'Dec 2025',     title: 'Smart Assistant Preview',  desc: 'Natural‑language Q&A on statutes, rulings, and firm docs.',                icon: '🤖' },
-  { date: '1 Jan 2026',   title: 'Public Launch',            desc: 'Self‑serve onboarding, billing, and live support.',                        icon: '🚀' },
-  { date: 'Q1 2026',      title: 'Practice‑Area Expansion',  desc: 'Immigration, family, and business‑law playbooks.',                         icon: '🌐' },
+    { date: '1 Jan 2026',   title: 'Public Launch',            desc: 'Self‑serve onboarding, billing, and live support.',                        icon: '🚀' },
+    { date: 'Q1 2026',      title: 'Practice‑Area Expansion',  desc: 'Immigration, family, and business‑law playbooks.',                         icon: '🌐' },
 ] as const;
 
 /* ------------------------------------------------------------------------- */
