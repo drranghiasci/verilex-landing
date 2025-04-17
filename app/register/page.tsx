@@ -8,41 +8,48 @@ import Link from 'next/link';
 export default function RegisterPage() {
   const router = useRouter();
 
-  /* -------------------- form state -------------------- */
   const [form, setForm] = useState({
     fullName: '',
     firmName: '',
     email: '',
     password: '',
     confirmPassword: '',
+    accessCode: '',
+    acceptTerms: false,
   });
 
-  const [agreedToTerms,   setAgreedToTerms]   = useState(false);
-  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
-
-  const [error,   setError]   = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  /* -------------------- handlers -------------------- */
+  /* ----------------------------- Handlers ----------------------------- */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!agreedToTerms || !agreedToPrivacy) {
-      setError('You must agree to the Terms of Use and Privacy Policy.');
-      return;
-    }
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match.');
       return;
     }
+    if (!form.accessCode.trim()) {
+      setError('Access code is required.');
+      return;
+    }
+    if (!form.acceptTerms) {
+      setError('You must accept the Terms of Service.');
+      return;
+    }
 
     setLoading(true);
+
+    /* 1️⃣  Sign up through Supabase auth */
     const { error: signUpError } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
@@ -50,103 +57,118 @@ export default function RegisterPage() {
         data: { full_name: form.fullName, firm_name: form.firmName },
       },
     });
+    if (signUpError) {
+      setError(signUpError.message);
+      setLoading(false);
+      return;
+    }
 
-    if (signUpError) setError(signUpError.message);
-    else             router.push('/dashboard');
+    /* 2️⃣  Redeem the invite code */
+    const { error: inviteError } = await supabase.rpc('redeem_invite', {
+      invite_code: form.accessCode.trim(),
+      new_email:   form.email,
+    });
 
-    setLoading(false);
+    if (inviteError) {
+      // Roll back: you may choose to delete the unfinished user here
+      await supabase.auth.signOut();
+      setError(inviteError.message || 'Invalid or already‑used access code.');
+      setLoading(false);
+      return;
+    }
+
+    /* 3️⃣  Success → dashboard */
+    router.push('/dashboard');
   };
 
-  /* -------------------- render -------------------- */
+  /* ------------------------------ JSX -------------------------------- */
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-slate-100 flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white shadow-xl rounded-xl p-8 space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Register for VeriLex AI</h1>
-        <p className="text-sm text-gray-700">
-          Create your firm’s account to access the legal assistant dashboard.
-        </p>
+    <div className="mx-auto max-w-md px-4 py-10">
+      <h1 className="mb-6 text-3xl font-bold">Create Your Account</h1>
 
-        <form onSubmit={handleRegister} className="space-y-4 text-gray-900">
+      <form onSubmit={handleRegister} className="space-y-4">
+        <input
+          type="text"
+          name="fullName"
+          placeholder="Full name"
+          value={form.fullName}
+          onChange={handleChange}
+          className="w-full rounded border border-gray-300 px-4 py-2"
+          required
+        />
+        <input
+          type="text"
+          name="firmName"
+          placeholder="Firm name"
+          value={form.firmName}
+          onChange={handleChange}
+          className="w-full rounded border border-gray-300 px-4 py-2"
+          required
+        />
+        <input
+          type="email"
+          name="email"
+          placeholder="Work email"
+          value={form.email}
+          onChange={handleChange}
+          className="w-full rounded border border-gray-300 px-4 py-2"
+          required
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
+          className="w-full rounded border border-gray-300 px-4 py-2"
+          required
+        />
+        <input
+          type="password"
+          name="confirmPassword"
+          placeholder="Confirm password"
+          value={form.confirmPassword}
+          onChange={handleChange}
+          className="w-full rounded border border-gray-300 px-4 py-2"
+          required
+        />
+        <input
+          type="text"
+          name="accessCode"
+          placeholder="Access code"
+          value={form.accessCode}
+          onChange={handleChange}
+          className="w-full rounded border border-gray-300 px-4 py-2"
+          required
+        />
 
-          {/* --- name / firm / email / pwd fields --- */}
-          {['fullName','firmName','email','password','confirmPassword'].map((field) => (
-            <div key={field}>
-              <label className="block text-sm font-medium text-gray-800">
-                {{
-                  fullName:        'Full Name',
-                  firmName:        'Law Firm Name',
-                  email:           'Email',
-                  password:        'Password',
-                  confirmPassword: 'Confirm Password',
-                }[field as keyof typeof form]}
-              </label>
-              <input
-                type={field.includes('password') ? 'password' : field === 'email' ? 'email' : 'text'}
-                name={field}
-                value={(form as any)[field]}
-                onChange={handleChange}
-                required
-                className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2
-                           focus:ring-black focus:outline-none text-gray-900"
-              />
-            </div>
-          ))}
+        {/* Terms checkbox */}
+        <label className="flex items-center space-x-2 text-sm">
+          <input
+            type="checkbox"
+            name="acceptTerms"
+            checked={form.acceptTerms}
+            onChange={handleChange}
+            className="h-4 w-4"
+          />
+          <span>
+            I agree to the&nbsp;
+            <Link href="/terms" className="underline">
+              Terms of Service
+            </Link>
+          </span>
+        </label>
 
-          {/* --- consent checkboxes --- */}
-          <div className="flex flex-col gap-3">
-            <label className="flex items-start gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="mt-1 accent-black"
-                required
-              />
-              <span>
-                I agree to the&nbsp;
-                <Link href="/terms" target="_blank"
-                      className="underline text-blue-600 hover:text-blue-800">
-                  Terms of Use
-                </Link>
-              </span>
-            </label>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded bg-black py-2 text-white hover:bg-gray-800 transition"
+        >
+          {loading ? 'Creating account…' : 'Sign Up'}
+        </button>
+      </form>
 
-            <label className="flex items-start gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={agreedToPrivacy}
-                onChange={(e) => setAgreedToPrivacy(e.target.checked)}
-                className="mt-1 accent-black"
-                required
-              />
-              <span>
-                I agree to the&nbsp;
-                <Link href="/privacy" target="_blank"
-                      className="underline text-blue-600 hover:text-blue-800">
-                  Privacy Policy
-                </Link>
-              </span>
-            </label>
-          </div>
-
-          {error && <p className="text-sm text-red-600">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-black text-white py-2 rounded-md hover:opacity-90 transition"
-          >
-            {loading ? 'Creating account…' : 'Register'}
-          </button>
-        </form>
-
-        <p className="text-sm text-gray-600 text-center">
-          Already have an account?{' '}
-          <Link href="/login" className="text-black hover:underline font-medium">
-            Login
-          </Link>
-        </p>
-      </div>
+      {error && <p className="mt-4 text-red-600">{error}</p>}
     </div>
   );
 }

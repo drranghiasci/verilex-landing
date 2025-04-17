@@ -3,65 +3,97 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import QuickAccessSidebar from '@/components/dashboard/QuickAccessSidebar';
-import TopMenu from '@/components/dashboard/TopMenu';
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const router = useRouter();
+import QuickAccessSidebar from '@/components/dashboard/QuickAccessSidebar';
+import TopMenu            from '@/components/dashboard/TopMenu';
+
+type ProfileRow = {
+  beta_access: boolean | null;
+};
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const router   = useRouter();
   const supabase = createClientComponentClient();
-  const [session, setSession] = useState<any>(null);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
 
-    // Fetch the session from Supabase
-    supabase.auth.getSession().then(({ data, error }) => {
+    /** Convenience: redirects user and stops further state updates */
+    const denyAccess = (path: string) => {
       if (!isMounted) return;
-
-      if (error) {
-        console.error('Supabase session error:', error);
-      }
-
-      if (!data?.session) {
-        // If no session, redirect to the login page
-        router.push('/login');
-      } else {
-        // If a session exists, store it locally
-        setSession(data.session);
-      }
       setLoading(false);
+      router.replace(path);
+    };
+
+    /** Main check: session → profile → beta_access flag */
+    const checkAccess = async () => {
+      const {
+        data: { session },
+        error: sessionErr,
+      } = await supabase.auth.getSession();
+
+      if (sessionErr || !session) {
+        console.error('Session error:', sessionErr);
+        return denyAccess('/login');
+      }
+
+      // Look up the profile row
+      const { data: profile, error: profileErr } = await supabase
+        .from('profiles')
+        .select('beta_access')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileErr) {
+        console.error('Profile fetch error:', profileErr);
+        return denyAccess('/login');
+      }
+
+      if (!profile?.beta_access) {
+        // User exists but has no beta flag → send to request‑access screen
+        return denyAccess('/request-access');
+      }
+
+      // All good
+      if (isMounted) setLoading(false);
+    };
+
+    checkAccess();
+
+    /** Listen for auth changes so a brand‑new sign‑up gets re‑validated */
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      checkAccess();
     });
 
-    // Cleanup to prevent state updates on unmounted component
     return () => {
       isMounted = false;
+      listener.subscription.unsubscribe();
     };
   }, [router, supabase]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        Checking session...
+        Checking access&hellip;
       </div>
     );
   }
 
-  if (!session) return null;
-
+  /* -------------------------------------------------------------- */
+  /*  Render the actual dashboard layout (user is authenticated &   */
+  /*  has beta_access = true)                                       */
+  /* -------------------------------------------------------------- */
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 relative">
-    {/* Top Menu (with Lexi search and avatar) */}
-    <TopMenu />
-    
-    <div className="bg-gray-50 text-gray-900 min-h-screen flex">
-      <QuickAccessSidebar />
-      <main className="p-4 md:p-8 flex-1">{children}</main>
-    </div>
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      {/* Top bar */}
+      <TopMenu />
+
+      <div className="flex min-h-screen bg-gray-50">
+        <QuickAccessSidebar />
+        <main className="flex-1 p-4 md:p-8">{children}</main>
+      </div>
     </div>
   );
 }
