@@ -13,23 +13,23 @@ import { Analytics }  from '@vercel/analytics/react';
 /* ------------------------------------------------------------------------- */
 /* Hook: useCountdown                                                        */
 /* ------------------------------------------------------------------------- */
-function useCountdown(target: Date) {
-  const calc = () => {
-    const d = target.getTime() - Date.now();
-    return {
-      months:  Math.max(0, Math.floor(d / (1000 * 60 * 60 * 24 * 30))),
-      days:    Math.max(0, Math.floor((d % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24))),
-      hours:   Math.max(0, Math.floor((d % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))),
-      minutes: Math.max(0, Math.floor((d % (1000 * 60 * 60)) / (1000 * 60))),
-      seconds: Math.max(0, Math.floor((d % (1000 * 60)) / 1000)),
-    } as const;
-  };
+const calcCountdown = (target: Date) => {
+  const d = target.getTime() - Date.now();
+  return {
+    months:  Math.max(0, Math.floor(d / (1000 * 60 * 60 * 24 * 30))),
+    days:    Math.max(0, Math.floor((d % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24))),
+    hours:   Math.max(0, Math.floor((d % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))),
+    minutes: Math.max(0, Math.floor((d % (1000 * 60 * 60)) / (1000 * 60))),
+    seconds: Math.max(0, Math.floor((d % (1000 * 60)) / 1000)),
+  } as const;
+};
 
-  const [time, setTime] = useState(calc);
+function useCountdown(target: Date) {
+  const [time, setTime] = useState(() => calcCountdown(target));
   useEffect(() => {
-    const id = setInterval(() => setTime(calc()), 1000);
+    const id = setInterval(() => setTime(calcCountdown(target)), 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [target]);
   return time;
 }
 
@@ -221,11 +221,11 @@ export default function Home() {
           </section>
 
           {/* Contact */}
-          <section aria-labelledby="contact" className="py-16 text-left">
-            <h2 id="contact" className="mb-6 text-center text-3xl font-bold">
+          <section id="contact" aria-labelledby="contact-heading" className="py-16 text-left">
+            <h2 id="contact-heading" className="mb-6 text-center text-3xl font-bold">
               Contact
             </h2>
-            <p className="text-lg text-gray-700">
+            <p className="text-lg text-gray-700 text-center">
               Questions or partnership ideas? Reach us at&nbsp;
               <a href="mailto:founder@verilex.us" className="text-blue-600 underline">
                 founder@verilex.us
