@@ -1,4 +1,3 @@
-
 import Head from 'next/head';
 import Link from 'next/link';
 
@@ -39,24 +38,8 @@ export default function TermsOfUse() {
         </header>
 
         {/* ─── centred two‑column grid ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(auto,1fr)] justify-center lg:gap-16 gap-10">
-          {/* Sidebar */}
-          <nav className="hidden lg:block sticky top-24 self-start">
-            <ul className="space-y-2 text-sm leading-6">
-              {toc.map(({ id, title }) => (
-                <li key={id}>
-                  <a
-                    href={`#${id}`}
-                    className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white transition-colors"
-                  >
-                    {title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          {/* Main article */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(auto,1fr)_260px] justify-center lg:gap-16 gap-10">
+          {/* Main article first */}
           <article className="space-y-12 text-base leading-relaxed lg:pr-8 lg:max-w-3xl lg:mx-auto">
             {/* 1. About */}
             <section id="about" className="scroll-mt-28">
@@ -231,6 +214,22 @@ export default function TermsOfUse() {
               </p>
             </footer>
           </article>
+
+          {/* Sidebar second */}
+          <nav className="hidden lg:block sticky top-24 self-start">
+            <ul className="space-y-2 text-sm leading-6">
+              {toc.map(({ id, title }) => (
+                <li key={id}>
+                  <a
+                    href={`#${id}`}
+                    className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white transition-colors"
+                  >
+                    {title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
       </div>
     </>
