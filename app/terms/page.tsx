@@ -215,14 +215,26 @@ export default function TermsOfUse() {
             </footer>
           </article>
 
-          {/* Sidebar second */}
-          <nav className="hidden lg:block sticky top-24 self-start">
-            <ul className="space-y-2 text-sm leading-6">
+          {/* Sidebar / TOC  -- visible on all screens, collapses into accordion under lg */}
+          <nav className="sticky top-24 self-start">
+            <details className="lg:hidden mb-6">
+              <summary className="cursor-pointer text-primary font-medium">On this page</summary>
+              <ul className="pl-4 mt-2 space-y-2 text-sm leading-6">
+                {toc.map(({ id, title }) => (
+                  <li key={id}>
+                    <a href={`#${id}`} className="block py-1 text-gray-500 hover:text-white">
+                      {title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+            <ul className="hidden lg:block space-y-2 text-sm leading-6">
               {toc.map(({ id, title }) => (
                 <li key={id}>
                   <a
                     href={`#${id}`}
-                    className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white transition-colors"
+                    className="text-gray-500 hover:text-white transition-colors"
                   >
                     {title}
                   </a>
