@@ -38,9 +38,9 @@ export default function TermsOfUse() {
         </header>
 
         {/* ─── centred two‑column grid ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(auto,1fr)_260px] justify-center lg:gap-16 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-[auto_260px] mx-auto lg:gap-16 gap-10">
           {/* Main article first */}
-          <article className="space-y-12 text-base leading-relaxed lg:pr-8 lg:max-w-3xl lg:mx-auto">
+          <article className="space-y-12 text-base leading-relaxed lg:pr-8 lg:max-w-3xl">
             {/* 1. About */}
             <section id="about" className="scroll-mt-28">
               <h2 className="text-2xl font-semibold mb-4">1. About VeriLex AI</h2>
