@@ -5,24 +5,23 @@ import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 import QuickAccessSidebar from '@/components/dashboard/QuickAccessSidebar';
-import TopMenu            from '@/components/dashboard/TopMenu';
+import TopMenu from '@/components/dashboard/TopMenu';
 
 type ProfileRow = {
   beta_access: boolean | null;
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const router   = useRouter();
+  const router = useRouter();
   const supabase = createClientComponentClient();
 
   const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<any | undefined>(undefined); // use undefined as initial state
   const [redirectPath, setRedirectPath] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
-    /** Main check: session → profile → beta_access flag */
     const checkAccess = async () => {
       const {
         data: { session: fetchedSession },
@@ -32,7 +31,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (sessionErr || !fetchedSession) {
         console.error('Session error:', sessionErr);
         if (isMounted) {
-          setSession(null);
+          setSession(null); // explicitly unauthenticated
           setRedirectPath('/login');
           setLoading(false);
         }
@@ -41,7 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       if (isMounted) setSession(fetchedSession);
 
-      // Look up the profile row
+      // Look up the beta_access flag in profiles
       const { data: profile, error: profileErr } = await supabase
         .from('profiles')
         .select('beta_access')
@@ -58,7 +57,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }
 
       if (!profile?.beta_access) {
-        // User exists but has no beta flag → send to request‑access screen
         if (isMounted) {
           setRedirectPath('/request-access');
           setLoading(false);
@@ -66,15 +64,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         return;
       }
 
-      // All good
-      if (isMounted) setLoading(false);
+      if (isMounted) {
+        setLoading(false); // session is good and beta_access is true
+      }
     };
 
     checkAccess();
 
-    /** Listen for auth changes so a brand‑new sign‑up gets re‑validated */
     const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      checkAccess();
+      setTimeout(() => checkAccess(), 250); // delay helps avoid double exec
     });
 
     return () => {
@@ -86,13 +84,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     console.log('Session:', session);
     console.log('Loading:', loading);
-    if (!loading && redirectPath) {
-      console.log('Redirecting to', redirectPath);
+    console.log('RedirectPath:', redirectPath);
+
+    // Only redirect if loading is complete and session has resolved
+    if (!loading && redirectPath !== null && session !== undefined) {
       router.replace(redirectPath);
     }
   }, [loading, redirectPath, session, router]);
 
-  if (loading) {
+  if (loading || session === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         Checking access&hellip;
@@ -100,15 +100,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  /* -------------------------------------------------------------- */
-  /*  Render the actual dashboard layout (user is authenticated &   */
-  /*  has beta_access = true)                                       */
-  /* -------------------------------------------------------------- */
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
-      {/* Top bar */}
       <TopMenu />
-
       <div className="flex min-h-screen bg-gray-50">
         <QuickAccessSidebar />
         <main className="flex-1 p-4 md:p-8">{children}</main>
