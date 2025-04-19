@@ -8,9 +8,6 @@ import Link from 'next/link';
 export default function RegisterPage() {
   const router = useRouter();
 
-  /* ------------------------------------------------------------------ */
-  /* State                                                              */
-  /* ------------------------------------------------------------------ */
   const [form, setForm] = useState({
     fullName: '',
     firmName: '',
@@ -23,7 +20,7 @@ export default function RegisterPage() {
   });
 
   const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState('');
+  const [error, setError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -33,9 +30,6 @@ export default function RegisterPage() {
     }));
   };
 
-  /* ------------------------------------------------------------------ */
-  /* Submit                                                              */
-  /* ------------------------------------------------------------------ */
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -52,44 +46,55 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    /* 1️⃣  Auth sign‑up */
-    const { error: signUpErr } = await supabase.auth.signUp({
+    // 1️⃣ Sign up user
+    const {
+      data: signUpData,
+      error: signUpErr,
+    } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
-      options: {
-        data: {
-          full_name:       form.fullName,
-          firm_name:       form.firmName,
-          marketing_optin: form.marketingOptIn,
-        },
-      },
     });
-    if (signUpErr) {
-      setError(signUpErr.message || 'Database error saving new user.');
+
+    if (signUpErr || !signUpData?.user?.id) {
+      setError(signUpErr?.message || 'Error creating user.');
       setLoading(false);
       return;
     }
 
-    /* 2️⃣  Redeem invite */
+    const userId = signUpData.user.id;
+
+    // 2️⃣ Insert profile row manually
+    const { error: profileInsertErr } = await supabase.from('profiles').insert({
+      id: userId,
+      full_name: form.fullName,
+      firm_name: form.firmName,
+      marketing_optin: form.marketingOptIn,
+    });
+
+    if (profileInsertErr) {
+      await supabase.auth.signOut();
+      setError('Error creating profile.');
+      setLoading(false);
+      return;
+    }
+
+    // 3️⃣ Redeem invite
     const { error: inviteErr } = await supabase.rpc('redeem_invite', {
       invite_code: form.accessCode.trim(),
-      new_email:   form.email,
+      new_email: form.email,
     });
 
     if (inviteErr) {
       await supabase.auth.signOut();
-      setError(inviteErr.message || 'Invalid or already‑used access code.');
+      setError(inviteErr.message || 'Invalid or already-used access code.');
       setLoading(false);
       return;
     }
 
-    /* 3️⃣  Success */
+    // 4️⃣ Success
     router.push('/dashboard');
   };
 
-  /* ------------------------------------------------------------------ */
-  /* UI                                                                  */
-  /* ------------------------------------------------------------------ */
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 text-gray-900">
       <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
@@ -160,7 +165,6 @@ export default function RegisterPage() {
             required
           />
 
-          {/* Checkbox: Terms + Privacy */}
           <label className="flex items-start space-x-2 text-sm">
             <input
               type="checkbox"
@@ -191,7 +195,6 @@ export default function RegisterPage() {
             </span>
           </label>
 
-          {/* Checkbox: marketing opt‑in */}
           <label className="flex items-start space-x-2 text-sm">
             <input
               type="checkbox"
