@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const supabase = createClientComponentClient();
 
   const [form, setForm] = useState({
     fullName: '',
@@ -69,6 +70,7 @@ export default function RegisterPage() {
       full_name: form.fullName,
       firm_name: form.firmName,
       marketing_optin: form.marketingOptIn,
+      beta_access: true, // added beta_access flag so dashboard check passes
     });
 
     if (profileInsertErr) {

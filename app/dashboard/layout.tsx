@@ -56,6 +56,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         return;
       }
 
+      // Ensure the profiles table sets beta_access appropriately
       if (!profile?.beta_access) {
         if (isMounted) {
           setRedirectPath('/request-access');

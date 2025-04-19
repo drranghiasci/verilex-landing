@@ -22,23 +22,21 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    console.log("Attempting login for:", form.email);
+    // Debug logging: remove or comment out in production
+    // console.log("Attempting login for:", form.email);
     
     const { data, error } = await supabase.auth.signInWithPassword({
       email: form.email,
       password: form.password,
     });
-    console.log('Sign-In Data:', data);
-    console.log('Sign-In Error:', error);
+    // console.log('Sign-In Data:', data);
+    // console.log('Sign-In Error:', error);
     
-    console.log("Login result for", form.email, ":", error ? error.message : "Success");
-
     if (error) {
       setError('Invalid email or password.');
     } else {
       router.push('/dashboard');
     }
-
     setLoading(false);
   };
 
