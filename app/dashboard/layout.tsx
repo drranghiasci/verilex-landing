@@ -16,44 +16,54 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const supabase = createClientComponentClient();
 
   const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<any>(null);
+  const [redirectPath, setRedirectPath] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
-    /** Convenience: redirects user and stops further state updates */
-    const denyAccess = (path: string) => {
-      if (!isMounted) return;
-      setLoading(false);
-      router.replace(path);
-    };
-
     /** Main check: session → profile → beta_access flag */
     const checkAccess = async () => {
       const {
-        data: { session },
+        data: { session: fetchedSession },
         error: sessionErr,
       } = await supabase.auth.getSession();
 
-      if (sessionErr || !session) {
+      if (sessionErr || !fetchedSession) {
         console.error('Session error:', sessionErr);
-        return denyAccess('/login');
+        if (isMounted) {
+          setSession(null);
+          setRedirectPath('/login');
+          setLoading(false);
+        }
+        return;
       }
+
+      if (isMounted) setSession(fetchedSession);
 
       // Look up the profile row
       const { data: profile, error: profileErr } = await supabase
         .from('profiles')
         .select('beta_access')
-        .eq('id', session.user.id)
+        .eq('id', fetchedSession.user.id)
         .single();
 
       if (profileErr) {
         console.error('Profile fetch error:', profileErr);
-        return denyAccess('/login');
+        if (isMounted) {
+          setRedirectPath('/login');
+          setLoading(false);
+        }
+        return;
       }
 
       if (!profile?.beta_access) {
         // User exists but has no beta flag → send to request‑access screen
-        return denyAccess('/request-access');
+        if (isMounted) {
+          setRedirectPath('/request-access');
+          setLoading(false);
+        }
+        return;
       }
 
       // All good
@@ -72,6 +82,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       listener.subscription.unsubscribe();
     };
   }, [router, supabase]);
+
+  useEffect(() => {
+    console.log('Session:', session);
+    console.log('Loading:', loading);
+    if (!loading && redirectPath) {
+      console.log('Redirecting to', redirectPath);
+      router.replace(redirectPath);
+    }
+  }, [loading, redirectPath, session, router]);
 
   if (loading) {
     return (
