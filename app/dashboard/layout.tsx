@@ -7,58 +7,50 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import QuickAccessSidebar from '@/components/dashboard/QuickAccessSidebar';
 import TopMenu from '@/components/dashboard/TopMenu';
 
-type ProfileRow = {
-  beta_access: boolean | null;
-};
-
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const supabase = createClientComponentClient();
 
+  const [session, setSession] = useState<any | undefined>(undefined); // undefined = still loading
   const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState<any | undefined>(undefined); // use undefined as initial state
   const [redirectPath, setRedirectPath] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
     const checkAccess = async () => {
-      const {
-        data: { session: fetchedSession },
-        error: sessionErr,
-      } = await supabase.auth.getSession();
+      const { data, error } = await supabase.auth.getSession();
 
-      if (sessionErr || !fetchedSession) {
-        console.error('Session error:', sessionErr);
+      if (error || !data?.session) {
+        console.error('Auth error or no session:', error);
         if (isMounted) {
-          setSession(null); // explicitly unauthenticated
+          setSession(null);
           setRedirectPath('/login');
           setLoading(false);
         }
         return;
       }
 
-      if (isMounted) setSession(fetchedSession);
+      const userId = data.session.user.id;
+      if (isMounted) setSession(data.session);
 
-      // Look up the beta_access flag in profiles
-      const { data: profile, error: profileErr } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('beta_access')
-        .eq('id', fetchedSession.user.id)
+        .eq('id', userId)
         .single();
 
-      // Updated error handling: redirect to registration if profile fetch fails
-      if (profileErr) {
-        console.error('Profile fetch error:', profileErr);
+      if (profileError) {
+        console.error('Failed to fetch profile:', profileError);
         if (isMounted) {
-          setRedirectPath('/register');
+          setRedirectPath('/register'); // fallback if no profile row exists
           setLoading(false);
         }
         return;
       }
 
-      // Ensure the profiles table sets beta_access appropriately
-      if (!profile?.beta_access) {
+      if (!profile || !profile.beta_access) {
+        console.warn('User lacks beta access or profile missing');
         if (isMounted) {
           setRedirectPath('/request-access');
           setLoading(false);
@@ -67,28 +59,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }
 
       if (isMounted) {
-        setLoading(false); // session is good and beta_access is true
+        setLoading(false); // ✅ All checks passed
       }
     };
 
     checkAccess();
 
     const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      setTimeout(() => checkAccess(), 250); // delay helps avoid double exec
+      setTimeout(() => checkAccess(), 250); // slight delay to avoid race
     });
 
     return () => {
       isMounted = false;
       listener.subscription.unsubscribe();
     };
-  }, [router, supabase]);
+  }, [supabase, router]);
 
   useEffect(() => {
-    console.log('Session:', session);
-    console.log('Loading:', loading);
-    console.log('RedirectPath:', redirectPath);
-
-    // Only redirect if loading is complete and session has resolved
     if (!loading && redirectPath !== null && session !== undefined) {
       router.replace(redirectPath);
     }
@@ -96,7 +83,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (loading || session === undefined) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center text-gray-700">
         Checking access&hellip;
       </div>
     );
