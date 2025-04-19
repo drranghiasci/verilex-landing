@@ -56,44 +56,47 @@ export default function RegisterPage() {
       password: form.password,
     });
 
+    console.error('SignUp Error:', signUpErr); // for debugging
+
     if (signUpErr || !signUpData?.user?.id) {
       setError(signUpErr?.message || 'Error creating user.');
       setLoading(false);
       return;
     }
 
-    const userId = signUpData.user.id;
-
-    // 2️⃣ Insert profile row manually
-    const { error: profileInsertErr } = await supabase.from('profiles').insert({
-      id: userId,
-      full_name: form.fullName,
-      firm_name: form.firmName,
-      marketing_optin: form.marketingOptIn,
-      beta_access: true, // added beta_access flag so dashboard check passes
-    });
-
-    if (profileInsertErr) {
-      await supabase.auth.signOut();
-      setError('Error creating profile.');
-      setLoading(false);
-      return;
-    }
-
-    // 3️⃣ Redeem invite
+    // 2️⃣ Redeem invite to link profile + grant beta access
     const { error: inviteErr } = await supabase.rpc('redeem_invite', {
       invite_code: form.accessCode.trim(),
       new_email: form.email,
     });
 
     if (inviteErr) {
+      console.error('Invite redemption failed:', inviteErr);
       await supabase.auth.signOut();
       setError(inviteErr.message || 'Invalid or already-used access code.');
       setLoading(false);
       return;
     }
 
-    // 4️⃣ Success
+    // 3️⃣ Update extra profile fields (optional)
+    const { error: updateErr } = await supabase
+      .from('profiles')
+      .update({
+        full_name: form.fullName,
+        firm_name: form.firmName,
+        marketing_optin: form.marketingOptIn,
+      })
+      .eq('id', signUpData.user.id);
+
+    if (updateErr) {
+      console.error('Profile update failed:', updateErr);
+      await supabase.auth.signOut();
+      setError('Account created but failed to update profile.');
+      setLoading(false);
+      return;
+    }
+
+    // 4️⃣ Redirect to dashboard
     router.push('/dashboard');
   };
 
@@ -177,21 +180,11 @@ export default function RegisterPage() {
             />
             <span>
               I agree to the{' '}
-              <Link
-                href="/terms"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
+              <Link href="/terms" target="_blank" rel="noopener noreferrer" className="underline">
                 Terms of Service
               </Link>{' '}
               and{' '}
-              <Link
-                href="/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
+              <Link href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">
                 Privacy Policy
               </Link>
             </span>
