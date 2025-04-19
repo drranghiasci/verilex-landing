@@ -47,10 +47,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .eq('id', fetchedSession.user.id)
         .single();
 
+      // Updated error handling: redirect to registration if profile fetch fails
       if (profileErr) {
         console.error('Profile fetch error:', profileErr);
         if (isMounted) {
-          setRedirectPath('/login');
+          setRedirectPath('/register');
           setLoading(false);
         }
         return;
