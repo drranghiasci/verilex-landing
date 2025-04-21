@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   FolderOpenIcon,
   FolderPlusIcon,
@@ -38,7 +37,6 @@ const menuItems: MenuItem[] = [
     icon: <Cog8ToothIcon className="h-5 w-5" />,
     available: true,
   },
-  // Future placeholders
   {
     name: 'Analytics (Soon)',
     href: '#',
@@ -59,32 +57,11 @@ export default function QuickAccessSidebar() {
   return (
     <div
       className="fixed left-0 top-0 h-screen bg-white border-r border-gray-200 shadow-sm z-20
-                 flex flex-col items-center py-4 transition-all duration-300"
+                 flex flex-col items-center pt-16 transition-all duration-300"
       style={{ width: isHovered ? 240 : 64 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Logo Section */}
-      <div className="mb-8">
-        {isHovered ? (
-          <Image
-            src="/verilex-logo-name.png"
-            alt="Verilex AI Logo Expanded"
-            width={160}
-            height={50}
-            priority
-          />
-        ) : (
-          <Image
-            src="/verilex-logo.png"
-            alt="Verilex AI Logo Collapsed"
-            width={40}
-            height={40}
-            priority
-          />
-        )}
-      </div>
-
       {/* Navigation Items */}
       <nav className="flex flex-col w-full px-2 space-y-2">
         {menuItems.map((item, idx) => {
@@ -102,9 +79,7 @@ export default function QuickAccessSidebar() {
             >
               {item.icon}
               {isHovered && (
-                <span className="ml-3 whitespace-nowrap">
-                  {item.name}
-                </span>
+                <span className="ml-3 whitespace-nowrap">{item.name}</span>
               )}
             </Link>
           );

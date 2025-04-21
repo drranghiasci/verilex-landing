@@ -12,7 +12,6 @@ export default function TopMenu() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // For now, just log the "Lexi" query or send to your AI endpoint
     console.log('Lexi Query:', searchInput);
     setSearchInput('');
   };
@@ -23,12 +22,20 @@ export default function TopMenu() {
   };
 
   return (
-    <header className="flex items-center justify-between h-14 border-b border-gray-200 bg-white px-4 shadow-sm relative z-10">
-      {/* Left side is intentionally blank */}
-      <div className="w-16" />
+    <header className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between h-14 border-b border-gray-200 bg-white px-4 shadow-sm">
+      {/* Left: Logo */}
+      <div className="flex items-center">
+        <Image
+          src="/verilex-logo-name.png"
+          alt="VeriLex AI"
+          width={150}
+          height={40}
+          priority
+        />
+      </div>
 
-      {/* Center: Large Lexi search bar */}
-      <form onSubmit={handleSearch} className="flex-1 mx-4">
+      {/* Center: Lexi Search */}
+      <form onSubmit={handleSearch} className="flex-1 mx-4 max-w-xl">
         <input
           type="text"
           placeholder="Ask Lexi a legal question..."
@@ -38,7 +45,7 @@ export default function TopMenu() {
         />
       </form>
 
-      {/* Right side: user avatar + dropdown */}
+      {/* Right: Avatar Dropdown */}
       <div className="relative">
         <button
           onClick={() => setDropdownOpen(!dropdownOpen)}

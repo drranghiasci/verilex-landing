@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { AnimatePresence, motion } from 'framer-motion';
 
 import QuickAccessSidebar from '@/components/dashboard/QuickAccessSidebar';
 import TopMenu from '@/components/dashboard/TopMenu';
@@ -43,7 +44,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (profileError) {
         console.error('Failed to fetch profile:', profileError);
         if (isMounted) {
-          setRedirectPath('/register'); // fallback if no profile row exists
+          setRedirectPath('/register');
           setLoading(false);
         }
         return;
@@ -66,7 +67,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     checkAccess();
 
     const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      setTimeout(() => checkAccess(), 250); // slight delay to avoid race
+      setTimeout(() => checkAccess(), 250);
     });
 
     return () => {
@@ -94,7 +95,42 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <TopMenu />
       <div className="flex min-h-screen bg-gray-50">
         <QuickAccessSidebar />
-        <main className="flex-1 p-4 md:p-8">{children}</main>
+        <main className="flex-1 pt-14 p-4 md:p-8">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key="dashboard-content"
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              variants={{
+                hidden: { opacity: 0, y: 10 },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                  transition: {
+                    staggerChildren: 0.1,
+                  },
+                },
+              }}
+              className="space-y-6"
+            >
+              {React.Children.map(children, (child, index) => (
+                <motion.div
+                  key={index}
+                  variants={{
+                    hidden: { opacity: 0, y: 10 },
+                    visible: { opacity: 1, y: 0 },
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ duration: 0.3 }}
+                  className="transition-transform"
+                >
+                  {child}
+                </motion.div>
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        </main>
       </div>
     </div>
   );
