@@ -55,6 +55,8 @@ export default function RegisterPage() {
       email: form.email,
       password: form.password,
     });
+    console.error('🔴 Supabase signup error:', signUpErr);
+
 
     console.error('SignUp Error:', signUpErr); // for debugging
 
