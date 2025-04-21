@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 
 import WaitlistForm  from '@/components/WaitlistForm';
 import CookieBanner   from '@/components/CookieBanner';
@@ -153,6 +154,41 @@ export default function Home() {
               </span>
             </p>
           </section>
+
+{/* OUR STORY SECTION */}
+<section id="story" className="py-24 text-left">
+  <h2 className="mb-8 text-center text-4xl font-bold">Our Story</h2>
+  <div className="mx-auto max-w-3xl space-y-8 text-gray-700 text-lg leading-relaxed">
+    <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }} className="text-center italic text-gray-600">
+      We’re not lawyers. We’re entrepreneurs. And we’re building the future of legal work.
+    </motion.p>
+    {[`VeriLex AI began with a simple realization: lawyers are doing far too much work that AI can handle. As a small team of builders and creatives, we saw an opportunity to help legal professionals spend more time doing what matters — serving clients, winning cases, and making a difference.`,
+      `We’re not here to replace attorneys — we’re here to amplify them. From client intake to document automation and beyond, VeriLex AI is built to be an all-in-one assistant that reduces burnout, improves accuracy, and reclaims time.`,
+      `As a young founder, I’m not from the legal world — and that’s why I’m asking better questions. Why can’t legal tools feel intuitive? Why can’t solo attorneys and small firms have access to the same superpowers as big law? Why isn’t there a platform built just for them?`,
+      `We’re building VeriLex AI to change that. With input from real attorneys and a commitment to security and usability, we’re creating the tools that will define the next generation of legal work — smarter, faster, more human.`
+    ].map((text, idx) => (
+      <motion.p
+        key={idx}
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: idx * 0.15 }}
+        viewport={{ once: true }}
+      >
+        {text}
+      </motion.p>
+    ))}
+    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.6 }} viewport={{ once: true }} className="mt-10 border-l-4 border-indigo-500 pl-6 italic text-gray-600">
+      “This is just the beginning. We’re proud to be building VeriLex AI — and we can’t wait to see how it empowers the attorneys who inspire us.”
+      <br />
+      <span className="mt-4 block text-right font-bold text-gray-900">– The VeriLex AI Team</span>
+    </motion.div>
+    <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.8 }} viewport={{ once: true }} className="mt-12 text-center">
+      <Link href="#waitlist" className="inline-block rounded bg-indigo-600 px-6 py-3 text-white font-semibold shadow-md hover:bg-indigo-700 transition">
+        Join the Early Access Waitlist
+      </Link>
+    </motion.div>
+  </div>
+</section>
 
           {/* Waitlist */}
           <section id="waitlist" aria-labelledby="join" className="py-16">
