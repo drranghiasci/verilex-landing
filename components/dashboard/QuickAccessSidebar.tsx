@@ -56,7 +56,7 @@ export default function QuickAccessSidebar() {
 
   return (
     <div
-      className="fixed left-0 top-0 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 shadow-sm z-20 flex flex-col items-center pt-16 transition-all duration-300"
+      className="fixed left-0 top-0 h-screen bg-white dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-700 shadow-sm z-20 flex flex-col items-center pt-16 transition-all duration-300"
       style={{ width: isHovered ? 240 : 64 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -72,8 +72,8 @@ export default function QuickAccessSidebar() {
               className={clsx(
                 'flex items-center rounded-md px-3 py-2 transition text-sm font-medium group',
                 disabled
-                  ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800'
-                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-zinc-800'
+                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-800'
               )}
             >
               {item.icon}

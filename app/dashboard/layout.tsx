@@ -66,7 +66,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     checkAccess();
 
     const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      setTimeout(() => checkAccess(), 250); // slight delay to avoid race
+      setTimeout(() => checkAccess(), 250);
     });
 
     return () => {
@@ -83,16 +83,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (loading || session === undefined) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-700">
+      <div className="min-h-screen flex items-center justify-center text-gray-700 dark:text-gray-300 bg-white dark:bg-zinc-950 transition-colors">
         Checking access&hellip;
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
+    <div className="min-h-screen bg-white dark:bg-zinc-950 text-gray-900 dark:text-white transition-colors">
       <TopMenu />
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen">
         <QuickAccessSidebar />
         <main className="flex-1 pt-14 p-4 md:p-8">{children}</main>
       </div>

@@ -5,14 +5,18 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { Menu, Transition } from '@headlessui/react';
-import { MoonIcon, SunIcon } from '@heroicons/react/24/outline';
+import { MoonIcon, SunIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
 import md5 from 'md5';
+import ThemeSelector from '@/components/dashboard/ThemeSelector';
+
+type Theme = 'light' | 'dark' | 'system';
 
 export default function TopMenu() {
   const [searchInput, setSearchInput] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('/placeholder-avatar.png');
-  const [darkMode, setDarkMode] = useState(false);
+  const [theme, setTheme] = useState<Theme>('system');
+
   const router = useRouter();
 
   useEffect(() => {
@@ -26,21 +30,27 @@ export default function TopMenu() {
       }
     });
 
-    const prefersDark = localStorage.getItem('theme') === 'dark';
-    setDarkMode(prefersDark);
-    if (prefersDark) document.documentElement.classList.add('dark');
+    const stored = localStorage.getItem('theme') as Theme;
+    const preferred: Theme = stored || 'system';
+    setTheme(preferred);
+    applyTheme(preferred);
   }, []);
 
-  const toggleDarkMode = () => {
-    const isDark = !darkMode;
-    setDarkMode(isDark);
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
+  const applyTheme = (value: Theme) => {
+    const root = document.documentElement;
+    root.classList.remove('light', 'dark');
+
+    const shouldDark =
+      value === 'dark' ||
+      (value === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    root.classList.add(shouldDark ? 'dark' : 'light');
+  };
+
+  const setAndApplyTheme = (newTheme: Theme) => {
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    applyTheme(newTheme);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -54,11 +64,17 @@ export default function TopMenu() {
     router.push('/login');
   };
 
+  const isDark =
+    theme === 'dark' ||
+    (theme === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+  const logoSrc = isDark ? '/verilex-logo-name-darkmode.png' : '/verilex-logo-name.png';
+
   return (
     <header className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between h-14 border-b border-gray-200 bg-white px-4 shadow-sm dark:bg-gray-900 dark:border-gray-700">
       {/* Logo */}
       <div className="flex items-center">
-        <Image src="/verilex-logo-name.png" alt="VeriLex AI" width={150} height={40} priority />
+        <Image src={logoSrc} alt="VeriLex AI" width={150} height={40} priority />
       </div>
 
       {/* Lexi Search */}
@@ -72,7 +88,7 @@ export default function TopMenu() {
         />
       </form>
 
-      {/* Account Menu */}
+      {/* Account Dropdown */}
       <Menu as="div" className="relative inline-block text-left">
         <Menu.Button className="flex items-center focus:outline-none">
           <Image
@@ -97,6 +113,7 @@ export default function TopMenu() {
               <p className="text-sm text-gray-700 dark:text-gray-200">Signed in as</p>
               <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{userEmail}</p>
             </div>
+
             <div className="py-1">
               <Menu.Item>
                 {({ active }) => (
@@ -110,19 +127,9 @@ export default function TopMenu() {
                   </button>
                 )}
               </Menu.Item>
-              <Menu.Item>
-                {({ active }) => (
-                  <button
-                    onClick={toggleDarkMode}
-                    className={`${
-                      active ? 'bg-gray-100 dark:bg-gray-700' : ''
-                    } flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200`}
-                  >
-                    {darkMode ? <SunIcon className="w-4 h-4" /> : <MoonIcon className="w-4 h-4" />}
-                    Toggle Dark Mode
-                  </button>
-                )}
-              </Menu.Item>
+
+              <ThemeSelector theme={theme} setTheme={setAndApplyTheme} />
+        
               <Menu.Item>
                 {({ active }) => (
                   <button

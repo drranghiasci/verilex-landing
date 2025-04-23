@@ -37,24 +37,24 @@ export default function SmartCaseFeed() {
   }, []);
 
   return (
-    <div className="bg-white shadow rounded-xl p-6">
-      <h2 className="text-xl font-bold mb-4">📡 Smart Case Feed</h2>
+    <div className="bg-white dark:bg-zinc-900 shadow rounded-xl p-6 transition-colors duration-300">
+      <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">📡 Smart Case Feed</h2>
 
       {loading ? (
-        <p className="text-gray-500">Loading recent case activity...</p>
+        <p className="text-gray-500 dark:text-gray-400">Loading recent case activity...</p>
       ) : cases.length === 0 ? (
-        <p className="text-gray-500">No recent activity.</p>
+        <p className="text-gray-500 dark:text-gray-400">No recent activity.</p>
       ) : (
-        <ul className="divide-y divide-gray-200">
+        <ul className="divide-y divide-gray-200 dark:divide-zinc-700">
           {cases.map((caseItem) => (
             <li key={caseItem.id} className="py-3">
               <Link href={`/active-cases/${caseItem.id}`} className="block hover:underline">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-gray-800">
+                    <p className="font-semibold text-gray-800 dark:text-white">
                       {caseItem.client_name} — {caseItem.case_type}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       Status: {caseItem.status} • {new Date(caseItem.created_at).toLocaleString()}
                     </p>
                   </div>

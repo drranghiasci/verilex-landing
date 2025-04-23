@@ -46,8 +46,8 @@ export default function AddTaskModal({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
       {/* Centered White Card */}
-      <div className="bg-white border border-gray-200 shadow-lg rounded-xl w-full max-w-md mx-auto p-6 relative">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Add New Task</h2>
+      <div className="bg-white text-black dark:bg-zinc-900 dark:text-white p-4 rounded-xl shadow">
+  <h2 className="text-lg font-semibold">Add New Task</h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
