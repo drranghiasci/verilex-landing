@@ -1,7 +1,6 @@
 'use client';
 
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { ChangeEvent, FormEvent, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import Image from 'next/image';
@@ -20,12 +19,34 @@ const US_STATES = [
   'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'
 ];
 
-export default function Page() {
+type NewCaseForm = {
+  clientName: string;
+  email: string;
+  phoneNumber: string;
+  state: string;
+  county: string;
+  caseType: string;
+  preferredContact: string;
+  description: string;
+  courtDate: string;
+  status: string;
+  isStarred: boolean;
+};
+
+export default function NewCasePage() { // Renamed function from Page
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    client_name: '', client_email: '', phone_number: '', state: '', county: '',
-    case_type: '', preferred_contact: '', description: '', court_date: '',
-    status: 'open', is_starred: false
+  const [formData, setFormData] = useState<NewCaseForm>({
+    clientName: '',
+    email: '',
+    phoneNumber: '',
+    state: '',
+    county: '',
+    caseType: '',
+    preferredContact: '',
+    description: '',
+    courtDate: '',
+    status: 'open',
+    isStarred: false
   });
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]); // Explicitly type as File[]
   const [submitting, setSubmitting] = useState(false);
@@ -39,7 +60,9 @@ export default function Page() {
     });
   }, []);
 
-  const handleChange = (e) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -48,12 +71,12 @@ export default function Page() {
     }));
   };
 
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files) as File[]; // Explicitly cast to File[]
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []) as File[]; // Use default empty array if files is null.
     setUploadedFiles((prev) => [...prev, ...files]);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitting(true);
     setSuccessMessage('');
@@ -67,7 +90,7 @@ export default function Page() {
 
       const fullData = {
         ...formData,
-        court_date: formData.court_date ? new Date(formData.court_date) : null,
+        courtDate: formData.courtDate ? new Date(formData.courtDate) : null,
         user_id: user.id
       };
 
@@ -98,9 +121,17 @@ export default function Page() {
 
         setSuccessMessage('Case submitted successfully and added to Active Cases.');
         setFormData({
-          client_name: '', client_email: '', phone_number: '', state: '', county: '',
-          case_type: '', preferred_contact: '', description: '', court_date: '',
-          status: 'open', is_starred: false
+          clientName: '',
+          email: '',
+          phoneNumber: '',
+          state: '',
+          county: '',
+          caseType: '',
+          preferredContact: '',
+          description: '',
+          courtDate: '',
+          status: 'open',
+          isStarred: false
         });
         setUploadedFiles([]);
         router.push(`/dashboard/active-cases/${newCaseId}`);
@@ -115,8 +146,8 @@ export default function Page() {
     }
   };
 
-  const filteredCounties = formData.state && COUNTY_MAP[formData.state]
-    ? COUNTY_MAP[formData.state].filter(county =>
+  const filteredCounties = formData.state && COUNTY_MAP[formData.state as keyof typeof COUNTY_MAP]
+    ? COUNTY_MAP[formData.state as keyof typeof COUNTY_MAP].filter((county: string) =>
         county.toLowerCase().includes(formData.county.toLowerCase())
       )
     : [];
@@ -132,19 +163,19 @@ export default function Page() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block font-medium mb-1">Client Name</label>
-            <input type="text" name="client_name" value={formData.client_name} onChange={handleChange} required className="w-full border border-gray-300 rounded-md px-4 py-2" />
+            <input type="text" name="clientName" value={formData.clientName} onChange={handleChange} required className="w-full border border-gray-300 rounded-md px-4 py-2" title="Client Name" placeholder="Enter client name" />
           </div>
           <div>
             <label className="block font-medium mb-1">Client Email</label>
-            <input type="email" name="client_email" value={formData.client_email} onChange={handleChange} required className="w-full border border-gray-300 rounded-md px-4 py-2" />
+            <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full border border-gray-300 rounded-md px-4 py-2" title="Client Email" placeholder="Enter client email" />
           </div>
           <div>
             <label className="block font-medium mb-1">Phone Number</label>
-            <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2" />
+            <input type="tel" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2" title="Phone Number" placeholder="Enter phone number" />
           </div>
           <div>
             <label className="block font-medium mb-1">State</label>
-            <select name="state" value={formData.state} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2">
+            <select name="state" value={formData.state} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2" title="State">
               <option value="">Select a state</option>
               {US_STATES.map((state) => (
                 <option key={state} value={state}>{state}</option>
@@ -152,13 +183,13 @@ export default function Page() {
             </select>
           </div>
 
-          {formData.state && COUNTY_MAP[formData.state] && (
+          {formData.state && COUNTY_MAP[formData.state as keyof typeof COUNTY_MAP] && (
             <div>
               <label className="block font-medium mb-1">County</label>
               <input type="text" name="county" value={formData.county} onChange={handleChange} placeholder="Start typing to search..." className="w-full border border-gray-300 rounded-md px-4 py-2 mb-2" />
-              <select name="county" value={formData.county} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2">
+              <select name="county" value={formData.county} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2" title="County">
                 <option value="">Select a county</option>
-                {filteredCounties.map((county) => (
+                {filteredCounties.map((county: string) => (
                   <option key={county} value={county}>{county}</option>
                 ))}
               </select>
@@ -167,11 +198,12 @@ export default function Page() {
 
           <div>
             <label className="block font-medium mb-1">Case Type</label>
-            <input type="text" name="case_type" value={formData.case_type} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2" />
+            <input type="text" name="caseType" value={formData.caseType} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2" title="Case Type" placeholder="Enter case type" />
           </div>
           <div>
             <label className="block font-medium mb-1">Preferred Contact Method</label>
-            <select name="preferred_contact" value={formData.preferred_contact} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2">
+            <label htmlFor="preferredContact" className="block font-medium mb-1">Preferred Contact Method</label>
+            <select id="preferredContact" name="preferredContact" value={formData.preferredContact} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2">
               <option value="">Select</option>
               <option value="Email">Email</option>
               <option value="Phone">Phone</option>
@@ -180,11 +212,11 @@ export default function Page() {
           </div>
           <div>
             <label className="block font-medium mb-1">Brief Case Description</label>
-            <textarea name="description" value={formData.description} onChange={handleChange} rows={4} className="w-full border border-gray-300 rounded-md px-4 py-2" />
+            <textarea name="description" value={formData.description} onChange={handleChange} rows={4} className="w-full border border-gray-300 rounded-md px-4 py-2" title="Case Description" placeholder="Enter brief case description" />
           </div>
           <div>
             <label className="block font-medium mb-1">Court Date</label>
-            <input type="date" name="court_date" value={formData.court_date} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2" />
+            <input type="date" name="courtDate" value={formData.courtDate} onChange={handleChange} className="w-full border border-gray-300 rounded-md px-4 py-2" title="Court Date" />
           </div>
 
           <div className="border border-gray-300 p-4 rounded-lg">
