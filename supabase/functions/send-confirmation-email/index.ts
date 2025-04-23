@@ -44,7 +44,8 @@ const server = createServer(async (req, res) => {
       } catch (err) {
         console.error("Function error:", err);
         res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: err.message }));
+        const message = err instanceof Error ? err.message : String(err);
+        res.end(JSON.stringify({ error: message }));
       }
     });
   } else {
