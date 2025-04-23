@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-
+import './global.css';
 import QuickAccessSidebar from '@/components/dashboard/QuickAccessSidebar';
 import TopMenu from '@/components/dashboard/TopMenu';
 
