@@ -1,14 +1,15 @@
-/* stylelint-disable */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* styles/globals.css ------------------------------------------------------ */
 
-/* Custom global styles */
+/* Tailwind v4: one import boots everything */
+@import "tailwindcss";
+
+/* ---------- custom global styles ---------- */
 :root {
   --background: #ffffff;
   --foreground: #171717;
 }
 
+/* Auto-switch for users on dark preference */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -19,5 +20,5 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  @apply transition-colors duration-300;
+  transition: background-color 300ms, color 300ms; /* Equivalent CSS */
 }

@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -13,13 +17,13 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
-
     // ✅ FIX: Use new JSX transform
-    "jsx": "react-jsx",
-
+    "jsx": "preserve",
     // ✅ FIX: Ensure React types are included
-    "types": ["react", "react-dom"],
-
+    "types": [
+      "react",
+      "react-dom"
+    ],
     "plugins": [
       {
         "name": "next"
@@ -28,8 +32,12 @@
     "strictNullChecks": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
-      "@styles/*": ["styles/*"]
+      "@/*": [
+        "./*"
+      ],
+      "@styles/*": [
+        "styles/*"
+      ]
     }
   },
   "include": [
@@ -38,5 +46,7 @@
     "**/*.ts",
     "**/*.tsx"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }
