@@ -1,8 +1,7 @@
-// postcss.config.js  – Tailwind v4
-const config = {
+// postcss.config.js  – CommonJS for Vercel / Next build
+/** @type {import('postcss-load-config').Config} */
+module.exports = {
   plugins: {
-    '@tailwindcss/postcss': {},   // single plugin – autoprefixer is built-in
+    '@tailwindcss/postcss': {},   // Tailwind v4 PostCSS plugin
   },
 };
-
-export default config;
