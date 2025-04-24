@@ -8,12 +8,12 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
 import WaitlistForm  from '@/components/WaitlistForm';
-import CookieBanner   from '@/components/CookieBanner';
-import { Analytics }  from '@vercel/analytics/react';
+import CookieBanner  from '@/components/CookieBanner';
+import { Analytics } from '@vercel/analytics/react';
 
-/* ------------------------------------------------------------------------- */
-/* Hook: useCountdown                                                        */
-/* ------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+/* Countdown hook                                                             */
+/* -------------------------------------------------------------------------- */
 const calcCountdown = (target: Date) => {
   const d = target.getTime() - Date.now();
   return {
@@ -34,9 +34,9 @@ function useCountdown(target: Date) {
   return time;
 }
 
-/* ------------------------------------------------------------------------- */
-/* Static Roadmap Data                                                       */
-/* ------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+/* Static roadmap                                                             */
+/* -------------------------------------------------------------------------- */
 const ROADMAP = [
   { date: 'Apr 2025',   title: 'Waitlist Opens',          desc: 'Gather early-adopter attorneys & gauge feature priorities.',         icon: '🔒' },
   { date: 'Aug 2025',   title: 'Private Alpha',           desc: 'Research & summary engine available to internal testers.',            icon: '🧪' },
@@ -47,26 +47,23 @@ const ROADMAP = [
   { date: 'Q1 2026',    title: 'Practice-Area Expansion', desc: 'Immigration, family, and business-law playbooks.',                   icon: '🌐' },
 ] as const;
 
-/* ------------------------------------------------------------------------- */
-/* Page Component                                                            */
-/* ------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+/* Page                                                                       */
+/* -------------------------------------------------------------------------- */
 export default function Home() {
   const launchDate = new Date('2026-01-01T05:00:00Z'); // 00:00 EST
   const countdown  = useCountdown(launchDate);
 
   return (
     <>
-      {/* SEO / Social */}
+      {/* SEO / OG tags */}
       <Head>
         <title>VeriLex AI | AI-Powered Legal Software for Solo & Small Firms</title>
         <meta
           name="description"
           content="Legal AI software that automates research, contract review, and client intake so attorneys can focus on clients. Join the waitlist today."
         />
-        <meta
-          name="keywords"
-          content="Legal AI Software, Legal AI, Legal task manager, AI Client intake, Law firm automation, VeriLex AI"
-        />
+        <meta name="keywords" content="Legal AI Software, Legal AI, task manager, law firm automation" />
         <link rel="canonical" href="https://verilex.ai/" />
         <meta property="og:type"  content="website" />
         <meta property="og:title" content="VeriLex AI | AI-Powered Legal Assistant" />
@@ -79,89 +76,38 @@ export default function Home() {
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
 
-      {/* Shell */}
-      <div
-        className="
-          scroll-smooth
-          bg-gradient-to-br
-          from-background
-          to-background/80
-          text-foreground
-          min-h-screen
-        "
-      >
-        {/* ----------------------------------------------------------------- */}
-        {/* Header                                                            */}
-        {/* ----------------------------------------------------------------- */}
-        <header
-          className="
-            fixed inset-x-0 top-0 z-50
-            bg-background/90 backdrop-blur
-            border-b border-border
-          "
-        >
-          <nav
-            className="flex w-full items-center justify-between px-4 sm:px-6 py-3"
-            aria-label="Main Navigation"
-          >
-            <Link
-  href="/"
-  className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
->
-  {/* Light-mode logo */}
-  <Image
-    src="/verilex-logo-name.png"
-    alt="VeriLex AI logo"
-    width={170}
-    height={60}
-    priority
-    className="dark:hidden"
-  />
+      {/* ─────────────────────────────── Shell */}
+      <div className="min-h-screen scroll-smooth bg-gradient-to-br from-background to-background/80 text-foreground">
+        {/* ─────────────────────────── Header */}
+        <header className="fixed inset-x-0 top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
+          <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-4">
+            {/* Logo pair */}
+            <Link href="/" className="flex items-center focus-visible:ring-2 focus-visible:ring-indigo-600">
+              <Image
+                src="/verilex-logo-name.png"
+                alt="VeriLex AI logo"
+                width={170}
+                height={60}
+                priority
+                className="dark:hidden"
+              />
+              <Image
+                src="/verilex-logo-name-darkmode.png"
+                alt="VeriLex AI logo"
+                width={170}
+                height={60}
+                priority
+                className="hidden dark:block"
+              />
+            </Link>
 
-  {/* Dark-mode logo */}
-  <Image
-    src="/verilex-logo-name-darkmode.png"   /* adjust path if needed */
-    alt="VeriLex AI logo"
-    width={170}
-    height={60}
-    priority
-    className="hidden dark:block"
-  />
-</Link>
-
+            {/* Nav links */}
             <div className="flex items-center gap-6 text-sm font-medium">
-              <Link
-                href="/login"
-                className="
-                  hover:text-foreground
-                  transition
-                  focus-visible:ring-2 focus-visible:ring-indigo-600
-                "
-              >
-                Log In
-              </Link>
-
-              <Link
-                href="#contact"
-                className="
-                  hover:text-foreground
-                  transition
-                  focus-visible:ring-2 focus-visible:ring-indigo-600
-                "
-              >
-                Contact
-              </Link>
-
+              <Link href="/login"   className="hover:text-foreground transition">Log In</Link>
+              <Link href="#contact" className="hover:text-foreground transition">Contact</Link>
               <Link
                 href="/register"
-                className="
-                  rounded
-                  border border-foreground
-                  px-4 py-1.5
-                  hover:bg-foreground hover:text-background
-                  transition
-                  focus-visible:ring-2 focus-visible:ring-indigo-600
-                "
+                className="rounded border border-foreground px-4 py-1.5 hover:bg-foreground hover:text-background transition"
               >
                 Sign Up
               </Link>
@@ -169,12 +115,10 @@ export default function Home() {
           </nav>
         </header>
 
-        {/* ----------------------------------------------------------------- */}
-        {/* Main                                                              */}
-        {/* ----------------------------------------------------------------- */}
-        <main className="mx-auto max-w-4xl px-4 pt-28 text-center">
+        {/* ─────────────────────────── Main */}
+        <main className="mx-auto max-w-4xl px-4 pt-32 text-center">
           {/* Hero */}
-          <section id="hero" aria-label="Hero" className="flex flex-col items-center py-28">
+          <section id="hero" className="flex flex-col items-center py-28">
             <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight">
               Your AI-Powered Legal Assistant
             </h1>
@@ -189,13 +133,7 @@ export default function Home() {
             </div>
 
             {/* Countdown */}
-            <p
-              className="
-                mt-8 inline-block rounded
-                bg-foreground text-background
-                px-5 py-2 text-lg font-semibold
-              "
-            >
+            <p className="mt-8 inline-block rounded bg-foreground px-5 py-2 text-lg font-semibold text-background">
               Public launch&nbsp;in&nbsp;
               <span className="font-mono">
                 {`${countdown.months}mo ${countdown.days}d ${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`}
@@ -204,10 +142,8 @@ export default function Home() {
           </section>
 
           {/* Waitlist */}
-          <section id="waitlist" aria-labelledby="join" className="py-16">
-            <h2 id="join" className="mb-6 text-3xl font-bold">
-              Join the Waitlist
-            </h2>
+          <section id="waitlist" className="py-16">
+            <h2 className="mb-6 text-3xl font-bold">Join the Waitlist</h2>
             <p className="mx-auto mb-8 max-w-2xl text-lg text-foreground/70">
               Early adopters receive priority onboarding, exclusive discounts, and direct access to the founding team.
             </p>
@@ -217,15 +153,12 @@ export default function Home() {
           </section>
 
           {/* Roadmap */}
-          <section aria-labelledby="roadmap" className="py-16 text-left">
-            <h2 id="roadmap" className="mb-6 text-center text-3xl font-bold">
-              Product Roadmap
-            </h2>
-
+          <section className="py-16 text-left">
+            <h2 className="mb-6 text-center text-3xl font-bold">Product Roadmap</h2>
             <ul className="relative mx-auto max-w-2xl border-l border-border pl-6">
               {ROADMAP.map(({ date, title, desc, icon }) => (
-                <li key={title} className="group mb-10 last:mb-0 -mt-2 first:mt-0">
-                  <span className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full bg-background ring-2 ring-indigo-600 text-base">
+                <li key={title} className="group mb-10 last:mb-0 first:mt-0">
+                  <span className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full bg-background ring-2 ring-indigo-600">
                     {icon}
                   </span>
                   <details className="cursor-pointer">
