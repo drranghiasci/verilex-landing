@@ -100,7 +100,7 @@ export default function Home() {
         className="dark:hidden"
       />
       <Image
-        src="/verilex-logo-name-darkmode.png"
+        src="/verilex-logo-name-darkmode.png?v=2"
         alt="VeriLex AI logo"
         width={170}
         height={60}
