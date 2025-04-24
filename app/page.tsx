@@ -78,42 +78,51 @@ export default function Home() {
 
       {/* ─────────────────────────────── Shell */}
       <div className="min-h-screen scroll-smooth bg-gradient-to-br from-background to-background/80 text-foreground">
-        {/* ─────────────────────────── Header */}
-        <header className="fixed inset-x-0 top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
-          <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-4">
-            {/* Logo pair */}
-            <Link href="/" className="flex items-center focus-visible:ring-2 focus-visible:ring-indigo-600">
-              <Image
-                src="/verilex-logo-name.png"
-                alt="VeriLex AI logo"
-                width={170}
-                height={60}
-                priority
-                className="dark:hidden"
-              />
-              <Image
-                src="/verilex-logo-name-darkmode.png"
-                alt="VeriLex AI logo"
-                width={170}
-                height={60}
-                priority
-                className="hidden dark:block"
-              />
-            </Link>
+       {/* ─────────────────────────── Header */}
+<header className="fixed inset-x-0 top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
+  <nav
+    className="
+      mx-auto
+      flex h-16 w-full max-w-7xl
+      items-center justify-between
+      px-4 sm:px-6
+    "
+    aria-label="Main Navigation"
+  >
+    {/* Logo pair */}
+    <Link href="/" className="flex items-center focus-visible:ring-2 focus-visible:ring-indigo-600">
+      <Image
+        src="/verilex-logo-name.png"
+        alt="VeriLex AI logo"
+        width={170}
+        height={60}
+        priority
+        className="dark:hidden"
+      />
+      <Image
+        src="/verilex-logo-name-darkmode.png"
+        alt="VeriLex AI logo"
+        width={170}
+        height={60}
+        priority
+        className="hidden dark:block"
+      />
+    </Link>
 
-            {/* Nav links */}
-            <div className="flex items-center gap-6 text-sm font-medium">
-              <Link href="/login"   className="hover:text-foreground transition">Log In</Link>
-              <Link href="#contact" className="hover:text-foreground transition">Contact</Link>
-              <Link
-                href="/register"
-                className="rounded border border-foreground px-4 py-1.5 hover:bg-foreground hover:text-background transition"
-              >
-                Sign Up
-              </Link>
-            </div>
-          </nav>
-        </header>
+    {/* Nav links */}
+    <div className="flex items-center gap-6 text-sm font-medium">
+      <Link href="/login"   className="hover:text-foreground transition">Log In</Link>
+      <Link href="#contact" className="hover:text-foreground transition">Contact</Link>
+      <Link
+        href="/register"
+        className="rounded border border-foreground px-4 py-1.5 hover:bg-foreground hover:text-background transition"
+      >
+        Sign Up
+      </Link>
+    </div>
+  </nav>
+</header>
+
 
         {/* ─────────────────────────── Main */}
         <main className="mx-auto max-w-4xl px-4 pt-32 text-center">
