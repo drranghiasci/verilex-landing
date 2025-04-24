@@ -105,26 +105,29 @@ export default function Home() {
             aria-label="Main Navigation"
           >
             <Link
-              href="/"
-              className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
-            >
-              <Image
-                src="/verilex-logo-name.png"
-                alt="VeriLex AI logo"
-                width={170}
-                height={60}
-                priority
-                className="dark:hidden"
-              />
-              <Image
-                src="/verilex-logo-name-darkmode.png"
-                alt="VeriLex AI logo"
-                width={170}
-                height={60}
-                priority
-                className="hidden dark:block"
-              />
-            </Link>
+  href="/"
+  className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+>
+  {/* Light-mode logo */}
+  <Image
+    src="/verilex-logo-name.png"
+    alt="VeriLex AI logo"
+    width={170}
+    height={60}
+    priority
+    className="dark:hidden"
+  />
+
+  {/* Dark-mode logo */}
+  <Image
+    src="/verilex-logo-name-darkmode.png"   /* adjust path if needed */
+    alt="VeriLex AI logo"
+    width={170}
+    height={60}
+    priority
+    className="hidden dark:block"
+  />
+</Link>
 
             <div className="flex items-center gap-6 text-sm font-medium">
               <Link
