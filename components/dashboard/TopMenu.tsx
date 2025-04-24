@@ -5,9 +5,9 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { Menu, Transition } from '@headlessui/react';
-import { MoonIcon, SunIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
 import md5 from 'md5';
 import ThemeSelector from '@/components/dashboard/ThemeSelector';
+import VerilexLogo from '@/components/dashboard/VerilexLogo';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -19,6 +19,19 @@ export default function TopMenu() {
 
   const router = useRouter();
 
+  // Set stored theme on mount
+  useEffect(() => {
+    const stored = (localStorage.getItem('theme') as Theme) || 'system';
+    setTheme(stored);
+  }, []);
+
+  // Apply theme: explicit dark wins over OS light
+  useEffect(() => {
+    const systemPref = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const shouldUseDark = theme === 'dark' || (theme === 'system' && systemPref === 'dark');
+    document.documentElement.classList.toggle('dark', shouldUseDark);
+  }, [theme]);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       const email = data?.user?.email ?? '';
@@ -29,28 +42,11 @@ export default function TopMenu() {
         setAvatarUrl(gravatar);
       }
     });
-
-    const stored = localStorage.getItem('theme') as Theme;
-    const preferred: Theme = stored || 'system';
-    setTheme(preferred);
-    applyTheme(preferred);
   }, []);
-
-  const applyTheme = (value: Theme) => {
-    const root = document.documentElement;
-    root.classList.remove('light', 'dark');
-
-    const shouldDark =
-      value === 'dark' ||
-      (value === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-    root.classList.add(shouldDark ? 'dark' : 'light');
-  };
 
   const setAndApplyTheme = (newTheme: Theme) => {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
-    applyTheme(newTheme);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -64,17 +60,13 @@ export default function TopMenu() {
     router.push('/login');
   };
 
-  const isDark =
-    theme === 'dark' ||
-    (theme === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-  const logoSrc = isDark ? '/verilex-logo-name-darkmode.png' : '/verilex-logo-name.png';
-
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between h-14 border-b border-gray-200 bg-white px-4 shadow-sm dark:bg-gray-900 dark:border-gray-700">
+    <header
+      className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between h-14 border-b border-gray-200 bg-background/95 backdrop-blur px-4 shadow-sm dark:border-gray-700"
+    >
       {/* Logo */}
       <div className="flex items-center">
-        <Image src={logoSrc} alt="VeriLex AI" width={150} height={40} priority />
+        <VerilexLogo className="w-[150px] h-auto" />
       </div>
 
       {/* Lexi Search */}
@@ -129,7 +121,7 @@ export default function TopMenu() {
               </Menu.Item>
 
               <ThemeSelector theme={theme} setTheme={setAndApplyTheme} />
-        
+
               <Menu.Item>
                 {({ active }) => (
                   <button

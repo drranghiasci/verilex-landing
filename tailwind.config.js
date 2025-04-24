@@ -12,9 +12,10 @@ module.exports = {
         colors: {
           background: 'var(--background)',
           foreground: 'var(--foreground)',
+          accent: 'var(--accent)', // new accent token
+          border: 'var(--border)', // new border token
         },
       },
     },
     plugins: [],
   };
-  
