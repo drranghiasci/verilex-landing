@@ -1,13 +1,24 @@
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { useTheme } from 'next-themes';
 
 export default function VerilexLogo({ className = '', ...props }) {
-  const { theme, resolvedTheme } = useTheme();
-  const mode = theme === 'system' ? resolvedTheme : theme;
-  const src =
-    mode === 'dark'
-      ? '/verilex-logo-name-darkmode.png'
-      : '/verilex-logo-name-lightmode.png';
+  const [src, setSrc] = useState('/verilex-logo-name.png'); // light mode default
+
+  useEffect(() => {
+    const updateLogo = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      setSrc(isDark ? '/verilex-logo-name-darkmode.png' : '/verilex-logo-name.png');
+    };
+
+    updateLogo();
+
+    const observer = new MutationObserver(updateLogo);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   return (
     <Image
