@@ -1,21 +1,27 @@
-// app/layout.tsx (Global Minimal)
-'use client';
-
+// app/layout.tsx
 import '@styles/globals.css';
-import React from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import type { Metadata } from 'next';
 import { ThemeProvider } from 'next-themes';
 
-console.log('Root layout rendering: no session check here!');
-// Removed duplicate RootLayout definition
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export const metadata: Metadata = {
+  title: 'VeriLex AI',
+  description: 'AI-powered legal software for solo and small firms',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      {/* `class` is added by ThemeProvider */}
+      <body className="antialiased">
+        {/* ---------- client providers ---------- */}
         <ThemeProvider attribute="class" enableSystem>
           {children}
         </ThemeProvider>
-        </body>
-      </html>
-    );
-  }
+      </body>
+    </html>
+  );
+}
