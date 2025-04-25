@@ -78,38 +78,50 @@ export default function Home() {
 
       {/* ─────────────────────────────── Shell */}
       <div className="min-h-screen scroll-smooth bg-gradient-to-br from-background to-background/80 text-foreground">
-       {/* ─────────────────────────── Header */}
+      {/* ─────────────────────────── Header */}
 <header className="fixed inset-x-0 top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
   <nav
     className="
-      mx-auto
-      flex h-16 w-full max-w-7xl
+      mx-auto flex h-16 w-full max-w-7xl
       items-center justify-between
       px-4 sm:px-6
     "
     aria-label="Main Navigation"
   >
-    {/* Logo pair */}
-    <Link href="/" className="flex items-center focus-visible:ring-2 focus-visible:ring-indigo-600">
+    {/* ---------- Logo (light + dark stacked) ---------- */}
+    <Link
+      href="/"
+      className="relative flex items-center focus-visible:ring-2 focus-visible:ring-indigo-600"
+      style={{ width: 170 }}           /* reserve width so layout never shifts */
+    >
+      {/* light-mode logo (always rendered) */}
       <Image
         src="/verilex-logo-name.png"
-        alt="VeriLex AI logo"
+        alt="VeriLex AI"
         width={170}
         height={60}
         priority
-        className="dark:hidden"
+        unoptimized                 /* skip next-image transformation */
+        className="transition-opacity duration-150 dark:opacity-0"
       />
+
+      {/* dark-mode logo (opacity 0 until .dark) */}
       <Image
         src="/verilex-logo-name-dark.png"
-        alt="VeriLex AI logo"
+        alt="VeriLex AI dark"
         width={170}
         height={60}
         priority
-        className="hidden dark:block"
+        unoptimized
+        className="
+          absolute left-0 top-0
+          opacity-0 transition-opacity duration-150
+          dark:opacity-100
+        "
       />
     </Link>
 
-    {/* Nav links */}
+    {/* ---------- Nav links ---------- */}
     <div className="flex items-center gap-6 text-sm font-medium">
       <Link href="/login"   className="hover:text-foreground transition">Log In</Link>
       <Link href="#contact" className="hover:text-foreground transition">Contact</Link>
