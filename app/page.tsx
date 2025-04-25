@@ -78,9 +78,10 @@ export default function Home() {
 
       {/* ─────────────────────────────── Shell */}
       <div className="min-h-screen scroll-smooth bg-gradient-to-br from-background to-background/80 text-foreground">
-      {/* ─────────────────────────── Header */}
+     {/* ─────────────────────────── Header */}
 <header className="fixed inset-x-0 top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
   <nav
+    /* full-bleed background but the content is centred via max-w-7xl */
     className="
       mx-auto flex h-16 w-full max-w-7xl
       items-center justify-between
@@ -88,36 +89,31 @@ export default function Home() {
     "
     aria-label="Main Navigation"
   >
-    {/* ---------- Logo (light + dark stacked) ---------- */}
+    {/* ---------- Logo ---------- */}
     <Link
       href="/"
       className="relative flex items-center focus-visible:ring-2 focus-visible:ring-indigo-600"
-      style={{ width: 170 }}           /* reserve width so layout never shifts */
     >
-      {/* light-mode logo (always rendered) */}
+      {/* light logo */}
       <Image
         src="/verilex-logo-name.png"
         alt="VeriLex AI"
-        width={170}
-        height={60}
+        width={140}          /* ← adjust if you’d like it smaller */
+        height={50}
         priority
-        unoptimized                 /* skip next-image transformation */
+        unoptimized
         className="transition-opacity duration-150 dark:opacity-0"
       />
 
-      {/* dark-mode logo (opacity 0 until .dark) */}
+      {/* dark logo sits exactly on top and fades in */}
       <Image
         src="/verilex-logo-name-dark.png"
         alt="VeriLex AI dark"
-        width={170}
-        height={60}
+        width={140}
+        height={50}
         priority
         unoptimized
-        className="
-          absolute left-0 top-0
-          opacity-0 transition-opacity duration-150
-          dark:opacity-100
-        "
+        className="absolute inset-0 opacity-0 transition-opacity duration-150 dark:opacity-100"
       />
     </Link>
 
@@ -127,7 +123,11 @@ export default function Home() {
       <Link href="#contact" className="hover:text-foreground transition">Contact</Link>
       <Link
         href="/register"
-        className="rounded border border-foreground px-4 py-1.5 hover:bg-foreground hover:text-background transition"
+        className="
+          rounded border border-foreground px-4 py-1.5
+          hover:bg-foreground hover:text-background
+          transition
+        "
       >
         Sign Up
       </Link>
