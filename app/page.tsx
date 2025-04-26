@@ -80,33 +80,37 @@ export default function Home() {
       <div className="min-h-screen scroll-smooth bg-gradient-to-br from-background to-background/80 text-foreground">
      {/* ─────────────────────────── Header */}
 <header className="fixed inset-x-0 top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
-  {/* remove mx-auto / max-w-7xl so the bar stretches full-width */}
   <nav
     className="flex h-16 w-full items-center justify-between px-4 sm:px-6"
     aria-label="Main Navigation"
   >
-    {/* Logo block */}
-<Link href="/" className="relative flex items-center h-full focus-visible:ring-2 focus-visible:ring-indigo-600">
-  {/* light */}
-  <Image
-    src="/verilex-logo-name.png"
-    alt="VeriLex AI"
-    fill                     /* ← makes the image fill the 64-px bar  */
-    style={{ objectFit: 'contain' }}
-    priority
-    className="transition-opacity duration-150 dark:opacity-0"
-  />
+    {/* ---------- Logo ---------- */}
+    <Link
+      href="/"
+      className="relative flex items-center focus-visible:ring-2 focus-visible:ring-indigo-600"
+    >
+      {/* light logo */}
+      <Image
+        src="/verilex-logo-name.png"
+        alt="VeriLex AI"
+        width={150}          /* <— pick whatever width looks right */
+        height={46}          /* keeps aspect ratio */
+        priority
+        unoptimized
+        className="object-contain transition-opacity duration-150 dark:opacity-0"
+      />
 
-  {/* dark */}
-  <Image
-    src="/verilex-logo-name-dark.png"
-    alt="VeriLex AI dark"
-    fill
-    style={{ objectFit: 'contain' }}
-    priority
-    className="absolute inset-0 opacity-0 transition-opacity duration-150 dark:opacity-100"
-  />
-</Link>
+      {/* dark logo */}
+      <Image
+        src="/verilex-logo-name-dark.png"
+        alt="VeriLex AI (dark)"
+        width={150}
+        height={46}
+        priority
+        unoptimized
+        className="absolute inset-0 object-contain opacity-0 transition-opacity duration-150 dark:opacity-100"
+      />
+    </Link>
 
     {/* ---------- Nav links ---------- */}
     <div className="flex items-center gap-6 text-sm font-medium">
