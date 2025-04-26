@@ -11,6 +11,7 @@
   "dependencies": {
     "@headlessui/react": "^2.2.2",
     "@heroicons/react": "^2.2.0",
+    "@react-three/fiber": "^9.1.2",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
@@ -26,7 +27,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-tooltip": "^5.28.1",
-    "resend": "^4.2.0"
+    "resend": "^4.2.0",
+    "three": "^0.176.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -34,6 +36,7 @@
     "@types/md5": "^2.3.5",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
+    "@types/three": "^0.176.0",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
     "supabase": "^2.20.12",

@@ -6,10 +6,16 @@ import Link from 'next/link';
 import { ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
 
 import WaitlistForm  from '@/components/WaitlistForm';
 import CookieBanner  from '@/components/CookieBanner';
 import { Analytics } from '@vercel/analytics/react';
+
+const WaveBackground = dynamic(
+  () => import('@/components/WaveBackground'),
+  { ssr: false } // don’t render in Node
+);
 
 /* -------------------------------------------------------------------------- */
 /* Countdown hook                                                             */
@@ -56,6 +62,7 @@ export default function Home() {
 
   return (
     <>
+      <WaveBackground /> {/* animated low-poly lines */}
       {/* SEO / OG tags */}
       <Head>
         <title>VeriLex AI | AI-Powered Legal Software for Solo & Small Firms</title>
@@ -79,9 +86,6 @@ export default function Home() {
       {/* ─────────────────────────────── Shell */}
       <div className="min-h-screen scroll-smooth bg-gradient-to-br from-background to-background/80 text-foreground">
         <div className="relative min-h-screen scroll-smooth">
-          {/* background layer */}
-          <div className="bg-landing absolute inset-0 -z-10" />
-
           {/* ─────────────────────────── Header */}
           <header className="fixed inset-x-0 top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
             <nav
