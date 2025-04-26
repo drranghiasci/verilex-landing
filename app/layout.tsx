@@ -2,6 +2,8 @@
 import '@styles/globals.css';
 import type { Metadata } from 'next';
 import { ThemeProvider } from 'next-themes';
+import '@/styles/landing-bg.css';
+
 
 export const metadata: Metadata = {
   title: 'VeriLex AI',

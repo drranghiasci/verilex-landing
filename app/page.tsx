@@ -78,244 +78,249 @@ export default function Home() {
 
       {/* ─────────────────────────────── Shell */}
       <div className="min-h-screen scroll-smooth bg-gradient-to-br from-background to-background/80 text-foreground">
-     {/* ─────────────────────────── Header */}
-<header className="fixed inset-x-0 top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
-  <nav
-    className="flex h-16 w-full items-center justify-between px-4 sm:px-6"
-    aria-label="Main Navigation"
-  >
-    {/* ---------- Logo ---------- */}
-    <Link
-      href="/"
-      className="relative flex items-center focus-visible:ring-2 focus-visible:ring-indigo-600"
-    >
-      {/* light logo */}
-      <Image
-        src="/verilex-logo-name.png"
-        alt="VeriLex AI"
-        width={150}          /* <— pick whatever width looks right */
-        height={46}          /* keeps aspect ratio */
-        priority
-        unoptimized
-        className="object-contain transition-opacity duration-150 dark:opacity-0"
-      />
+        <div className="relative min-h-screen scroll-smooth">
+          {/* background layer */}
+          <div className="bg-landing absolute inset-0 -z-10" />
 
-      {/* dark logo */}
-      <Image
-        src="/verilex-logo-name-darkmode.png"
-        alt="VeriLex AI (dark)"
-        width={150}
-        height={46}
-        priority
-        unoptimized
-        className="absolute inset-0 object-contain opacity-0 transition-opacity duration-150 dark:opacity-100"
-      />
-    </Link>
-
-    {/* ---------- Nav links ---------- */}
-    <div className="flex items-center gap-6 text-sm font-medium">
-      <Link href="/login"   className="hover:text-foreground transition">Log In</Link>
-      <Link href="#contact" className="hover:text-foreground transition">Contact</Link>
-      <Link
-        href="/register"
-        className="rounded border border-foreground px-4 py-1.5 hover:bg-foreground hover:text-background transition"
-      >
-        Sign Up
-      </Link>
-    </div>
-  </nav>
-</header>
-
-        {/* ─────────────────────────── Main */}
-        <main className="mx-auto max-w-4xl px-4 pt-32 text-center">
-          {/* Hero */}
-          <section id="hero" className="flex flex-col items-center py-28">
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight">
-              Your AI-Powered Legal Assistant
-            </h1>
-            <p className="mt-6 text-lg md:text-xl text-foreground/70">
-              Automate research, summarize cases, manage intake, and review contracts — all in one secure platform.
-            </p>
-
-            {/* Security */}
-            <div className="mt-4 flex items-center justify-center text-sm text-foreground/60">
-              <ShieldCheck className="mr-2 h-4 w-4" aria-hidden="true" />
-              256-bit encryption • SOC 2 Type II (in progress)
-            </div>
-
-            {/* Countdown */}
-            <p className="mt-8 inline-block rounded bg-foreground px-5 py-2 text-lg font-semibold text-background">
-              Public launch&nbsp;in&nbsp;
-              <span className="font-mono">
-                {`${countdown.months}mo ${countdown.days}d ${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`}
-              </span>
-            </p>
-          </section>
-
-          {/* Waitlist */}
-          <section id="waitlist" className="py-16">
-            <h2 className="mb-6 text-3xl font-bold">Join the Waitlist</h2>
-            <p className="mx-auto mb-8 max-w-2xl text-lg text-foreground/70">
-              Early adopters receive priority onboarding, exclusive discounts, and direct access to the founding team.
-            </p>
-            <div className="mx-auto w-full max-w-md">
-              <WaitlistForm />
-            </div>
-          </section>
-
-          {/* Roadmap */}
-          <section className="py-16 text-left">
-            <h2 className="mb-6 text-center text-3xl font-bold">Product Roadmap</h2>
-            <ul className="relative mx-auto max-w-2xl border-l border-border pl-6">
-              {ROADMAP.map(({ date, title, desc, icon }) => (
-                <li key={title} className="group mb-10 last:mb-0 first:mt-0">
-                  <span className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full bg-background ring-2 ring-indigo-600">
-                    {icon}
-                  </span>
-                  <details className="cursor-pointer">
-                    <summary className="font-semibold">
-                      {title}{' '}
-                      <span className="ml-2 text-sm font-normal text-foreground/60">{date}</span>
-                    </summary>
-                    <p className="mt-2 text-foreground/70">{desc}</p>
-                  </details>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          {/* OUR STORY SECTION */}
-          <section id="story" className="py-24 text-left">
-            <h2 className="mb-8 text-center text-4xl font-bold">Our Story</h2>
-            <div className="mx-auto max-w-3xl space-y-8 text-foreground/70 text-lg leading-relaxed">
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                viewport={{ once: true }}
-                className="text-center italic text-foreground/60"
+          {/* ─────────────────────────── Header */}
+          <header className="fixed inset-x-0 top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
+            <nav
+              className="flex h-16 w-full items-center justify-between px-4 sm:px-6"
+              aria-label="Main Navigation"
+            >
+              {/* ---------- Logo ---------- */}
+              <Link
+                href="/"
+                className="relative flex items-center focus-visible:ring-2 focus-visible:ring-indigo-600"
               >
-                We’re not lawyers. We’re entrepreneurs. And we’re building the future of legal work.
-              </motion.p>
-              {[
-                `VeriLex AI began with a simple realization: lawyers are doing far too much work that AI can handle. As a small team of builders and creatives, we saw an opportunity to help legal professionals spend more time doing what matters — serving clients, winning cases, and making a difference.`,
-                `We’re not here to replace attorneys — we’re here to amplify them. From client intake to document automation and beyond, VeriLex AI is built to be an all-in-one assistant that reduces burnout, improves accuracy, and reclaims time.`,
-                `As a young founder, I’m not from the legal world — and that’s why I’m asking better questions. Why can’t legal tools feel intuitive? Why can’t solo attorneys and small firms have access to the same superpowers as big law? Why isn’t there a platform built just for them?`,
-                `We’re building VeriLex AI to change that. With input from real attorneys and a commitment to security and usability, we’re creating the tools that will define the next generation of legal work — smarter, faster, more human.`,
-              ].map((text, idx) => (
+                {/* light logo */}
+                <Image
+                  src="/verilex-logo-name.png"
+                  alt="VeriLex AI"
+                  width={150}          /* <— pick whatever width looks right */
+                  height={46}          /* keeps aspect ratio */
+                  priority
+                  unoptimized
+                  className="object-contain transition-opacity duration-150 dark:opacity-0"
+                />
+
+                {/* dark logo */}
+                <Image
+                  src="/verilex-logo-name-darkmode.png"
+                  alt="VeriLex AI (dark)"
+                  width={150}
+                  height={46}
+                  priority
+                  unoptimized
+                  className="absolute inset-0 object-contain opacity-0 transition-opacity duration-150 dark:opacity-100"
+                />
+              </Link>
+
+              {/* ---------- Nav links ---------- */}
+              <div className="flex items-center gap-6 text-sm font-medium">
+                <Link href="/login"   className="hover:text-foreground transition">Log In</Link>
+                <Link href="#contact" className="hover:text-foreground transition">Contact</Link>
+                <Link
+                  href="/register"
+                  className="rounded border border-foreground px-4 py-1.5 hover:bg-foreground hover:text-background transition"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            </nav>
+          </header>
+
+          {/* ─────────────────────────── Main */}
+          <main className="mx-auto max-w-4xl px-4 pt-32 text-center">
+            {/* Hero */}
+            <section id="hero" className="flex flex-col items-center py-28">
+              <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight">
+                Your AI-Powered Legal Assistant
+              </h1>
+              <p className="mt-6 text-lg md:text-xl text-foreground/70">
+                Automate research, summarize cases, manage intake, and review contracts — all in one secure platform.
+              </p>
+
+              {/* Security */}
+              <div className="mt-4 flex items-center justify-center text-sm text-foreground/60">
+                <ShieldCheck className="mr-2 h-4 w-4" aria-hidden="true" />
+                256-bit encryption • SOC 2 Type II (in progress)
+              </div>
+
+              {/* Countdown */}
+              <p className="mt-8 inline-block rounded bg-foreground px-5 py-2 text-lg font-semibold text-background">
+                Public launch&nbsp;in&nbsp;
+                <span className="font-mono">
+                  {`${countdown.months}mo ${countdown.days}d ${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`}
+                </span>
+              </p>
+            </section>
+
+            {/* Waitlist */}
+            <section id="waitlist" className="py-16">
+              <h2 className="mb-6 text-3xl font-bold">Join the Waitlist</h2>
+              <p className="mx-auto mb-8 max-w-2xl text-lg text-foreground/70">
+                Early adopters receive priority onboarding, exclusive discounts, and direct access to the founding team.
+              </p>
+              <div className="mx-auto w-full max-w-md">
+                <WaitlistForm />
+              </div>
+            </section>
+
+            {/* Roadmap */}
+            <section className="py-16 text-left">
+              <h2 className="mb-6 text-center text-3xl font-bold">Product Roadmap</h2>
+              <ul className="relative mx-auto max-w-2xl border-l border-border pl-6">
+                {ROADMAP.map(({ date, title, desc, icon }) => (
+                  <li key={title} className="group mb-10 last:mb-0 first:mt-0">
+                    <span className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full bg-background ring-2 ring-indigo-600">
+                      {icon}
+                    </span>
+                    <details className="cursor-pointer">
+                      <summary className="font-semibold">
+                        {title}{' '}
+                        <span className="ml-2 text-sm font-normal text-foreground/60">{date}</span>
+                      </summary>
+                      <p className="mt-2 text-foreground/70">{desc}</p>
+                    </details>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            {/* OUR STORY SECTION */}
+            <section id="story" className="py-24 text-left">
+              <h2 className="mb-8 text-center text-4xl font-bold">Our Story</h2>
+              <div className="mx-auto max-w-3xl space-y-8 text-foreground/70 text-lg leading-relaxed">
                 <motion.p
-                  key={idx}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: idx * 0.15 }}
+                  transition={{ duration: 0.6 }}
                   viewport={{ once: true }}
+                  className="text-center italic text-foreground/60"
                 >
-                  {text}
+                  We’re not lawyers. We’re entrepreneurs. And we’re building the future of legal work.
                 </motion.p>
-              ))}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                viewport={{ once: true }}
-                className="mt-10 border-l-4 border-indigo-500 pl-6 italic text-foreground/60"
-              >
-                “This is just the beginning. We’re proud to be building VeriLex AI — and we can’t wait to see how it empowers the attorneys who inspire us.”
-                <br />
-                <span className="mt-4 block text-right font-bold">
-                  – The VeriLex AI Team
-                </span>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
-                viewport={{ once: true }}
-                className="mt-12 text-center"
-              >
-                <Link
-                  href="#waitlist"
-                  className="
-                    inline-block rounded
-                    bg-indigo-600 px-6 py-3 text-white
-                    font-semibold shadow-md
-                    hover:bg-indigo-700
-                    transition
-                  "
+                {[
+                  `VeriLex AI began with a simple realization: lawyers are doing far too much work that AI can handle. As a small team of builders and creatives, we saw an opportunity to help legal professionals spend more time doing what matters — serving clients, winning cases, and making a difference.`,
+                  `We’re not here to replace attorneys — we’re here to amplify them. From client intake to document automation and beyond, VeriLex AI is built to be an all-in-one assistant that reduces burnout, improves accuracy, and reclaims time.`,
+                  `As a young founder, I’m not from the legal world — and that’s why I’m asking better questions. Why can’t legal tools feel intuitive? Why can’t solo attorneys and small firms have access to the same superpowers as big law? Why isn’t there a platform built just for them?`,
+                  `We’re building VeriLex AI to change that. With input from real attorneys and a commitment to security and usability, we’re creating the tools that will define the next generation of legal work — smarter, faster, more human.`,
+                ].map((text, idx) => (
+                  <motion.p
+                    key={idx}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: idx * 0.15 }}
+                    viewport={{ once: true }}
+                  >
+                    {text}
+                  </motion.p>
+                ))}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.6 }}
+                  viewport={{ once: true }}
+                  className="mt-10 border-l-4 border-indigo-500 pl-6 italic text-foreground/60"
                 >
-                  Join the Early Access Waitlist
-                </Link>
-              </motion.div>
-            </div>
-          </section>
+                  “This is just the beginning. We’re proud to be building VeriLex AI — and we can’t wait to see how it empowers the attorneys who inspire us.”
+                  <br />
+                  <span className="mt-4 block text-right font-bold">
+                    – The VeriLex AI Team
+                  </span>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.8 }}
+                  viewport={{ once: true }}
+                  className="mt-12 text-center"
+                >
+                  <Link
+                    href="#waitlist"
+                    className="
+                      inline-block rounded
+                      bg-indigo-600 px-6 py-3 text-white
+                      font-semibold shadow-md
+                      hover:bg-indigo-700
+                      transition
+                    "
+                  >
+                    Join the Early Access Waitlist
+                  </Link>
+                </motion.div>
+              </div>
+            </section>
 
-          {/* FAQ */}
-          <section aria-labelledby="faq" className="py-16 text-left">
-            <h2 id="faq" className="mb-6 text-center text-3xl font-bold">
-              FAQ
-            </h2>
+            {/* FAQ */}
+            <section aria-labelledby="faq" className="py-16 text-left">
+              <h2 id="faq" className="mb-6 text-center text-3xl font-bold">
+                FAQ
+              </h2>
 
-            <div className="mx-auto max-w-2xl space-y-6">
-              {[
-                {
-                  q: 'Is VeriLex AI a law firm?',
-                  a: 'No. VeriLex AI is a legal-automation platform and does not provide legal advice. Always consult a licensed attorney for legal matters.',
-                },
-                {
-                  q: 'When does beta access start?',
-                  a: 'Closed beta begins 1 October 2025 for the first 50 firms on the waitlist.',
-                },
-                {
-                  q: 'How secure is my data?',
-                  a: 'All data is encrypted in transit (TLS 1.3) and at rest (AES-256). We are pursuing SOC 2 Type II certification.',
-                },
-              ].map(({ q, a }) => (
-                <details key={q} className="rounded border border-border p-4 open:shadow-sm">
-                  <summary className="cursor-pointer font-semibold">{q}</summary>
-                  <p className="pt-2 text-foreground/70">{a}</p>
-                </details>
-              ))}
-            </div>
-          </section>
+              <div className="mx-auto max-w-2xl space-y-6">
+                {[
+                  {
+                    q: 'Is VeriLex AI a law firm?',
+                    a: 'No. VeriLex AI is a legal-automation platform and does not provide legal advice. Always consult a licensed attorney for legal matters.',
+                  },
+                  {
+                    q: 'When does beta access start?',
+                    a: 'Closed beta begins 1 October 2025 for the first 50 firms on the waitlist.',
+                  },
+                  {
+                    q: 'How secure is my data?',
+                    a: 'All data is encrypted in transit (TLS 1.3) and at rest (AES-256). We are pursuing SOC 2 Type II certification.',
+                  },
+                ].map(({ q, a }) => (
+                  <details key={q} className="rounded border border-border p-4 open:shadow-sm">
+                    <summary className="cursor-pointer font-semibold">{q}</summary>
+                    <p className="pt-2 text-foreground/70">{a}</p>
+                  </details>
+                ))}
+              </div>
+            </section>
 
-          {/* Contact */}
-          <section id="contact" aria-labelledby="contact-heading" className="py-16 text-left">
-            <h2 id="contact-heading" className="mb-6 text-center text-3xl font-bold">
-              Contact
-            </h2>
-            <p className="text-lg text-foreground/70 text-center">
-              Questions or partnership ideas? Reach us at&nbsp;
-              <a href="mailto:founder@verilex.us" className="text-accent underline">
-                founder@verilex.us
-              </a>
-            </p>
-          </section>
-        </main>
+            {/* Contact */}
+            <section id="contact" aria-labelledby="contact-heading" className="py-16 text-left">
+              <h2 id="contact-heading" className="mb-6 text-center text-3xl font-bold">
+                Contact
+              </h2>
+              <p className="text-lg text-foreground/70 text-center">
+                Questions or partnership ideas? Reach us at&nbsp;
+                <a href="mailto:founder@verilex.us" className="text-accent underline">
+                  founder@verilex.us
+                </a>
+              </p>
+            </section>
+          </main>
 
-        {/* ----------------------------------------------------------------- */}
-        {/* Footer                                                            */}
-        {/* ----------------------------------------------------------------- */}
-        <footer className="py-10 text-center text-sm text-foreground/50">
-          VeriLex AI is <span className="whitespace-nowrap">not a law firm</span> and does not
-          provide legal advice. All information is for informational purposes only.
-          <br />
-          <Link
-            href="/privacy"
-            className="
-              underline decoration-1 underline-offset-2
-              hover:text-accent
-              focus-visible:outline-none
-              focus-visible:ring-2 focus-visible:ring-blue-500
-              rounded
-            "
-          >
-            Privacy Policy
-          </Link>
-        </footer>
+          {/* ----------------------------------------------------------------- */}
+          {/* Footer                                                            */}
+          {/* ----------------------------------------------------------------- */}
+          <footer className="py-10 text-center text-sm text-foreground/50">
+            VeriLex AI is <span className="whitespace-nowrap">not a law firm</span> and does not
+            provide legal advice. All information is for informational purposes only.
+            <br />
+            <Link
+              href="/privacy"
+              className="
+                underline decoration-1 underline-offset-2
+                hover:text-accent
+                focus-visible:outline-none
+                focus-visible:ring-2 focus-visible:ring-blue-500
+                rounded
+              "
+            >
+              Privacy Policy
+            </Link>
+          </footer>
 
-        {/* Cookie banner & analytics */}
-        <CookieBanner />
-        <Analytics />
+          {/* Cookie banner & analytics */}
+          <CookieBanner />
+          <Analytics />
+        </div>
       </div>
     </>
   );
