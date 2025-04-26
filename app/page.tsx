@@ -80,35 +80,27 @@ export default function Home() {
       <div className="min-h-screen scroll-smooth bg-gradient-to-br from-background to-background/80 text-foreground">
      {/* ─────────────────────────── Header */}
 <header className="fixed inset-x-0 top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
+  {/* remove mx-auto / max-w-7xl so the bar stretches full-width */}
   <nav
-    /* full-bleed background but the content is centred via max-w-7xl */
-    className="
-      mx-auto flex h-16 w-full max-w-7xl
-      items-center justify-between
-      px-4 sm:px-6
-    "
+    className="flex h-16 w-full items-center justify-between px-4 sm:px-6"
     aria-label="Main Navigation"
   >
     {/* ---------- Logo ---------- */}
-    <Link
-      href="/"
-      className="relative flex items-center focus-visible:ring-2 focus-visible:ring-indigo-600"
-    >
+    <Link href="/" className="relative flex items-center space-x-0 focus-visible:ring-2 focus-visible:ring-indigo-600">
       {/* light logo */}
       <Image
         src="/verilex-logo-name.png"
         alt="VeriLex AI"
-        width={140}          /* ← adjust if you’d like it smaller */
+        width={140}
         height={50}
         priority
         unoptimized
         className="transition-opacity duration-150 dark:opacity-0"
       />
-
-      {/* dark logo sits exactly on top and fades in */}
+      {/* dark logo */}
       <Image
         src="/verilex-logo-name-dark.png"
-        alt="VeriLex AI dark"
+        alt="VeriLex AI"
         width={140}
         height={50}
         priority
@@ -123,18 +115,13 @@ export default function Home() {
       <Link href="#contact" className="hover:text-foreground transition">Contact</Link>
       <Link
         href="/register"
-        className="
-          rounded border border-foreground px-4 py-1.5
-          hover:bg-foreground hover:text-background
-          transition
-        "
+        className="rounded border border-foreground px-4 py-1.5 hover:bg-foreground hover:text-background transition"
       >
         Sign Up
       </Link>
     </div>
   </nav>
 </header>
-
 
         {/* ─────────────────────────── Main */}
         <main className="mx-auto max-w-4xl px-4 pt-32 text-center">
