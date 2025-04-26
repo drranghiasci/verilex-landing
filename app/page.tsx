@@ -102,7 +102,7 @@ export default function Home() {
 
       {/* dark logo */}
       <Image
-        src="/verilex-logo-name-dark.png"
+        src="/verilex-logo-name-darkmode.png"
         alt="VeriLex AI (dark)"
         width={150}
         height={46}
