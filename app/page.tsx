@@ -85,29 +85,28 @@ export default function Home() {
     className="flex h-16 w-full items-center justify-between px-4 sm:px-6"
     aria-label="Main Navigation"
   >
-    {/* ---------- Logo ---------- */}
-    <Link href="/" className="relative flex items-center space-x-0 focus-visible:ring-2 focus-visible:ring-indigo-600">
-      {/* light logo */}
-      <Image
-        src="/verilex-logo-name.png"
-        alt="VeriLex AI"
-        width={140}
-        height={50}
-        priority
-        unoptimized
-        className="transition-opacity duration-150 dark:opacity-0"
-      />
-      {/* dark logo */}
-      <Image
-        src="/verilex-logo-name-dark.png"
-        alt="VeriLex AI"
-        width={140}
-        height={50}
-        priority
-        unoptimized
-        className="absolute inset-0 opacity-0 transition-opacity duration-150 dark:opacity-100"
-      />
-    </Link>
+    {/* Logo block */}
+<Link href="/" className="relative flex items-center h-full focus-visible:ring-2 focus-visible:ring-indigo-600">
+  {/* light */}
+  <Image
+    src="/verilex-logo-name.png"
+    alt="VeriLex AI"
+    fill                     /* ← makes the image fill the 64-px bar  */
+    style={{ objectFit: 'contain' }}
+    priority
+    className="transition-opacity duration-150 dark:opacity-0"
+  />
+
+  {/* dark */}
+  <Image
+    src="/verilex-logo-name-dark.png"
+    alt="VeriLex AI dark"
+    fill
+    style={{ objectFit: 'contain' }}
+    priority
+    className="absolute inset-0 opacity-0 transition-opacity duration-150 dark:opacity-100"
+  />
+</Link>
 
     {/* ---------- Nav links ---------- */}
     <div className="flex items-center gap-6 text-sm font-medium">
