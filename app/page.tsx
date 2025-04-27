@@ -8,18 +8,17 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
-import WaitlistForm  from '@/components/WaitlistForm';
-import CookieBanner  from '@/components/CookieBanner';
-import { Analytics } from '@vercel/analytics/react';
+import WaitlistForm   from '@/components/WaitlistForm';
+import CookieBanner   from '@/components/CookieBanner';
+import { Analytics }  from '@vercel/analytics/react';
 
+/* ────────────────────────────────────────── dynamic 3-D background */
 const WaveBackground = dynamic(
-  () => import('@/components/WaveBackground'),
-  { ssr: false } // don’t render in Node
+  () => import('@/components/WaveBackground'),   // new dotted-wave component
+  { ssr: false }
 );
 
-/* -------------------------------------------------------------------------- */
-/* Countdown hook                                                             */
-/* -------------------------------------------------------------------------- */
+/* ────────────────────────────────────────── Countdown hook */
 const calcCountdown = (target: Date) => {
   const d = target.getTime() - Date.now();
   return {
@@ -34,163 +33,147 @@ const calcCountdown = (target: Date) => {
 function useCountdown(target: Date) {
   const [time, setTime] = useState(() => calcCountdown(target));
   useEffect(() => {
-    const id = setInterval(() => setTime(calcCountdown(target)), 1000);
+    const id = setInterval(() => setTime(calcCountdown(target)), 1_000);
     return () => clearInterval(id);
   }, [target]);
   return time;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Static roadmap                                                             */
-/* -------------------------------------------------------------------------- */
+/* ────────────────────────────────────────── Static roadmap */
 const ROADMAP = [
-  { date: 'Apr 2025',   title: 'Waitlist Opens',          desc: 'Gather early-adopter attorneys & gauge feature priorities.',         icon: '🔒' },
-  { date: 'Aug 2025',   title: 'Private Alpha',           desc: 'Research & summary engine available to internal testers.',            icon: '🧪' },
-  { date: '1 Oct 2025', title: 'Closed Beta',             desc: 'Invite-only beta for 50 firms. Feedback loops & bug fixes.',          icon: '🚧' },
-  { date: 'Nov 2025',   title: 'Contract Analyzer Alpha', desc: 'Risk-clause detection and key-term extraction.',                     icon: '📑' },
-  { date: 'Dec 2025',   title: 'Smart Assistant Preview', desc: 'Natural-language Q&A on statutes, rulings, and firm docs.',          icon: '🤖' },
-  { date: '1 Jan 2026', title: 'Public Launch',           desc: 'Self-serve onboarding, billing, and live support.',                  icon: '🚀' },
-  { date: 'Q1 2026',    title: 'Practice-Area Expansion', desc: 'Immigration, family, and business-law playbooks.',                   icon: '🌐' },
+  { date: 'Apr 2025', title: 'Waitlist Opens',          desc: 'Gather early-adopter attorneys & gauge feature priorities.',         icon: '🔒' },
+  { date: 'Aug 2025', title: 'Private Alpha',           desc: 'Research & summary engine available to internal testers.',            icon: '🧪' },
+  { date: '1 Oct 2025', title: 'Closed Beta',           desc: 'Invite-only beta for 50 firms. Feedback loops & bug fixes.',          icon: '🚧' },
+  { date: 'Nov 2025', title: 'Contract Analyzer Alpha', desc: 'Risk-clause detection and key-term extraction.',                     icon: '📑' },
+  { date: 'Dec 2025', title: 'Smart Assistant Preview', desc: 'Natural-language Q&A on statutes, rulings, and firm docs.',          icon: '🤖' },
+  { date: '1 Jan 2026', title: 'Public Launch',         desc: 'Self-serve onboarding, billing, and live support.',                  icon: '🚀' },
+  { date: 'Q1 2026',  title: 'Practice-Area Expansion', desc: 'Immigration, family, and business-law playbooks.',                   icon: '🌐' },
 ] as const;
 
-/* -------------------------------------------------------------------------- */
-/* Page                                                                       */
-/* -------------------------------------------------------------------------- */
+/* ────────────────────────────────────────── Page */
 export default function Home() {
-  const launchDate = new Date('2026-01-01T05:00:00Z'); // 00:00 EST
+  const launchDate = new Date('2026-01-01T05:00:00Z');  // 00:00 EST
   const countdown  = useCountdown(launchDate);
 
   return (
     <>
-      <WaveBackground /> {/* animated low-poly lines */}
-      {/* SEO / OG tags */}
+      {/* SEO / OG */}
       <Head>
         <title>VeriLex AI | AI-Powered Legal Software for Solo & Small Firms</title>
-        <meta
-          name="description"
-          content="Legal AI software that automates research, contract review, and client intake so attorneys can focus on clients. Join the waitlist today."
-        />
-        <meta name="keywords" content="Legal AI Software, Legal AI, task manager, law firm automation" />
+        <meta name="description" content="Legal AI software that automates research, contract review, and client intake." />
+        <meta name="keywords"    content="Legal AI, Legal research automation, Contract analyzer" />
         <link rel="canonical" href="https://verilex.ai/" />
-        <meta property="og:type"  content="website" />
-        <meta property="og:title" content="VeriLex AI | AI-Powered Legal Assistant" />
-        <meta
-          property="og:description"
-          content="Automate legal research, summarize cases, and review contracts — built for solo attorneys and small firms."
-        />
-        <meta property="og:url"   content="https://verilex.ai/" />
-        <meta property="og:image" content="https://verilex.ai/og-cover.png" />
-        <meta name="twitter:card" content="summary_large_image" />
+        <meta property="og:type"        content="website" />
+        <meta property="og:title"       content="VeriLex AI | AI-Powered Legal Assistant" />
+        <meta property="og:description" content="Automate legal research, summarize cases, and review contracts." />
+        <meta property="og:url"         content="https://verilex.ai/" />
+        <meta property="og:image"       content="https://verilex.ai/og-cover.png" />
+        <meta name="twitter:card"       content="summary_large_image" />
       </Head>
 
-      {/* ─────────────────────────────── Shell */}
+      {/* ────────────────────────── Shell */}
       <div className="min-h-screen scroll-smooth bg-gradient-to-br from-background to-background/80 text-foreground">
-        <div className="relative min-h-screen scroll-smooth">
-          {/* ─────────────────────────── Header */}
-          <header className="fixed inset-x-0 top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
-            <nav
-              className="flex h-16 w-full items-center justify-between px-4 sm:px-6"
-              aria-label="Main Navigation"
-            >
-              {/* ---------- Logo ---------- */}
+
+        {/* ───────── Header */}
+        <header className="fixed inset-x-0 top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
+          <nav className="flex h-16 w-full items-center justify-between px-4 sm:px-6" aria-label="Main Navigation">
+            {/* Logo pair */}
+            <Link href="/" className="relative flex items-center focus-visible:ring-2 focus-visible:ring-indigo-600">
+              <Image
+                src="/verilex-logo-name.png"
+                alt="VeriLex AI"
+                width={150}
+                height={46}
+                priority
+                unoptimized
+                className="object-contain transition-opacity dark:opacity-0"
+              />
+              <Image
+                src="/verilex-logo-name-darkmode.png"
+                alt="VeriLex AI (dark)"
+                width={150}
+                height={46}
+                priority
+                unoptimized
+                className="absolute inset-0 object-contain opacity-0 transition-opacity dark:opacity-100"
+              />
+            </Link>
+
+            {/* Nav links */}
+            <div className="flex items-center gap-6 text-sm font-medium">
+              <Link href="/login"   className="hover:text-foreground transition">Log In</Link>
+              <Link href="#contact" className="hover:text-foreground transition">Contact</Link>
               <Link
-                href="/"
-                className="relative flex items-center focus-visible:ring-2 focus-visible:ring-indigo-600"
+                href="/register"
+                className="rounded border border-foreground px-4 py-1.5 hover:bg-foreground hover:text-background transition"
               >
-                {/* light logo */}
-                <Image
-                  src="/verilex-logo-name.png"
-                  alt="VeriLex AI"
-                  width={150}          /* <— pick whatever width looks right */
-                  height={46}          /* keeps aspect ratio */
-                  priority
-                  unoptimized
-                  className="object-contain transition-opacity duration-150 dark:opacity-0"
-                />
-
-                {/* dark logo */}
-                <Image
-                  src="/verilex-logo-name-darkmode.png"
-                  alt="VeriLex AI (dark)"
-                  width={150}
-                  height={46}
-                  priority
-                  unoptimized
-                  className="absolute inset-0 object-contain opacity-0 transition-opacity duration-150 dark:opacity-100"
-                />
+                Sign Up
               </Link>
+            </div>
+          </nav>
+        </header>
 
-              {/* ---------- Nav links ---------- */}
-              <div className="flex items-center gap-6 text-sm font-medium">
-                <Link href="/login"   className="hover:text-foreground transition">Log In</Link>
-                <Link href="#contact" className="hover:text-foreground transition">Contact</Link>
-                <Link
-                  href="/register"
-                  className="rounded border border-foreground px-4 py-1.5 hover:bg-foreground hover:text-background transition"
-                >
-                  Sign Up
-                </Link>
-              </div>
-            </nav>
-          </header>
+        {/* ───────── Main */}
+        <main className="mx-auto max-w-4xl px-4 pt-32 text-center">
 
-          {/* ─────────────────────────── Main */}
-          <main className="mx-auto max-w-4xl px-4 pt-32 text-center">
-            {/* Hero */}
-            <section id="hero" className="flex flex-col items-center py-28">
-              <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight">
-                Your AI-Powered Legal Assistant
-              </h1>
-              <p className="mt-6 text-lg md:text-xl text-foreground/70">
-                Automate research, summarize cases, manage intake, and review contracts — all in one secure platform.
-              </p>
+          {/* Hero */}
+          <section id="hero" className="relative flex flex-col items-center py-28">
+            {/* dotted-wave background limited to hero */}
+            <WaveBackground />
 
-              {/* Security */}
-              <div className="mt-4 flex items-center justify-center text-sm text-foreground/60">
-                <ShieldCheck className="mr-2 h-4 w-4" aria-hidden="true" />
-                256-bit encryption • SOC 2 Type II (in progress)
-              </div>
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight">
+              Your AI-Powered Legal Assistant
+            </h1>
+            <p className="mt-6 text-lg md:text-xl text-foreground/70">
+              Automate research, summarize cases, manage intake, and review contracts — all in one secure platform.
+            </p>
 
-              {/* Countdown */}
-              <p className="mt-8 inline-block rounded bg-foreground px-5 py-2 text-lg font-semibold text-background">
-                Public launch&nbsp;in&nbsp;
-                <span className="font-mono">
-                  {`${countdown.months}mo ${countdown.days}d ${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`}
-                </span>
-              </p>
-            </section>
+            {/* Security */}
+            <div className="mt-4 flex items-center justify-center text-sm text-foreground/60">
+              <ShieldCheck className="mr-2 h-4 w-4" aria-hidden="true" />
+              256-bit encryption • SOC 2 Type II (in progress)
+            </div>
 
-            {/* Waitlist */}
-            <section id="waitlist" className="py-16">
-              <h2 className="mb-6 text-3xl font-bold">Join the Waitlist</h2>
-              <p className="mx-auto mb-8 max-w-2xl text-lg text-foreground/70">
-                Early adopters receive priority onboarding, exclusive discounts, and direct access to the founding team.
-              </p>
-              <div className="mx-auto w-full max-w-md">
-                <WaitlistForm />
-              </div>
-            </section>
+            {/* Countdown */}
+            <p className="mt-8 inline-block rounded bg-foreground px-5 py-2 text-lg font-semibold text-background">
+              Public launch&nbsp;in&nbsp;
+              <span className="font-mono">
+                {`${countdown.months}mo ${countdown.days}d ${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`}
+              </span>
+            </p>
+          </section>
 
-            {/* Roadmap */}
-            <section className="py-16 text-left">
-              <h2 className="mb-6 text-center text-3xl font-bold">Product Roadmap</h2>
-              <ul className="relative mx-auto max-w-2xl border-l border-border pl-6">
-                {ROADMAP.map(({ date, title, desc, icon }) => (
-                  <li key={title} className="group mb-10 last:mb-0 first:mt-0">
-                    <span className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full bg-background ring-2 ring-indigo-600">
-                      {icon}
-                    </span>
-                    <details className="cursor-pointer">
-                      <summary className="font-semibold">
-                        {title}{' '}
-                        <span className="ml-2 text-sm font-normal text-foreground/60">{date}</span>
-                      </summary>
-                      <p className="mt-2 text-foreground/70">{desc}</p>
-                    </details>
-                  </li>
-                ))}
-              </ul>
-            </section>
+          {/* Waitlist */}
+          <section id="waitlist" className="py-16">
+            <h2 className="mb-6 text-3xl font-bold">Join the Waitlist</h2>
+            <p className="mx-auto mb-8 max-w-2xl text-lg text-foreground/70">
+              Early adopters receive priority onboarding, exclusive discounts, and direct access to the founding team.
+            </p>
+            <div className="mx-auto w-full max-w-md">
+              <WaitlistForm />
+            </div>
+          </section>
+
+          {/* Roadmap */}
+          <section className="py-16 text-left">
+            <h2 className="mb-6 text-center text-3xl font-bold">Product Roadmap</h2>
+            <ul className="relative mx-auto max-w-2xl border-l border-border pl-6">
+              {ROADMAP.map(({ date, title, desc, icon }) => (
+                <li key={title} className="group mb-10 last:mb-0 first:mt-0">
+                  <span className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full bg-background ring-2 ring-indigo-600">
+                    {icon}
+                  </span>
+                  <details className="cursor-pointer">
+                    <summary className="font-semibold">
+                      {title}{' '}
+                      <span className="ml-2 text-sm font-normal text-foreground/60">{date}</span>
+                    </summary>
+                    <p className="mt-2 text-foreground/70">{desc}</p>
+                  </details>
+                </li>
+              ))}
+            </ul>
+          </section>
 
             {/* OUR STORY SECTION */}
             <section id="story" className="py-24 text-left">
@@ -300,31 +283,21 @@ export default function Home() {
             </section>
           </main>
 
-          {/* ----------------------------------------------------------------- */}
-          {/* Footer                                                            */}
-          {/* ----------------------------------------------------------------- */}
-          <footer className="py-10 text-center text-sm text-foreground/50">
-            VeriLex AI is <span className="whitespace-nowrap">not a law firm</span> and does not
-            provide legal advice. All information is for informational purposes only.
-            <br />
-            <Link
-              href="/privacy"
-              className="
-                underline decoration-1 underline-offset-2
-                hover:text-accent
-                focus-visible:outline-none
-                focus-visible:ring-2 focus-visible:ring-blue-500
-                rounded
-              "
-            >
-              Privacy Policy
-            </Link>
-          </footer>
+          {/* Footer */}
+        <footer className="py-10 text-center text-sm text-foreground/50">
+          VeriLex AI is <span className="whitespace-nowrap">not a law firm</span> and does not provide legal advice.
+          <br />
+          <Link
+            href="/privacy"
+            className="underline decoration-1 underline-offset-2 hover:text-accent focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+          >
+            Privacy Policy
+          </Link>
+        </footer>
 
-          {/* Cookie banner & analytics */}
-          <CookieBanner />
-          <Analytics />
-        </div>
+        {/* Cookie banner & analytics */}
+        <CookieBanner />
+        <Analytics />
       </div>
     </>
   );
