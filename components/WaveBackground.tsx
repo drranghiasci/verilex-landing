@@ -1,9 +1,8 @@
 'use client';
 
 import { Canvas, useFrame } from '@react-three/fiber';
-import { useRef, Suspense } from 'react';
-import { Mesh, Vector3 } from 'three';
-import { useEffect, useState } from 'react';
+import { useRef, Suspense, useEffect, useState } from 'react';
+import { Mesh, Vector3, Color } from 'three';
 import { useTheme } from 'next-themes';
 
 function usePrefersReducedMotion() {
@@ -18,7 +17,7 @@ function usePrefersReducedMotion() {
   return prefers;
 }
 
-function Waves({ isDark }: { isDark: boolean }) {
+function Waves() {
   const mesh = useRef<Mesh>(null);
 
   useFrame(({ clock }) => {
@@ -29,7 +28,7 @@ function Waves({ isDark }: { isDark: boolean }) {
 
     for (let i = 0; i < position.count; i++) {
       vertex.fromBufferAttribute(position, i);
-      vertex.z = 0.4 * Math.sin(i / 3 + time);
+      vertex.z = 0.3 * Math.sin(i / 2 + time * 0.8);
       position.setXYZ(i, vertex.x, vertex.y, vertex.z);
     }
 
@@ -37,13 +36,17 @@ function Waves({ isDark }: { isDark: boolean }) {
   });
 
   return (
-    <mesh ref={mesh} rotation={[-Math.PI / 2, 0, 0]}>
-      <planeGeometry args={[100, 100, 100, 100]} />
+    <mesh
+      ref={mesh}
+      rotation={[-Math.PI / 2, 0, 0]}
+      position={[0, -1.5, 0]} // lower into the scene
+    >
+      <planeGeometry args={[60, 60, 80, 80]} />
       <meshBasicMaterial
+        color="hsl(265, 80%, 70%)"
         wireframe
+        opacity={0.18}
         transparent
-        opacity={0.14}
-        color={isDark ? 'hsl(265, 80%, 65%)' : 'hsl(265, 60%, 50%)'}
       />
     </mesh>
   );
@@ -52,22 +55,26 @@ function Waves({ isDark }: { isDark: boolean }) {
 export default function WaveBackground() {
   const prefersReducedMotion = usePrefersReducedMotion();
   const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === 'dark';
+
   if (typeof window !== 'undefined' && prefersReducedMotion) return null;
 
   return (
-    <Canvas
-      className="fixed inset-0 -z-10 h-full w-full pointer-events-none"
-      camera={{ position: [0, 8, 8], fov: 60 }}
-      dpr={[1, 1.5]}
-      gl={{ alpha: true }}
-      onCreated={({ gl }) => {
-        gl.setClearColor(0x000000, 0); // fully transparent
-      }}
-    >
-      <Suspense fallback={null}>
-        <Waves isDark={isDark} />
-      </Suspense>
-    </Canvas>
+    <div className="fixed inset-0 -z-10">
+      <Canvas
+        className="w-full h-full"
+        dpr={[1, 1.5]}
+        camera={{ position: [0, 10, 10], fov: 65 }}
+        style={{
+          background:
+            resolvedTheme === 'light'
+              ? 'white'
+              : 'black',
+        }}
+      >
+        <Suspense fallback={null}>
+          <Waves />
+        </Suspense>
+      </Canvas>
+    </div>
   );
 }
