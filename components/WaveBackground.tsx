@@ -4,6 +4,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { useRef, Suspense } from 'react';
 import { Mesh, Vector3 } from 'three';
 import { useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
 
 function usePrefersReducedMotion() {
   const [prefers, setPrefers] = useState(false);
@@ -17,7 +18,7 @@ function usePrefersReducedMotion() {
   return prefers;
 }
 
-function Waves() {
+function Waves({ isDark }: { isDark: boolean }) {
   const mesh = useRef<Mesh>(null);
 
   useFrame(({ clock }) => {
@@ -42,7 +43,7 @@ function Waves() {
         wireframe
         transparent
         opacity={0.14}
-        color="hsl(265, 80%, 65%)"
+        color={isDark ? 'hsl(265, 80%, 65%)' : 'hsl(265, 60%, 50%)'}
       />
     </mesh>
   );
@@ -50,11 +51,13 @@ function Waves() {
 
 export default function WaveBackground() {
   const prefersReducedMotion = usePrefersReducedMotion();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
   if (typeof window !== 'undefined' && prefersReducedMotion) return null;
 
   return (
     <Canvas
-      className="absolute inset-0 -z-10 h-full w-full pointer-events-none"
+      className="fixed inset-0 -z-10 h-full w-full pointer-events-none"
       camera={{ position: [0, 8, 8], fov: 60 }}
       dpr={[1, 1.5]}
       gl={{ alpha: true }}
@@ -63,7 +66,7 @@ export default function WaveBackground() {
       }}
     >
       <Suspense fallback={null}>
-        <Waves />
+        <Waves isDark={isDark} />
       </Suspense>
     </Canvas>
   );

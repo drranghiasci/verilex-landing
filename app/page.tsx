@@ -72,7 +72,8 @@ export default function Home() {
       </Head>
 
       {/* ────────────────────────── Shell */}
-      <div className="min-h-screen scroll-smooth bg-gradient-to-br from-background to-background/80 text-foreground">
+      <div className="relative min-h-screen scroll-smooth bg-gradient-to-br from-background to-background/80 text-foreground">
+        <WaveBackground />
 
         {/* ───────── Header */}
         <header className="fixed inset-x-0 top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
@@ -118,16 +119,15 @@ export default function Home() {
 
           {/* Hero */}
           <section
-  id="hero"
-  className="relative flex flex-col items-center py-28 overflow-hidden"
->
-  <WaveBackground />
-  <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight">
-    Your AI-Powered Legal Assistant
-  </h1>
-  <p className="mt-6 text-lg md:text-xl text-foreground/70">
-    Automate research, summarize cases, manage intake, and review contracts — all in one secure platform.
-  </p>
+            id="hero"
+            className="relative flex flex-col items-center py-28 overflow-hidden"
+          >
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight">
+              Your AI-Powered Legal Assistant
+            </h1>
+            <p className="mt-6 text-lg md:text-xl text-foreground/70">
+              Automate research, summarize cases, manage intake, and review contracts — all in one secure platform.
+            </p>
 
             {/* Security */}
             <div className="mt-4 flex items-center justify-center text-sm text-foreground/60">
