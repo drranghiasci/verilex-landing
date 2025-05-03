@@ -117,7 +117,7 @@ export default function Home() {
         <main className="mx-auto max-w-4xl px-4 pt-32 text-center">
 
           {/* Hero */}
-          <section id="hero" className="relative flex flex-col items-center py-28">
+          <section id="hero" className="relative flex flex-col items-center py-28 overflow-hidden">
             {/* dotted-wave background limited to hero */}
             <WaveBackground />
 
