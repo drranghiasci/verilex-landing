@@ -50,6 +50,40 @@ const ROADMAP = [
   { date: 'Q1 2026',  title: 'Practice-Area Expansion', desc: 'Immigration, family, and business-law playbooks.',                   icon: '🌐' },
 ] as const;
 
+/* ────────────────────────────────────────── Stat messages and rotator */
+const STAT_MESSAGES = [
+  'Save up to 12 hours per week by automating case law and statute research.',
+  'Handle 30% more clients using streamlined AI-powered intake.',
+  'Draft documents 40% faster with AI-generated summaries and templates.',
+  'Cut response times by 60% with automated client messaging tools.',
+  'Reduce overhead costs by 20–25% by automating repetitive legal admin.',
+  'Boost client satisfaction with faster turnaround and clearer communication.',
+];
+
+function StatRotator({ messages }: { messages: string[] }) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setIndex((prev) => (prev + 1) % messages.length);
+    }, 4000);
+    return () => clearInterval(id);
+  }, [messages.length]);
+
+  return (
+    <motion.div
+      key={index}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.5 }}
+      className="px-4"
+    >
+      {messages[index]}
+    </motion.div>
+  );
+}
+
 /* ────────────────────────────────────────── Page */
 export default function Home() {
   const launchDate = new Date('2026-01-01T05:00:00Z');  // 00:00 EST
@@ -176,160 +210,143 @@ export default function Home() {
             </ul>
           </section>
 
-              {/* Impact Stats Section */}
-<section className="py-20 bg-background text-center text-foreground">
-  <h2 className="text-3xl font-bold mb-10">How VeriLex AI Helps Law Firms</h2>
-  <div className="relative h-20 overflow-hidden">
-    <motion.div
-      className="absolute w-full"
-      animate={{ x: ["100%", "0%", "-100%"] }}
-      transition={{ repeat: Infinity, duration: 36, ease: "linear" }}
-    >
-      {[
-        '🕒 Save up to 12 hours/week with automated legal research.',
-        '📈 Solo attorneys handle 30% more cases using smart intake.',
-        '💬 AI-assisted summaries reduce motion drafting time by 40%.',
-        '🤖 80% of routine document review can be AI-augmented.',
-        '🔐 VeriLex AI is built with SOC 2-grade data protection.',
-        '🚀 90% of beta testers say they’d recommend VeriLex to peers.'
-      ].map((stat, i) => (
-        <div key={i} className="w-full text-xl font-medium text-foreground/80">
-          {stat}
-        </div>
-      ))}
-    </motion.div>
-  </div>
-</section>
+          {/* Impact Stats Section */}
+          <section className="py-24 text-center">
+            <h2 className="mb-8 text-3xl font-bold">How VeriLex AI Helps Law Firms</h2>
+            <div className="text-xl md:text-2xl font-medium text-foreground transition-all duration-500 min-h-[3rem]">
+              <StatRotator messages={STAT_MESSAGES} />
+            </div>
+          </section>
 
-            {/* OUR STORY SECTION */}
-            <section id="story" className="py-24 text-left">
-              <h2 className="mb-8 text-center text-4xl font-bold">Our Story</h2>
-              <div className="mx-auto max-w-3xl space-y-8 text-foreground/70 text-lg leading-relaxed">
+          {/* OUR STORY SECTION */}
+          <section id="story" className="py-24 text-left">
+            <h2 className="mb-8 text-center text-4xl font-bold">Our Story</h2>
+            <div className="mx-auto max-w-3xl space-y-8 text-foreground/70 text-lg leading-relaxed">
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                viewport={{ once: true }}
+                className="text-center italic text-foreground/60"
+              >
+                We’re not lawyers. We’re entrepreneurs. And we’re building the future of legal work.
+              </motion.p>
+              {[
+                `VeriLex AI began with a simple realization: lawyers are doing far too much work that AI can handle. As a small team of builders and creatives, we saw an opportunity to help legal professionals spend more time doing what matters — serving clients, winning cases, and making a difference.`,
+                `We’re not here to replace attorneys — we’re here to amplify them. From client intake to document automation and beyond, VeriLex AI is built to be an all-in-one assistant that reduces burnout, improves accuracy, and reclaims time.`,
+                `As a young founder, I’m not from the legal world — and that’s why I’m asking better questions. Why can’t legal tools feel intuitive? Why can’t solo attorneys and small firms have access to the same superpowers as big law? Why isn’t there a platform built just for them?`,
+                `We’re building VeriLex AI to change that. With input from real attorneys and a commitment to security and usability, we’re creating the tools that will define the next generation of legal work — smarter, faster, more human.`,
+              ].map((text, idx) => (
                 <motion.p
+                  key={idx}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6 }}
+                  transition={{ duration: 0.6, delay: idx * 0.15 }}
                   viewport={{ once: true }}
-                  className="text-center italic text-foreground/60"
                 >
-                  We’re not lawyers. We’re entrepreneurs. And we’re building the future of legal work.
+                  {text}
                 </motion.p>
-                {[
-                  `VeriLex AI began with a simple realization: lawyers are doing far too much work that AI can handle. As a small team of builders and creatives, we saw an opportunity to help legal professionals spend more time doing what matters — serving clients, winning cases, and making a difference.`,
-                  `We’re not here to replace attorneys — we’re here to amplify them. From client intake to document automation and beyond, VeriLex AI is built to be an all-in-one assistant that reduces burnout, improves accuracy, and reclaims time.`,
-                  `As a young founder, I’m not from the legal world — and that’s why I’m asking better questions. Why can’t legal tools feel intuitive? Why can’t solo attorneys and small firms have access to the same superpowers as big law? Why isn’t there a platform built just for them?`,
-                  `We’re building VeriLex AI to change that. With input from real attorneys and a commitment to security and usability, we’re creating the tools that will define the next generation of legal work — smarter, faster, more human.`,
-                ].map((text, idx) => (
-                  <motion.p
-                    key={idx}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: idx * 0.15 }}
-                    viewport={{ once: true }}
-                  >
-                    {text}
-                  </motion.p>
-                ))}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.6 }}
-                  viewport={{ once: true }}
-                  className="mt-10 border-l-4 border-indigo-500 pl-6 italic text-foreground/60"
+              ))}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+                viewport={{ once: true }}
+                className="mt-10 border-l-4 border-indigo-500 pl-6 italic text-foreground/60"
+              >
+                “This is just the beginning. We’re proud to be building VeriLex AI — and we can’t wait to see how it empowers the attorneys who inspire us.”
+                <br />
+                <span className="mt-4 block text-right font-bold">
+                  – The VeriLex AI Team
+                </span>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.8 }}
+                viewport={{ once: true }}
+                className="mt-12 text-center"
+              >
+                <Link
+                  href="#waitlist"
+                  className="
+                    inline-block rounded
+                    bg-indigo-600 px-6 py-3 text-white
+                    font-semibold shadow-md
+                    hover:bg-indigo-700
+                    transition
+                  "
                 >
-                  “This is just the beginning. We’re proud to be building VeriLex AI — and we can’t wait to see how it empowers the attorneys who inspire us.”
-                  <br />
-                  <span className="mt-4 block text-right font-bold">
-                    – The VeriLex AI Team
-                  </span>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: 0.8 }}
-                  viewport={{ once: true }}
-                  className="mt-12 text-center"
-                >
-                  <Link
-                    href="#waitlist"
-                    className="
-                      inline-block rounded
-                      bg-indigo-600 px-6 py-3 text-white
-                      font-semibold shadow-md
-                      hover:bg-indigo-700
-                      transition
-                    "
-                  >
-                    Join the Early Access Waitlist
-                  </Link>
-                </motion.div>
-              </div>
-            </section>
+                  Join the Early Access Waitlist
+                </Link>
+              </motion.div>
+            </div>
+          </section>
 
-            {/* FAQ */}
-<section aria-labelledby="faq" className="py-16 text-left">
-  <h2 id="faq" className="mb-6 text-center text-3xl font-bold">
-    FAQ
-  </h2>
+          {/* FAQ */}
+          <section aria-labelledby="faq" className="py-16 text-left">
+            <h2 id="faq" className="mb-6 text-center text-3xl font-bold">
+              FAQ
+            </h2>
 
-  <div className="mx-auto max-w-2xl space-y-6">
-    {[
-      {
-        q: 'Is VeriLex AI a law firm?',
-        a: 'No. VeriLex AI is a legal-automation platform and does not provide legal advice. Always consult a licensed attorney for legal matters.',
-      },
-      {
-        q: 'When does beta access start?',
-        a: 'Closed beta begins 1 October 2025 for the first 50 firms on the waitlist.',
-      },
-      {
-        q: 'How secure is my data?',
-        a: 'All data is encrypted in transit (TLS 1.3) and at rest (AES-256). We are pursuing SOC 2 Type II certification.',
-      },
-      {
-        q: 'Do I need to install anything?',
-        a: 'No installations needed. VeriLex AI runs entirely in the cloud and is accessible from any modern browser.',
-      },
-      {
-        q: 'What practice areas are supported?',
-        a: 'We’re starting with divorce/family law, but will soon support immigration, estate, and business law.',
-      },
-      {
-        q: 'Is there a mobile app?',
-        a: 'A mobile web version is available. A native app is in development and planned for early 2026.',
-      },
-      {
-        q: 'How much will it cost?',
-        a: 'We’re finalizing tiered pricing based on firm size. Early users will receive exclusive lifetime discounts.',
-      },
-      {
-        q: 'Can I request features?',
-        a: 'Absolutely. We prioritize feedback from beta users and solo firms when planning new features.',
-      },
-    ].map(({ q, a }) => (
-      <details key={q} className="rounded border border-border p-4 open:shadow-sm">
-        <summary className="cursor-pointer font-semibold">{q}</summary>
-        <p className="pt-2 text-foreground/70">{a}</p>
-      </details>
-    ))}
-  </div>
-</section>
+            <div className="mx-auto max-w-2xl space-y-6">
+              {[
+                {
+                  q: 'Is VeriLex AI a law firm?',
+                  a: 'No. VeriLex AI is a legal-automation platform and does not provide legal advice. Always consult a licensed attorney for legal matters.',
+                },
+                {
+                  q: 'When does beta access start?',
+                  a: 'Closed beta begins 1 October 2025 for the first 50 firms on the waitlist.',
+                },
+                {
+                  q: 'How secure is my data?',
+                  a: 'All data is encrypted in transit (TLS 1.3) and at rest (AES-256). We are pursuing SOC 2 Type II certification.',
+                },
+                {
+                  q: 'Do I need to install anything?',
+                  a: 'No installations needed. VeriLex AI runs entirely in the cloud and is accessible from any modern browser.',
+                },
+                {
+                  q: 'What practice areas are supported?',
+                  a: 'We’re starting with divorce/family law, but will soon support immigration, estate, and business law.',
+                },
+                {
+                  q: 'Is there a mobile app?',
+                  a: 'A mobile web version is available. A native app is in development and planned for early 2026.',
+                },
+                {
+                  q: 'How much will it cost?',
+                  a: 'We’re finalizing tiered pricing based on firm size. Early users will receive exclusive lifetime discounts.',
+                },
+                {
+                  q: 'Can I request features?',
+                  a: 'Absolutely. We prioritize feedback from beta users and solo firms when planning new features.',
+                },
+              ].map(({ q, a }) => (
+                <details key={q} className="rounded border border-border p-4 open:shadow-sm">
+                  <summary className="cursor-pointer font-semibold">{q}</summary>
+                  <p className="pt-2 text-foreground/70">{a}</p>
+                </details>
+              ))}
+            </div>
+          </section>
 
-            {/* Contact */}
-            <section id="contact" aria-labelledby="contact-heading" className="py-16 text-left">
-              <h2 id="contact-heading" className="mb-6 text-center text-3xl font-bold">
-                Contact
-              </h2>
-              <p className="text-lg text-foreground/70 text-center">
-                Questions or partnership ideas? Reach us at&nbsp;
-                <a href="mailto:founder@verilex.us" className="text-accent underline">
-                  founder@verilex.us
-                </a>
-              </p>
-            </section>
-          </main>
+          {/* Contact */}
+          <section id="contact" aria-labelledby="contact-heading" className="py-16 text-left">
+            <h2 id="contact-heading" className="mb-6 text-center text-3xl font-bold">
+              Contact
+            </h2>
+            <p className="text-lg text-foreground/70 text-center">
+              Questions or partnership ideas? Reach us at&nbsp;
+              <a href="mailto:founder@verilex.us" className="text-accent underline">
+                founder@verilex.us
+              </a>
+            </p>
+          </section>
+        </main>
 
-          {/* Footer */}
+        {/* Footer */}
         <footer className="py-10 text-center text-sm text-foreground/50">
           VeriLex AI is <span className="whitespace-nowrap">not a law firm</span> and does not provide legal advice.
           <br />
