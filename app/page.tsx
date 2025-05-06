@@ -214,7 +214,7 @@ export default function Home() {
           <section className="py-24 text-center">
   <h2 className="mb-10 text-4xl font-bold">How VeriLex AI Helps Law Firms</h2>
   <div className="flex justify-center items-center min-h-[3rem]">
-    <div className="text-2xl md:text-3xl font-medium text-foreground transition-all duration-1000">
+    <div className="text-2xl md:text-3xl font-medium text-foreground transition-all duration-2000">
       <StatRotator messages={STAT_MESSAGES} />
     </div>
   </div>
