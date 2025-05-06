@@ -2,8 +2,12 @@
 
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useRef, Suspense, useEffect, useState } from 'react';
-import { Mesh, Vector3, Color } from 'three';
+import { Mesh, Vector3 } from 'three';
 import { useTheme } from 'next-themes';
+
+type WaveBackgroundProps = {
+  className?: string;
+};
 
 function usePrefersReducedMotion() {
   const [prefers, setPrefers] = useState(false);
@@ -39,7 +43,7 @@ function Waves() {
     <mesh
       ref={mesh}
       rotation={[-Math.PI / 2, 0, 0]}
-      position={[0, -1.5, 0]} // lower into the scene
+      position={[0, -1.5, 0]}
     >
       <planeGeometry args={[60, 60, 80, 80]} />
       <meshBasicMaterial
@@ -52,23 +56,20 @@ function Waves() {
   );
 }
 
-export default function WaveBackground() {
+export default function WaveBackground({ className = '' }: WaveBackgroundProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const { resolvedTheme } = useTheme();
 
   if (typeof window !== 'undefined' && prefersReducedMotion) return null;
 
   return (
-    <div className="fixed inset-0 -z-10">
+    <div className={`fixed inset-0 -z-10 ${className}`}>
       <Canvas
         className="w-full h-full"
         dpr={[1, 1.5]}
         camera={{ position: [0, 10, 10], fov: 65 }}
         style={{
-          background:
-            resolvedTheme === 'light'
-              ? 'white'
-              : 'black',
+          background: resolvedTheme === 'light' ? 'white' : 'black',
         }}
       >
         <Suspense fallback={null}>
