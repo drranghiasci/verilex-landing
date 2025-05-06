@@ -66,7 +66,7 @@ function StatRotator({ messages }: { messages: string[] }) {
   useEffect(() => {
     const id = setInterval(() => {
       setIndex((prev) => (prev + 1) % messages.length);
-    }, 4000);
+    }, 10000); // changed from 4000ms to 10000ms
     return () => clearInterval(id);
   }, [messages.length]);
 
@@ -212,13 +212,13 @@ export default function Home() {
 
           {/* Impact Stats Section */}
           <section className="py-24 text-center">
-  <h2 className="mb-10 text-4xl font-bold">How VeriLex AI Helps Law Firms</h2>
-  <div className="flex justify-center items-center min-h-[3rem]">
-    <div className="text-2xl md:text-3xl font-medium text-foreground transition-all duration-2000">
-      <StatRotator messages={STAT_MESSAGES} />
-    </div>
-  </div>
-</section>
+            <h2 className="mb-10 text-4xl font-bold">How VeriLex AI Helps Law Firms</h2>
+            <div className="flex justify-center items-center min-h-[3rem]">
+              <div className="mt-4 text-2xl md:text-3xl font-medium text-foreground transition-all duration-2000">
+                <StatRotator messages={STAT_MESSAGES} />
+              </div>
+            </div>
+          </section>
 
           {/* OUR STORY SECTION */}
           <section id="story" className="py-24 text-left">
