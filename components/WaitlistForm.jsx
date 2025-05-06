@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { CheckCircle, AlertCircle } from 'lucide-react';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -21,7 +22,7 @@ export default function WaitlistForm() {
     setMessage('');
 
     if (!email.trim() || !name.trim()) {
-      setError('Please enter both your name and a valid email.');
+      setError('Please enter both your name and a valid email address.');
       return;
     }
 
@@ -58,7 +59,7 @@ export default function WaitlistForm() {
         return;
       }
 
-      setMessage('🎉 You’re on the waitlist! Check your email for confirmation.');
+      setMessage('🎉 You’re officially on the waitlist!');
       setEmail('');
       setName('');
     } catch (err) {
@@ -71,49 +72,73 @@ export default function WaitlistForm() {
 
   return (
     <div className="max-w-xl mx-auto px-4 py-12 text-center text-black dark:text-white">
-      <h1 className="text-4xl font-bold mb-4">Draft. Review. Win. — All in One Platform</h1>
-      <p className="text-lg mb-4">
-        Join the waitlist for early access to our legal automation platform — built for solo attorneys and small firms.
-      </p>
-      <p className="text-md mb-8 text-gray-700 dark:text-gray-300">
-        Be the first to access tools for legal research, contract review, and case summaries.
+      <h2 className="text-3xl font-bold mb-2">Join the Waitlist</h2>
+      <p className="mb-6 text-gray-700 dark:text-gray-300 text-base sm:text-lg">
+        Early adopters get beta access, direct feedback opportunities, and exclusive offers.
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          placeholder="Your full name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full px-4 py-2 bg-white/10 dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-md text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-          required
-        />
-        <input
-          type="email"
-          placeholder="Your work email address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-4 py-2 bg-white/10 dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-md text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-          required
-        />
+      <form onSubmit={handleSubmit} className="space-y-4 text-left">
+        <div>
+          <label htmlFor="name" className="block text-sm font-medium mb-1">
+            Full Name
+          </label>
+          <input
+            id="name"
+            type="text"
+            placeholder="Jane Doe"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-white/20 bg-white/10 dark:bg-white/10 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition"
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium mb-1">
+            Work Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            placeholder="you@lawfirm.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-white/20 bg-white/10 dark:bg-white/10 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition"
+            required
+          />
+        </div>
+
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-black dark:bg-white text-white dark:text-black py-2 rounded-md font-semibold hover:opacity-90 transition"
+          className="w-full py-2 rounded-md font-semibold bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition disabled:opacity-60"
         >
-          {loading ? 'Joining...' : 'Request Early Access'}
+          {loading ? 'Submitting...' : 'Request Early Access'}
         </button>
       </form>
 
-      {error && <p className="mt-4 text-red-600 dark:text-red-400">{error}</p>}
-      {message && <p className="mt-4 text-green-600 dark:text-green-400">{message}</p>}
+      {/* Success */}
+      {message && (
+        <div className="mt-6 flex items-center justify-center text-green-600 dark:text-green-400 text-sm">
+          <CheckCircle className="w-5 h-5 mr-2" />
+          {message}
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="mt-6 flex items-center justify-center text-red-600 dark:text-red-400 text-sm">
+          <AlertCircle className="w-5 h-5 mr-2" />
+          {error}
+        </div>
+      )}
 
       <div className="mt-12 text-left">
         <h3 className="text-xl font-semibold mb-2">What to Expect</h3>
-        <ul className="list-disc list-inside space-y-2 text-gray-800 dark:text-gray-200">
-          <li>✅ <span className="text-inherit">Early access to our beta launch</span></li>
-          <li>📬 <span className="text-inherit">Exclusive product updates</span></li>
-          <li>💬 <span className="text-inherit">Opportunity to shape the product with your feedback</span></li>
+        <ul className="list-disc list-inside space-y-2 text-gray-800 dark:text-gray-200 text-sm sm:text-base">
+          <li>✅ Priority access to our legal AI tools</li>
+          <li>📬 Personalized product updates as features roll out</li>
+          <li>💬 Input on features built for solo attorneys & small firms</li>
         </ul>
       </div>
     </div>
