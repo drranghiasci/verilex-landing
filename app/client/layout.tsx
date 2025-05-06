@@ -1,5 +1,5 @@
 // app/client/layout.tsx
-import '@/app/globals.css';
+import '../../globals.css';
 import { ReactNode } from 'react';
 
 export default function ClientLayout({ children }: { children: ReactNode }) {
