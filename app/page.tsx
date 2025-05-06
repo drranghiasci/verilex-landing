@@ -66,7 +66,7 @@ function StatRotator({ messages }: { messages: string[] }) {
   useEffect(() => {
     const id = setInterval(() => {
       setIndex((prev) => (prev + 1) % messages.length);
-    }, 10000); // changed from 4000ms to 10000ms
+    }, 7000); // changed from 10000ms to 7000ms
     return () => clearInterval(id);
   }, [messages.length]);
 
