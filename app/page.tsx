@@ -176,6 +176,31 @@ export default function Home() {
             </ul>
           </section>
 
+              {/* Impact Stats Section */}
+<section className="py-20 bg-background text-center text-foreground">
+  <h2 className="text-3xl font-bold mb-10">How VeriLex AI Helps Law Firms</h2>
+  <div className="relative h-20 overflow-hidden">
+    <motion.div
+      className="absolute w-full"
+      animate={{ x: ["100%", "0%", "-100%"] }}
+      transition={{ repeat: Infinity, duration: 36, ease: "linear" }}
+    >
+      {[
+        '🕒 Save up to 12 hours/week with automated legal research.',
+        '📈 Solo attorneys handle 30% more cases using smart intake.',
+        '💬 AI-assisted summaries reduce motion drafting time by 40%.',
+        '🤖 80% of routine document review can be AI-augmented.',
+        '🔐 VeriLex AI is built with SOC 2-grade data protection.',
+        '🚀 90% of beta testers say they’d recommend VeriLex to peers.'
+      ].map((stat, i) => (
+        <div key={i} className="w-full text-xl font-medium text-foreground/80">
+          {stat}
+        </div>
+      ))}
+    </motion.div>
+  </div>
+</section>
+
             {/* OUR STORY SECTION */}
             <section id="story" className="py-24 text-left">
               <h2 className="mb-8 text-center text-4xl font-bold">Our Story</h2>
@@ -242,33 +267,53 @@ export default function Home() {
             </section>
 
             {/* FAQ */}
-            <section aria-labelledby="faq" className="py-16 text-left">
-              <h2 id="faq" className="mb-6 text-center text-3xl font-bold">
-                FAQ
-              </h2>
+<section aria-labelledby="faq" className="py-16 text-left">
+  <h2 id="faq" className="mb-6 text-center text-3xl font-bold">
+    FAQ
+  </h2>
 
-              <div className="mx-auto max-w-2xl space-y-6">
-                {[
-                  {
-                    q: 'Is VeriLex AI a law firm?',
-                    a: 'No. VeriLex AI is a legal-automation platform and does not provide legal advice. Always consult a licensed attorney for legal matters.',
-                  },
-                  {
-                    q: 'When does beta access start?',
-                    a: 'Closed beta begins 1 October 2025 for the first 50 firms on the waitlist.',
-                  },
-                  {
-                    q: 'How secure is my data?',
-                    a: 'All data is encrypted in transit (TLS 1.3) and at rest (AES-256). We are pursuing SOC 2 Type II certification.',
-                  },
-                ].map(({ q, a }) => (
-                  <details key={q} className="rounded border border-border p-4 open:shadow-sm">
-                    <summary className="cursor-pointer font-semibold">{q}</summary>
-                    <p className="pt-2 text-foreground/70">{a}</p>
-                  </details>
-                ))}
-              </div>
-            </section>
+  <div className="mx-auto max-w-2xl space-y-6">
+    {[
+      {
+        q: 'Is VeriLex AI a law firm?',
+        a: 'No. VeriLex AI is a legal-automation platform and does not provide legal advice. Always consult a licensed attorney for legal matters.',
+      },
+      {
+        q: 'When does beta access start?',
+        a: 'Closed beta begins 1 October 2025 for the first 50 firms on the waitlist.',
+      },
+      {
+        q: 'How secure is my data?',
+        a: 'All data is encrypted in transit (TLS 1.3) and at rest (AES-256). We are pursuing SOC 2 Type II certification.',
+      },
+      {
+        q: 'Do I need to install anything?',
+        a: 'No installations needed. VeriLex AI runs entirely in the cloud and is accessible from any modern browser.',
+      },
+      {
+        q: 'What practice areas are supported?',
+        a: 'We’re starting with divorce/family law, but will soon support immigration, estate, and business law.',
+      },
+      {
+        q: 'Is there a mobile app?',
+        a: 'A mobile web version is available. A native app is in development and planned for early 2026.',
+      },
+      {
+        q: 'How much will it cost?',
+        a: 'We’re finalizing tiered pricing based on firm size. Early users will receive exclusive lifetime discounts.',
+      },
+      {
+        q: 'Can I request features?',
+        a: 'Absolutely. We prioritize feedback from beta users and solo firms when planning new features.',
+      },
+    ].map(({ q, a }) => (
+      <details key={q} className="rounded border border-border p-4 open:shadow-sm">
+        <summary className="cursor-pointer font-semibold">{q}</summary>
+        <p className="pt-2 text-foreground/70">{a}</p>
+      </details>
+    ))}
+  </div>
+</section>
 
             {/* Contact */}
             <section id="contact" aria-labelledby="contact-heading" className="py-16 text-left">
