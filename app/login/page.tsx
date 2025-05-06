@@ -10,7 +10,8 @@ interface WaveBackgroundProps {
   className?: string;
 }
 
-export function LocalWaveBackground({ className }: WaveBackgroundProps) {
+// Remove export from LocalWaveBackground (make it local)
+function LocalWaveBackground({ className }: WaveBackgroundProps) {
   return (
     <svg
       className={className}
