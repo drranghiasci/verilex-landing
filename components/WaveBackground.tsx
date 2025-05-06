@@ -2,7 +2,7 @@
 
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useRef, Suspense, useEffect, useState } from 'react';
-import { Mesh, Vector3 } from 'three';
+import { Mesh, Vector3, Color } from 'three';
 import { useTheme } from 'next-themes';
 
 type WaveBackgroundProps = {
@@ -21,7 +21,7 @@ function usePrefersReducedMotion() {
   return prefers;
 }
 
-function Waves() {
+function Waves({ theme }: { theme: 'light' | 'dark' }) {
   const mesh = useRef<Mesh>(null);
 
   useFrame(({ clock }) => {
@@ -39,6 +39,11 @@ function Waves() {
     position.needsUpdate = true;
   });
 
+  const gridColor =
+    theme === 'light'
+      ? new Color('hsl(265, 50%, 50%)') // lighter violet grid
+      : new Color('hsl(265, 80%, 70%)'); // dark theme violet
+
   return (
     <mesh
       ref={mesh}
@@ -47,9 +52,9 @@ function Waves() {
     >
       <planeGeometry args={[60, 60, 80, 80]} />
       <meshBasicMaterial
-        color="hsl(265, 80%, 70%)"
+        color={gridColor}
         wireframe
-        opacity={0.18}
+        opacity={theme === 'light' ? 0.12 : 0.18}
         transparent
       />
     </mesh>
@@ -62,6 +67,9 @@ export default function WaveBackground({ className = '' }: WaveBackgroundProps) 
 
   if (typeof window !== 'undefined' && prefersReducedMotion) return null;
 
+  // fallback to 'dark' if theme is still resolving
+  const theme = resolvedTheme === 'light' ? 'light' : 'dark';
+
   return (
     <div className={`fixed inset-0 -z-10 ${className}`}>
       <Canvas
@@ -69,11 +77,11 @@ export default function WaveBackground({ className = '' }: WaveBackgroundProps) 
         dpr={[1, 1.5]}
         camera={{ position: [0, 10, 10], fov: 65 }}
         style={{
-          background: resolvedTheme === 'light' ? 'white' : 'black',
+          background: theme === 'light' ? 'white' : 'black',
         }}
       >
         <Suspense fallback={null}>
-          <Waves />
+          <Waves theme={theme} />
         </Suspense>
       </Canvas>
     </div>
