@@ -28,7 +28,6 @@ export default function WaitlistForm() {
     setLoading(true);
 
     try {
-      // Step 1: Insert into Supabase
       const { error: supabaseError } = await supabase
         .from('waitlist')
         .insert([{ email, name }]);
@@ -44,7 +43,6 @@ export default function WaitlistForm() {
         return;
       }
 
-      // Step 2: Send confirmation email
       const response = await fetch('/api/send-confirmation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -60,7 +58,6 @@ export default function WaitlistForm() {
         return;
       }
 
-      // Success
       setMessage('🎉 You’re on the waitlist! Check your email for confirmation.');
       setEmail('');
       setName('');
@@ -73,12 +70,12 @@ export default function WaitlistForm() {
   };
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-8 text-center">
+    <div className="max-w-xl mx-auto px-4 py-12 text-center text-black dark:text-white">
       <h1 className="text-4xl font-bold mb-4">Draft. Review. Win. — All in One Platform</h1>
-      <p className="text-lg mb-6">
+      <p className="text-lg mb-4">
         Join the waitlist for early access to our legal automation platform — built for solo attorneys and small firms.
       </p>
-      <p className="text-md mb-6 text-gray-600">
+      <p className="text-md mb-8 text-gray-700 dark:text-gray-300">
         Be the first to access tools for legal research, contract review, and case summaries.
       </p>
 
@@ -88,7 +85,7 @@ export default function WaitlistForm() {
           placeholder="Your full name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-md"
+          className="w-full px-4 py-2 bg-white/10 dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-md text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
           required
         />
         <input
@@ -96,27 +93,27 @@ export default function WaitlistForm() {
           placeholder="Your work email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-md"
+          className="w-full px-4 py-2 bg-white/10 dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-md text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
           required
         />
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-black text-white py-2 rounded-md hover:bg-gray-800 transition"
+          className="w-full bg-black dark:bg-white text-white dark:text-black py-2 rounded-md font-semibold hover:opacity-90 transition"
         >
           {loading ? 'Joining...' : 'Request Early Access'}
         </button>
       </form>
 
-      {error && <p className="mt-4 text-red-600">{error}</p>}
-      {message && <p className="mt-4 text-green-600">{message}</p>}
+      {error && <p className="mt-4 text-red-600 dark:text-red-400">{error}</p>}
+      {message && <p className="mt-4 text-green-600 dark:text-green-400">{message}</p>}
 
-      <div className="mt-10 text-left">
+      <div className="mt-12 text-left">
         <h3 className="text-xl font-semibold mb-2">What to Expect</h3>
-        <ul className="list-disc list-inside text-gray-700 space-y-1">
-          <li>✅ Early access to our beta launch</li>
-          <li>📬 Exclusive product updates</li>
-          <li>💬 Opportunity to shape the product with your feedback</li>
+        <ul className="list-disc list-inside space-y-2 text-gray-800 dark:text-gray-200">
+          <li>✅ <span className="text-inherit">Early access to our beta launch</span></li>
+          <li>📬 <span className="text-inherit">Exclusive product updates</span></li>
+          <li>💬 <span className="text-inherit">Opportunity to shape the product with your feedback</span></li>
         </ul>
       </div>
     </div>
