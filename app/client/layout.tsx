@@ -1,6 +1,5 @@
 // app/client/layout.tsx
 // ✅ app/layout.tsx
-import '../styles/global.css';
 import { ReactNode } from 'react';
 
 export default function ClientLayout({ children }: { children: ReactNode }) {
