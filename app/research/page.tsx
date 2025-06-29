@@ -4,8 +4,8 @@ import { Send, Users, BarChart3, MessageCircle, CheckCircle, Clock, Mail, Phone 
 
 // Initialize Supabase client
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
 export default function ResearchPage() {
@@ -32,7 +32,20 @@ export default function ResearchPage() {
     }
   });
 
-  const [analytics, setAnalytics] = useState({
+  interface SurveyResponse {
+    created_at: string;
+    practice_years: string;
+    biggest_pain_point: string;
+    budget_range: string;
+    automation_interest: number;
+  }
+
+  const [analytics, setAnalytics] = useState<{
+    totalResponses: number;
+    responses: SurveyResponse[];
+    painPointsData: [string, number][];
+    budgetData: [string, number][];
+  }>({
     totalResponses: 0,
     responses: [],
     painPointsData: [],
@@ -73,7 +86,7 @@ export default function ResearchPage() {
       setAnalytics({
         totalResponses: responses.length,
         responses: responses.slice(0, 10), // Show latest 10
-        painPointsData: Object.entries(painPoints).sort(([,a], [,b]) => b - a),
+        painPointsData: Object.entries(painPoints as Record<string, number>).sort(([,a], [,b]) => b - a),
         budgetData: Object.entries(budgetDistribution)
       });
     } catch (error) {
@@ -81,23 +94,24 @@ export default function ResearchPage() {
     }
   };
 
-  const handleSurveyChange = (field, value) => {
-    if (field.includes('.')) {
-      const [parent, child] = field.split('.');
-      setSurveyData(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value
-        }
-      }));
-    } else {
-      setSurveyData(prev => ({
-        ...prev,
-        [field]: value
-      }));
-    }
-  };
+  const handleSurveyChange = (field: keyof typeof surveyData | 'contactInfo.name' | 'contactInfo.email' | 'contactInfo.phone' | 'contactInfo.firmName', value: string) => {
+      if (field.startsWith('contactInfo.')) {
+        const child = field.split('.')[1] as keyof typeof surveyData.contactInfo;
+        setSurveyData(prev => ({
+          ...prev,
+          contactInfo: {
+            ...prev.contactInfo,
+            [child]: value
+          }
+        }));
+      } else {
+        const key = field as keyof typeof surveyData;
+        setSurveyData(prev => ({
+          ...prev,
+          [key]: value
+        }));
+      }
+    };
 
   const submitSurvey = async () => {
     setIsSubmitting(true);
@@ -179,7 +193,15 @@ export default function ResearchPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Years in Practice</label>
+          <label htmlFor="practiceYears" className="block text-sm font-medium text-gray-700 mb-2">Years in Practice</label>
+          <label htmlFor="practiceYears" className="block text-sm font-medium text-gray-700 mb-2">Years in Practice</label>
+          <label htmlFor="practiceYears" className="block text-sm font-medium text-gray-700 mb-2">Years in Practice</label>
+          <label htmlFor="practiceYears" className="block text-sm font-medium text-gray-700 mb-2">Years in Practice</label>
+          <label htmlFor="practiceYears" className="block text-sm font-medium text-gray-700 mb-2">Years in Practice</label>
+          <label htmlFor="practiceYears" className="block text-sm font-medium text-gray-700 mb-2">Years in Practice</label>
+          <label htmlFor="practiceYears" className="block text-sm font-medium text-gray-700 mb-2">Years in Practice</label>
           <select 
+            id="practiceYears"
             value={surveyData.practiceYears} 
             onChange={(e) => handleSurveyChange('practiceYears', e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -260,7 +282,7 @@ export default function ResearchPage() {
           value={surveyData.mostFrustratingTask}
           onChange={(e) => handleSurveyChange('mostFrustratingTask', e.target.value)}
           placeholder="Describe the task that takes too much time or causes the most frustration..."
-          rows="3"
+          rows={3}
           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
