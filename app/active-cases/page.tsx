@@ -52,7 +52,11 @@ export default function ActiveCasesPage() {
 
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl font-extrabold">Active Cases</h1>
+          <label htmlFor="sortCases" className="sr-only">
+            Sort cases
+          </label>
           <select
+            id="sortCases"
             className="border border-gray-300 rounded-md px-3 py-1 text-sm"
             value={sortOption}
             onChange={(e) => setSortOption(e.target.value)}
