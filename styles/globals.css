@@ -22,3 +22,14 @@ body {
   color: var(--foreground);
   transition: background-color 300ms, color 300ms; /* Equivalent CSS */
 }
+/* In your global CSS or at the root of your app */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  width: 100%;
+  overflow-x: hidden;
+}

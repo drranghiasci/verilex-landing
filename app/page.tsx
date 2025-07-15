@@ -254,13 +254,13 @@ export default function Home() {
 {/* ───────────── Hero (full-width coloured band) */}
 <section
   id="hero"
-  className="relative w-full overflow-hidden bg-gradient-to-r
+  className="relative w-full min-h-screen overflow-hidden bg-gradient-to-r
              from-indigo-600/10 via-purple-600/10 to-pink-600/10
              border-b border-border"
 >
   {/* push content down so it doesn't hide behind the 64 px fixed header */}
-  <div className="pt-32 pb-24 px-4">
-    <div className="mx-auto max-w-6xl text-center">
+  <div className="pt-32 pb-24 px-4 h-full flex items-center">
+    <div className="mx-auto max-w-6xl text-center w-full">
 
       <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight
                      bg-gradient-to-r from-indigo-500 to-purple-600
@@ -278,7 +278,7 @@ export default function Home() {
         <span>256-bit encryption • SOC 2 Type II (in progress) • Attorney-client privilege protected</span>
       </div>
 
-      <div className="mt-10 flex flex-col sm:flex-row items-center gap-4">
+      <div className="mt-10 flex flex-col sm:flex-row items-center gap-4 justify-center">
         <Link
           href="#waitlist"
           className="inline-flex items-center gap-2 rounded-lg
