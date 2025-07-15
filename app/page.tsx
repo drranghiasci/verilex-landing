@@ -149,12 +149,12 @@ function StatRotator({ messages }: { messages: typeof STAT_MESSAGES }) {
   const currentMessage = messages[currentIndex];
 
   return (
-    <div className="relative h-32 flex items-center justify-center overflow-hidden">
-      <div 
-        className={`flex flex-col items-center text-center transition-all duration-300 ${
-          isAnimating ? 'transform translate-x-full opacity-0' : 'transform translate-x-0 opacity-100'
-        }`}
-      >
+<div className="relative h-48 md:h-56 flex items-center justify-center overflow-hidden">
+<div 
+  className={`flex flex-col items-center text-center space-y-3 transition-all duration-300 ${
+    isAnimating ? 'transform translate-x-full opacity-0' : 'transform translate-x-0 opacity-100'
+  }`}
+>
         <div className="mb-3">
           {currentMessage.icon}
         </div>
@@ -251,40 +251,55 @@ export default function Home() {
         {/* Main */}
         <main className="mx-auto max-w-6xl px-4 pt-32">
 
-          {/* Hero */}
-          <section id="hero" className="relative flex flex-col items-center py-20 text-center">
-            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-indigo-500/5 via-purple-500/5 to-pink-500/5 rounded-3xl"></div>
-            
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Your AI-Powered Legal Assistant
-            </h1>
-            
-            <p className="mt-6 text-lg md:text-xl text-foreground/70 max-w-2xl">
-              Automate research, summarize cases, manage intake, and review contracts — all in one secure platform built for solo and small law firms.
-            </p>
+{/* ───────────── Hero (full-width coloured band) */}
+<section
+  id="hero"
+  className="relative w-full overflow-hidden bg-gradient-to-r
+             from-indigo-600/10 via-purple-600/10 to-pink-600/10
+             border-b border-border"
+>
+  {/* push content down so it doesn't hide behind the 64 px fixed header */}
+  <div className="pt-32 pb-24 px-4">
+    <div className="mx-auto max-w-6xl text-center">
 
-            <div className="mt-6 flex items-center justify-center text-sm text-foreground/60">
-              <ShieldCheck className="mr-2 h-4 w-4 text-green-500" aria-hidden="true" />
-              <span>256-bit encryption • SOC 2 Type II (in progress) • Attorney-client privilege protected</span>
-            </div>
+      <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight
+                     bg-gradient-to-r from-indigo-500 to-purple-600
+                     bg-clip-text text-transparent">
+        Your AI-Powered Legal Assistant
+      </h1>
 
-            <div className="mt-10 flex flex-col sm:flex-row items-center gap-4">
-              <Link
-                href="#waitlist"
-                className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-105"
-              >
-                Join Waitlist
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-              
-              <div className="inline-block rounded-lg bg-foreground/5 px-5 py-3 text-sm font-medium border border-foreground/10">
-                Public launch in{' '}
-                <span className="font-mono font-bold text-indigo-600">
-                  {countdown.months}mo {countdown.days}d {countdown.hours}h {countdown.minutes}m {countdown.seconds}s
-                </span>
-              </div>
-            </div>
-          </section>
+      <p className="mt-6 text-lg md:text-xl text-foreground/70 max-w-2xl mx-auto">
+        Automate research, summarize cases, manage intake, and review contracts —
+        all in one secure platform built for solo and small law firms.
+      </p>
+
+      <div className="mt-6 flex items-center justify-center text-sm text-foreground/60">
+        <ShieldCheck className="mr-2 h-4 w-4 text-green-500" aria-hidden="true" />
+        <span>256-bit encryption • SOC 2 Type II (in progress) • Attorney-client privilege protected</span>
+      </div>
+
+      <div className="mt-10 flex flex-col sm:flex-row items-center gap-4">
+        <Link
+          href="#waitlist"
+          className="inline-flex items-center gap-2 rounded-lg
+                     bg-indigo-600 px-6 py-3 text-white font-semibold shadow-lg
+                     hover:bg-indigo-700 transition-all transform hover:scale-105"
+        >
+          Join Waitlist
+          <ChevronRight className="h-4 w-4" />
+        </Link>
+
+        <div className="inline-block rounded-lg bg-foreground/5 px-5 py-3
+                        text-sm font-medium border border-foreground/10">
+          Public launch in{' '}
+          <span className="font-mono font-bold text-indigo-600">
+            {countdown.months}mo {countdown.days}d {countdown.hours}h {countdown.minutes}m {countdown.seconds}s
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
           {/* Impact Stats */}
           <section className="py-20">
@@ -362,7 +377,7 @@ export default function Home() {
           {/* Roadmap */}
           <section className="py-20">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-              Product Roadmap
+              Roadmap
             </h2>
             
             <div className="max-w-4xl mx-auto">
@@ -406,19 +421,29 @@ export default function Home() {
           </section>
 
           {/* Waitlist */}
-          <section id="waitlist" className="py-20 text-center">
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-3xl p-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                Join the Waitlist
-              </h2>
-              <p className="text-lg text-foreground/70 mb-8 max-w-2xl mx-auto">
-                Early adopters receive priority onboarding, exclusive lifetime discounts, and direct access to our founding team.
-              </p>
-              <div className="max-w-md mx-auto">
-                <WaitlistForm />
-              </div>
-            </div>
-          </section>
+          <section
+  id="waitlist"
+  className="w-full bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border-t border-border py-24"
+>
+  <div className="px-4 max-w-4xl mx-auto text-center">
+    <h2 className="text-3xl md:text-4xl font-bold mb-6">
+      Join the Waitlist
+    </h2>
+    <p className="text-lg text-foreground/70 mb-10 max-w-2xl mx-auto">
+      Early adopters receive priority onboarding, exclusive lifetime discounts, and direct access to our founding team.
+    </p>
+
+    <div className="bg-background/50 rounded-xl p-8 border border-border shadow-md">
+      <h3 className="text-2xl font-semibold mb-4">Join the Waitlist</h3>
+      <p className="text-foreground/70 mb-6">
+        Early adopters get beta access, direct feedback opportunities, and exclusive offers.
+      </p>
+      <div className="max-w-md mx-auto">
+        <WaitlistForm />
+      </div>
+    </div>
+  </div>
+</section>
 
           {/* FAQ */}
           <section className="py-20">
