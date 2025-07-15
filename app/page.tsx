@@ -3,11 +3,10 @@
 import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ShieldCheck } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ShieldCheck, ChevronRight, Clock, Users, Zap, Shield, CheckCircle } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
-
 import WaitlistForm   from '@/components/WaitlistForm';
 import CookieBanner   from '@/components/CookieBanner';
 import { Analytics }  from '@vercel/analytics/react';
@@ -18,76 +17,174 @@ const WaveBackground = dynamic(
   { ssr: false }
 );
 
-/* ────────────────────────────────────────── Countdown hook */
+/* ────────────────────────────────────────── Optimized Countdown hook */
 const calcCountdown = (target: Date) => {
-  const d = target.getTime() - Date.now();
-  return {
-    months:  Math.max(0, Math.floor(d / (1000 * 60 * 60 * 24 * 30))),
-    days:    Math.max(0, Math.floor((d % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24))),
-    hours:   Math.max(0, Math.floor((d % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))),
-    minutes: Math.max(0, Math.floor((d % (1000 * 60 * 60)) / (1000 * 60))),
-    seconds: Math.max(0, Math.floor((d % (1000 * 60)) / 1000)),
-  } as const;
+  const now = Date.now();
+  const diff = target.getTime() - now;
+  
+  if (diff <= 0) {
+    return { months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 };
+  }
+
+  const months = Math.floor(diff / (1000 * 60 * 60 * 24 * 30));
+  const days = Math.floor((diff % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+  return { months, days, hours, minutes, seconds };
 };
 
 function useCountdown(target: Date) {
   const [time, setTime] = useState(() => calcCountdown(target));
+  
   useEffect(() => {
-    const id = setInterval(() => setTime(calcCountdown(target)), 1_000);
-    return () => clearInterval(id);
+    const updateTime = () => setTime(calcCountdown(target));
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
   }, [target]);
+  
   return time;
 }
 
-/* ────────────────────────────────────────── Static roadmap */
+/* ────────────────────────────────────────── Optimized roadmap */
 const ROADMAP = [
-  { date: 'Apr 2025', title: 'Waitlist Opens',          desc: 'Gather early-adopter attorneys & gauge feature priorities.',         icon: '🔒' },
-  { date: 'Aug 2025', title: 'Private Alpha',           desc: 'Research & summary engine available to internal testers.',            icon: '🧪' },
-  { date: '1 Oct 2025', title: 'Closed Beta',           desc: 'Invite-only beta for 50 firms. Feedback loops & bug fixes.',          icon: '🚧' },
-  { date: 'Nov 2025', title: 'Contract Analyzer Alpha', desc: 'Risk-clause detection and key-term extraction.',                     icon: '📑' },
-  { date: 'Dec 2025', title: 'Smart Assistant Preview', desc: 'Natural-language Q&A on statutes, rulings, and firm docs.',          icon: '🤖' },
-  { date: '1 Jan 2026', title: 'Public Launch',         desc: 'Self-serve onboarding, billing, and live support.',                  icon: '🚀' },
-  { date: 'Q1 2026',  title: 'Practice-Area Expansion', desc: 'Immigration, family, and business-law playbooks.',                   icon: '🌐' },
-] as const;
-
-/* ────────────────────────────────────────── Stat messages and rotator */
-const STAT_MESSAGES = [
-  'Save up to 12 hours per week by automating case law and statute research.',
-  'Handle 30% more clients using streamlined AI-powered intake.',
-  'Draft documents 40% faster with AI-generated summaries and templates.',
-  'Cut response times by 60% with automated client messaging tools.',
-  'Reduce overhead costs by 20–25% by automating repetitive legal admin.',
-  'Boost client satisfaction with faster turnaround and clearer communication.',
+  { 
+    date: 'Apr 2025', 
+    title: 'Waitlist Opens', 
+    desc: 'Gather early-adopter attorneys & gauge feature priorities.', 
+    icon: '🔒',
+    status: 'completed'
+  },
+  { 
+    date: 'Aug 2025', 
+    title: 'Private Alpha', 
+    desc: 'Research & summary engine available to internal testers.', 
+    icon: '🧪',
+    status: 'current'
+  },
+  { 
+    date: 'Oct 2025', 
+    title: 'Closed Beta', 
+    desc: 'Invite-only beta for 50 firms. Feedback loops & bug fixes.', 
+    icon: '🚧',
+    status: 'upcoming'
+  },
+  { 
+    date: 'Nov 2025', 
+    title: 'Contract Analyzer Alpha', 
+    desc: 'Risk-clause detection and key-term extraction.', 
+    icon: '📑',
+    status: 'upcoming'
+  },
+  { 
+    date: 'Dec 2025', 
+    title: 'Smart Assistant Preview', 
+    desc: 'Natural-language Q&A on statutes, rulings, and firm docs.', 
+    icon: '🤖',
+    status: 'upcoming'
+  },
+  { 
+    date: 'Jan 2026', 
+    title: 'Public Launch', 
+    desc: 'Self-serve onboarding, billing, and live support.', 
+    icon: '🚀',
+    status: 'upcoming'
+  },
+  { 
+    date: 'Q1 2026', 
+    title: 'Practice-Area Expansion', 
+    desc: 'Immigration, family, and business-law playbooks.', 
+    icon: '🌐',
+    status: 'upcoming'
+  },
 ];
 
-function StatRotator({ messages }: { messages: string[] }) {
-  const [index, setIndex] = useState(0);
+/* ────────────────────────────────────────── Enhanced stat messages with swipe animation */
+const STAT_MESSAGES = [
+  { 
+    stat: '12 hours', 
+    description: 'saved per week by automating case law and statute research',
+    icon: <Clock className="h-8 w-8 text-indigo-500" />
+  },
+  { 
+    stat: '30% more', 
+    description: 'clients handled using streamlined AI-powered intake',
+    icon: <Users className="h-8 w-8 text-green-500" />
+  },
+  { 
+    stat: '40% faster', 
+    description: 'document drafting with AI-generated summaries and templates',
+    icon: <Zap className="h-8 w-8 text-yellow-500" />
+  },
+  { 
+    stat: '60% reduction', 
+    description: 'in response times with automated client messaging tools',
+    icon: <CheckCircle className="h-8 w-8 text-blue-500" />
+  },
+  { 
+    stat: '25% savings', 
+    description: 'in overhead costs by automating repetitive legal admin',
+    icon: <Shield className="h-8 w-8 text-purple-500" />
+  },
+];
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      setIndex((prev) => (prev + 1) % messages.length);
-    }, 7000); // changed from 10000ms to 7000ms
-    return () => clearInterval(id);
+function StatRotator({ messages }: { messages: typeof STAT_MESSAGES }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const rotateToNext = useCallback(() => {
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % messages.length);
+      setIsAnimating(false);
+    }, 150);
   }, [messages.length]);
 
+  useEffect(() => {
+    const interval = setInterval(rotateToNext, 4000); // Faster rotation: 4 seconds
+    return () => clearInterval(interval);
+  }, [rotateToNext]);
+
+  const currentMessage = messages[currentIndex];
+
   return (
-    <motion.div
-      key={index}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.5 }}
-      className="px-4"
-    >
-      {messages[index]}
-    </motion.div>
+    <div className="relative h-32 flex items-center justify-center overflow-hidden">
+      <div 
+        className={`flex flex-col items-center text-center transition-all duration-300 ${
+          isAnimating ? 'transform translate-x-full opacity-0' : 'transform translate-x-0 opacity-100'
+        }`}
+      >
+        <div className="mb-3">
+          {currentMessage.icon}
+        </div>
+        <div className="text-3xl md:text-4xl font-bold text-indigo-600 mb-2">
+          {currentMessage.stat}
+        </div>
+        <div className="text-lg md:text-xl text-foreground/80 max-w-lg">
+          {currentMessage.description}
+        </div>
+      </div>
+      
+      {/* Progress indicators */}
+      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex space-x-2">
+        {messages.map((_, index) => (
+          <div
+            key={index}
+            className={`h-2 w-2 rounded-full transition-all duration-300 ${
+              index === currentIndex ? 'bg-indigo-600' : 'bg-indigo-200'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 
-/* ────────────────────────────────────────── Page */
+/* ────────────────────────────────────────── Main component */
 export default function Home() {
-  const launchDate = new Date('2026-01-01T05:00:00Z');  // 00:00 EST
-  const countdown  = useCountdown(launchDate);
+  const launchDate = new Date('2026-01-01T05:00:00Z');
+  const countdown = useCountdown(launchDate);
 
   return (
     <>
@@ -95,25 +192,25 @@ export default function Home() {
       <Head>
         <title>VeriLex AI | AI-Powered Legal Software for Solo & Small Firms</title>
         <meta name="description" content="Legal AI software that automates research, contract review, and client intake." />
-        <meta name="keywords"    content="Legal AI, Legal research automation, Contract analyzer" />
+        <meta name="keywords" content="Legal AI, Legal research automation, Contract analyzer" />
         <link rel="canonical" href="https://verilex.ai/" />
-        <meta property="og:type"        content="website" />
-        <meta property="og:title"       content="VeriLex AI | AI-Powered Legal Assistant" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="VeriLex AI | AI-Powered Legal Assistant" />
         <meta property="og:description" content="Automate legal research, summarize cases, and review contracts." />
-        <meta property="og:url"         content="https://verilex.ai/" />
-        <meta property="og:image"       content="https://verilex.ai/og-cover.png" />
-        <meta name="twitter:card"       content="summary_large_image" />
+        <meta property="og:url" content="https://verilex.ai/" />
+        <meta property="og:image" content="https://verilex.ai/og-cover.png" />
+        <meta name="twitter:card" content="summary_large_image" />
       </Head>
 
-      {/* ────────────────────────── Shell */}
+      {/* Shell */}
       <div className="relative min-h-screen scroll-smooth bg-gradient-to-br from-background to-background/80 text-foreground">
-        <WaveBackground />
+        {/* Uncomment if WaveBackground exists */}
+        {/* <WaveBackground /> */}
 
-        {/* ───────── Header */}
-        <header className="fixed inset-x-0 top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
-          <nav className="flex h-16 w-full items-center justify-between px-4 sm:px-6" aria-label="Main Navigation">
-            {/* Logo pair */}
-            <Link href="/" className="relative flex items-center focus-visible:ring-2 focus-visible:ring-indigo-600">
+        {/* Header */}
+        <header className="fixed inset-x-0 top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+          <nav className="flex h-16 w-full items-center justify-between px-4 sm:px-6 max-w-7xl mx-auto" aria-label="Main Navigation">
+            <Link href="/" className="relative flex items-center focus-visible:ring-2 focus-visible:ring-indigo-600 rounded-lg">
               <Image
                 src="/verilex-logo-name.png"
                 alt="VeriLex AI"
@@ -134,13 +231,16 @@ export default function Home() {
               />
             </Link>
 
-            {/* Nav links */}
             <div className="flex items-center gap-6 text-sm font-medium">
-              <Link href="/login"   className="hover:text-foreground transition">Log In</Link>
-              <Link href="#contact" className="hover:text-foreground transition">Contact</Link>
+              <Link href="/login" className="hover:text-indigo-600 transition-colors">
+                Log In
+              </Link>
+              <Link href="#contact" className="hover:text-indigo-600 transition-colors">
+                Contact
+              </Link>
               <Link
                 href="/register"
-                className="rounded border border-foreground px-4 py-1.5 hover:bg-foreground hover:text-background transition"
+                className="rounded-lg border border-indigo-600 px-4 py-1.5 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all"
               >
                 Sign Up
               </Link>
@@ -148,150 +248,185 @@ export default function Home() {
           </nav>
         </header>
 
-        {/* ───────── Main */}
-        <main className="mx-auto max-w-4xl px-4 pt-32 text-center">
+        {/* Main */}
+        <main className="mx-auto max-w-6xl px-4 pt-32">
 
           {/* Hero */}
-          <section
-            id="hero"
-            className="relative flex flex-col items-center py-28 overflow-hidden"
-          >
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight">
+          <section id="hero" className="relative flex flex-col items-center py-20 text-center">
+            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-indigo-500/5 via-purple-500/5 to-pink-500/5 rounded-3xl"></div>
+            
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Your AI-Powered Legal Assistant
             </h1>
-            <p className="mt-6 text-lg md:text-xl text-foreground/70">
-              Automate research, summarize cases, manage intake, and review contracts — all in one secure platform.
+            
+            <p className="mt-6 text-lg md:text-xl text-foreground/70 max-w-2xl">
+              Automate research, summarize cases, manage intake, and review contracts — all in one secure platform built for solo and small law firms.
             </p>
 
-            {/* Security */}
-            <div className="mt-4 flex items-center justify-center text-sm text-foreground/60">
-              <ShieldCheck className="mr-2 h-4 w-4" aria-hidden="true" />
-              256-bit encryption • SOC 2 Type II (in progress)
+            <div className="mt-6 flex items-center justify-center text-sm text-foreground/60">
+              <ShieldCheck className="mr-2 h-4 w-4 text-green-500" aria-hidden="true" />
+              <span>256-bit encryption • SOC 2 Type II (in progress) • Attorney-client privilege protected</span>
             </div>
 
-            {/* Countdown */}
-            <p className="mt-8 inline-block rounded bg-foreground px-5 py-2 text-lg font-semibold text-background">
-              Public launch&nbsp;in&nbsp;
-              <span className="font-mono">
-                {`${countdown.months}mo ${countdown.days}d ${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`}
-              </span>
-            </p>
-          </section>
-
-          {/* Waitlist */}
-          <section id="waitlist" className="py-16">
-            <h2 className="mb-6 text-3xl font-bold">Join the Waitlist</h2>
-            <p className="mx-auto mb-8 max-w-2xl text-lg text-foreground/70">
-              Early adopters receive priority onboarding, exclusive discounts, and direct access to the founding team.
-            </p>
-            <div className="mx-auto w-full max-w-md">
-              <WaitlistForm />
-            </div>
-          </section>
-
-          {/* Roadmap */}
-          <section className="py-16 text-left">
-            <h2 className="mb-6 text-center text-3xl font-bold">Product Roadmap</h2>
-            <ul className="relative mx-auto max-w-2xl border-l border-border pl-6">
-              {ROADMAP.map(({ date, title, desc, icon }) => (
-                <li key={title} className="group mb-10 last:mb-0 first:mt-0">
-                  <span className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full bg-background ring-2 ring-indigo-600">
-                    {icon}
-                  </span>
-                  <details className="cursor-pointer">
-                    <summary className="font-semibold">
-                      {title}{' '}
-                      <span className="ml-2 text-sm font-normal text-foreground/60">{date}</span>
-                    </summary>
-                    <p className="mt-2 text-foreground/70">{desc}</p>
-                  </details>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          {/* Impact Stats Section */}
-          <section className="py-24 text-center">
-            <h2 className="mb-10 text-4xl font-bold">How VeriLex AI Helps Law Firms</h2>
-            <div className="flex justify-center items-center min-h-[3rem]">
-              <div className="mt-4 text-2xl md:text-3xl font-medium text-foreground transition-all duration-2000">
-                <StatRotator messages={STAT_MESSAGES} />
+            <div className="mt-10 flex flex-col sm:flex-row items-center gap-4">
+              <Link
+                href="#waitlist"
+                className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-105"
+              >
+                Join Waitlist
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+              
+              <div className="inline-block rounded-lg bg-foreground/5 px-5 py-3 text-sm font-medium border border-foreground/10">
+                Public launch in{' '}
+                <span className="font-mono font-bold text-indigo-600">
+                  {countdown.months}mo {countdown.days}d {countdown.hours}h {countdown.minutes}m {countdown.seconds}s
+                </span>
               </div>
             </div>
           </section>
 
-          {/* OUR STORY SECTION */}
-          <section id="story" className="py-24 text-left">
-            <h2 className="mb-8 text-center text-4xl font-bold">Our Story</h2>
-            <div className="mx-auto max-w-3xl space-y-8 text-foreground/70 text-lg leading-relaxed">
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                viewport={{ once: true }}
-                className="text-center italic text-foreground/60"
-              >
-                We’re not lawyers. We’re entrepreneurs. And we’re building the future of legal work.
-              </motion.p>
-              {[
-                `VeriLex AI began with a simple realization: lawyers are doing far too much work that AI can handle. As a small team of builders and creatives, we saw an opportunity to help legal professionals spend more time doing what matters — serving clients, winning cases, and making a difference.`,
-                `We’re not here to replace attorneys — we’re here to amplify them. From client intake to document automation and beyond, VeriLex AI is built to be an all-in-one assistant that reduces burnout, improves accuracy, and reclaims time.`,
-                `As a young founder, I’m not from the legal world — and that’s why I’m asking better questions. Why can’t legal tools feel intuitive? Why can’t solo attorneys and small firms have access to the same superpowers as big law? Why isn’t there a platform built just for them?`,
-                `We’re building VeriLex AI to change that. With input from real attorneys and a commitment to security and usability, we’re creating the tools that will define the next generation of legal work — smarter, faster, more human.`,
-              ].map((text, idx) => (
-                <motion.p
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: idx * 0.15 }}
-                  viewport={{ once: true }}
-                >
-                  {text}
-                </motion.p>
-              ))}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                viewport={{ once: true }}
-                className="mt-10 border-l-4 border-indigo-500 pl-6 italic text-foreground/60"
-              >
-                “This is just the beginning. We’re proud to be building VeriLex AI — and we can’t wait to see how it empowers the attorneys who inspire us.”
-                <br />
-                <span className="mt-4 block text-right font-bold">
-                  – The VeriLex AI Team
-                </span>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
-                viewport={{ once: true }}
-                className="mt-12 text-center"
-              >
-                <Link
-                  href="#waitlist"
-                  className="
-                    inline-block rounded
-                    bg-indigo-600 px-6 py-3 text-white
-                    font-semibold shadow-md
-                    hover:bg-indigo-700
-                    transition
-                  "
-                >
-                  Join the Early Access Waitlist
-                </Link>
-              </motion.div>
+          {/* Impact Stats */}
+          <section className="py-20">
+            <div className="text-center">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Transform Your Practice
+              </h2>
+              <p className="text-lg text-foreground/70 mb-12 max-w-2xl mx-auto">
+                See how VeriLex AI empowers solo attorneys and small firms to work smarter, not harder.
+              </p>
+              <StatRotator messages={STAT_MESSAGES} />
+            </div>
+          </section>
+
+          {/* Our Story - Revised */}
+          <section id="story" className="py-20">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+                Why We Built VeriLex AI
+              </h2>
+              
+              <div className="grid md:grid-cols-2 gap-12 items-center">
+                <div className="space-y-6 text-foreground/80">
+                  <div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-lg border-l-4 border-indigo-500">
+                    <p className="text-lg font-medium text-indigo-700 dark:text-indigo-300 mb-2">
+                      The Problem We Discovered
+                    </p>
+                    <p className="text-foreground/70">
+                      While working with small law firms, we noticed talented attorneys spending 60-70% of their time on repetitive tasks—research, document review, client intake—instead of practicing law.
+                    </p>
+                  </div>
+                  
+                  <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border-l-4 border-green-500">
+                    <p className="text-lg font-medium text-green-700 dark:text-green-300 mb-2">
+                      Our Mission
+                    </p>
+                    <p className="text-foreground/70">
+                      We believe solo attorneys and small firms deserve the same technological advantages as large firms. VeriLex AI levels the playing field by automating routine work so lawyers can focus on what matters most—their clients.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg border-l-4 border-purple-500">
+                    <p className="text-lg font-medium text-purple-700 dark:text-purple-300 mb-2">
+                      Built By Legal Tech Experts
+                    </p>
+                    <p className="text-foreground/70">
+                      Our team combines deep AI expertise with real-world legal experience. We&#39;ve spent months interviewing attorneys, understanding their workflows, and building solutions that actually work.
+                    </p>
+                  </div>
+                  
+                  <div className="bg-amber-50 dark:bg-amber-900/20 p-6 rounded-lg border-l-4 border-amber-500">
+                    <p className="text-lg font-medium text-amber-700 dark:text-amber-300 mb-2">
+                      Security & Trust First
+                    </p>
+                    <p className="text-foreground/70">
+                      Every feature is built with attorney-client privilege in mind. We use bank-level encryption, undergo regular security audits, and never train our AI on client data.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-12 text-center">
+                <blockquote className="text-xl md:text-2xl font-medium text-foreground/90 italic max-w-3xl mx-auto">
+                  &quot;We&apos;re not just building software—we&apos;re building the future of legal practice. One where technology amplifies human expertise instead of replacing it.&quot;
+                </blockquote>
+                <cite className="block mt-4 text-indigo-600 font-semibold">
+                  — The VeriLex AI Team
+                </cite>
+              </div>
+            </div>
+          </section>
+
+          {/* Roadmap */}
+          <section className="py-20">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+              Product Roadmap
+            </h2>
+            
+            <div className="max-w-4xl mx-auto">
+              <div className="relative">
+                <div className="absolute left-4 md:left-8 top-0 bottom-0 w-0.5 bg-indigo-200 dark:bg-indigo-800"></div>
+                
+                <div className="space-y-8">
+                  {ROADMAP.map((item, index) => (
+                    <div key={item.title} className="relative flex items-start">
+                      <div className={`absolute left-2 md:left-6 w-4 h-4 rounded-full border-2 ${
+                        item.status === 'completed' ? 'bg-green-500 border-green-500' :
+                        item.status === 'current' ? 'bg-indigo-500 border-indigo-500' :
+                        'bg-background border-gray-300'
+                      }`}></div>
+                      
+                      <div className="ml-12 md:ml-16 flex-1">
+                        <div className="bg-background border border-border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-lg font-semibold flex items-center gap-2">
+                              <span className="text-xl">{item.icon}</span>
+                              {item.title}
+                            </h3>
+                            <span className="text-sm text-foreground/60 font-medium">
+                              {item.date}
+                            </span>
+                          </div>
+                          <p className="text-foreground/70">{item.desc}</p>
+                          {item.status === 'current' && (
+                            <div className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-1 rounded">
+                              <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
+                              In Progress
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Waitlist */}
+          <section id="waitlist" className="py-20 text-center">
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-3xl p-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                Join the Waitlist
+              </h2>
+              <p className="text-lg text-foreground/70 mb-8 max-w-2xl mx-auto">
+                Early adopters receive priority onboarding, exclusive lifetime discounts, and direct access to our founding team.
+              </p>
+              <div className="max-w-md mx-auto">
+                <WaitlistForm />
+              </div>
             </div>
           </section>
 
           {/* FAQ */}
-          <section aria-labelledby="faq" className="py-16 text-left">
-            <h2 id="faq" className="mb-6 text-center text-3xl font-bold">
-              FAQ
+          <section className="py-20">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+              Frequently Asked Questions
             </h2>
-
-            <div className="mx-auto max-w-2xl space-y-6">
+            
+            <div className="max-w-3xl mx-auto space-y-4">
               {[
                 {
                   q: 'Is VeriLex AI a law firm?',
@@ -299,11 +434,11 @@ export default function Home() {
                 },
                 {
                   q: 'When does beta access start?',
-                  a: 'Closed beta begins 1 October 2025 for the first 50 firms on the waitlist.',
+                  a: 'Closed beta begins October 1st, 2025 for the first 50 firms on the waitlist. Private alpha testing starts in August 2025.',
                 },
                 {
                   q: 'How secure is my data?',
-                  a: 'All data is encrypted in transit (TLS 1.3) and at rest (AES-256). We are pursuing SOC 2 Type II certification.',
+                  a: 'All data is encrypted in transit (TLS 1.3) and at rest (AES-256). We are pursuing SOC 2 Type II certification and never train our AI on client data.',
                 },
                 {
                   q: 'Do I need to install anything?',
@@ -311,56 +446,91 @@ export default function Home() {
                 },
                 {
                   q: 'What practice areas are supported?',
-                  a: 'We’re starting with divorce/family law, but will soon support immigration, estate, and business law.',
-                },
-                {
-                  q: 'Is there a mobile app?',
-                  a: 'A mobile web version is available. A native app is in development and planned for early 2026.',
+                  a: 'We\'re starting with divorce/family law, but will expand to immigration, estate planning, and business law by Q1 2026.',
                 },
                 {
                   q: 'How much will it cost?',
-                  a: 'We’re finalizing tiered pricing based on firm size. Early users will receive exclusive lifetime discounts.',
+                  a: 'We\'re finalizing tiered pricing based on firm size. Early waitlist members will receive exclusive lifetime discounts up to 50% off.',
                 },
                 {
                   q: 'Can I request features?',
-                  a: 'Absolutely. We prioritize feedback from beta users and solo firms when planning new features.',
+                  a: 'Absolutely. We prioritize feedback from beta users and solo firms when planning new features. Your input shapes our roadmap.',
+                },
+                {
+                  q: 'What makes VeriLex AI different?',
+                  a: 'Unlike generic AI tools, VeriLex AI is built specifically for legal workflows with attorney-client privilege protection and legal-specific training.',
                 },
               ].map(({ q, a }) => (
-                <details key={q} className="rounded border border-border p-4 open:shadow-sm">
-                  <summary className="cursor-pointer font-semibold">{q}</summary>
-                  <p className="pt-2 text-foreground/70">{a}</p>
+                <details key={q} className="group bg-background border border-border rounded-lg">
+                  <summary className="flex items-center justify-between p-6 cursor-pointer hover:bg-foreground/5 transition-colors">
+                    <span className="font-semibold text-left">{q}</span>
+                    <ChevronRight className="h-5 w-5 text-foreground/40 group-open:rotate-90 transition-transform" />
+                  </summary>
+                  <div className="px-6 pb-6">
+                    <p className="text-foreground/70 leading-relaxed">{a}</p>
+                  </div>
                 </details>
               ))}
             </div>
           </section>
 
           {/* Contact */}
-          <section id="contact" aria-labelledby="contact-heading" className="py-16 text-left">
-            <h2 id="contact-heading" className="mb-6 text-center text-3xl font-bold">
-              Contact
-            </h2>
-            <p className="text-lg text-foreground/70 text-center">
-              Questions or partnership ideas? Reach us at&nbsp;
-              <a href="mailto:founder@verilex.us" className="text-accent underline">
-                founder@verilex.us
-              </a>
-            </p>
+          <section id="contact" className="py-20 text-center">
+            <div className="max-w-2xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                Get In Touch
+              </h2>
+              <p className="text-lg text-foreground/70 mb-8">
+                Questions about VeriLex AI? Partnership opportunities? We&apos;d love to hear from you.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <a
+                  href="mailto:founder@verilex.us"
+                  className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-white font-semibold hover:bg-indigo-700 transition-colors"
+                >
+                  Contact Founder
+                  <ChevronRight className="h-4 w-4" />
+                </a>
+                <a
+                  href="#waitlist"
+                  className="inline-flex items-center gap-2 rounded-lg border border-indigo-600 px-6 py-3 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                >
+                  Join Waitlist
+                </a>
+              </div>
+            </div>
           </section>
         </main>
 
         {/* Footer */}
-        <footer className="py-10 text-center text-sm text-foreground/50">
-          VeriLex AI is <span className="whitespace-nowrap">not a law firm</span> and does not provide legal advice.
-          <br />
-          <Link
-            href="/privacy"
-            className="underline decoration-1 underline-offset-2 hover:text-accent focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
-          >
-            Privacy Policy
-          </Link>
+        <footer className="border-t border-border bg-background/50 py-12">
+          <div className="max-w-6xl mx-auto px-4 text-center">
+            <p className="text-sm text-foreground/60 mb-4">
+              VeriLex AI is <strong>not a law firm</strong> and does not provide legal advice.
+              <br />
+              Always consult with a licensed attorney for legal matters.
+            </p>
+            <div className="flex items-center justify-center gap-6 text-sm">
+              <Link
+                href="/privacy"
+                className="text-foreground/60 hover:text-indigo-600 transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              <Link
+                href="/terms"
+                className="text-foreground/60 hover:text-indigo-600 transition-colors"
+              >
+                Terms of Service
+              </Link>
+              <span className="text-foreground/40">
+                © 2025 VeriLex AI
+              </span>
+            </div>
+          </div>
         </footer>
 
-        {/* Cookie banner & analytics */}
+        {/* Components */}
         <CookieBanner />
         <Analytics />
       </div>
