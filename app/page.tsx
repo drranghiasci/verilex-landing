@@ -255,11 +255,12 @@ export default function Home() {
 <section
   id="hero"
   className="relative w-full overflow-hidden bg-gradient-to-r
-             from-indigo-600 via-purple-600 to-pink-600
+             from-indigo-600/10 via-purple-600/10 to-pink-600/10
              border-b border-border"
 >
-  <div className="mx-auto max-w-7xl px-6 py-32 text-center">
-
+  {/* push content down so it doesn't hide behind the 64 px fixed header */}
+  <div className="pt-32 pb-24 px-4">
+    <div className="mx-auto max-w-6xl text-center">
 
       <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight
                      bg-gradient-to-r from-indigo-500 to-purple-600
@@ -297,6 +298,7 @@ export default function Home() {
         </div>
       </div>
     </div>
+  </div>
 </section>
 
           {/* Impact Stats */}
@@ -523,8 +525,8 @@ export default function Home() {
               </div>
             </div>
           </section>
-          </main>
-        </div>
+        </main>
+
         {/* Footer */}
         <footer className="border-t border-border bg-background/50 py-12">
           <div className="max-w-6xl mx-auto px-4 text-center">
@@ -556,8 +558,7 @@ export default function Home() {
         {/* Components */}
         <CookieBanner />
         <Analytics />
-      <main>
-      </main>
+      </div>
     </>
   );
 }
