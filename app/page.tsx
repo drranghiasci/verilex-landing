@@ -203,7 +203,7 @@ export default function Home() {
       </Head>
 
       {/* Shell */}
-      <div className="relative min-h-screen scroll-smooth bg-gradient-to-br from-background to-background/80 text-foreground">
+      + <div className="relative min-h-screen scroll-smooth">
         {/* Uncomment if WaveBackground exists */}
         {/* <WaveBackground /> */}
 
@@ -253,25 +253,22 @@ export default function Home() {
 
 {/* ───────────── Hero (full-width coloured band) */}
 <section
-  id="hero"
-  className="relative w-full min-h-screen overflow-hidden bg-gradient-to-r
-             from-indigo-600/10 via-purple-600/10 to-pink-600/10
-             border-b border-border"
->
-  {/* push content down so it doesn't hide behind the 64 px fixed header */}
-  <div className="pt-32 pb-24 px-4 h-full flex items-center">
-    <div className="mx-auto max-w-6xl text-center w-full">
+      id="hero"
+      className="relative w-full min-h-screen overflow-hidden border-b border-border"
+    >
+      <div className="pt-32 pb-24 px-4 h-full flex items-center">
+        <div className="mx-auto max-w-6xl text-center w-full">
 
-      <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight
-                     bg-gradient-to-r from-indigo-500 to-purple-600
-                     bg-clip-text text-transparent">
-        Your AI-Powered Legal Assistant
-      </h1>
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight
+                         bg-gradient-to-r from-indigo-500 to-purple-600
+                         bg-clip-text text-transparent">
+            Your AI-Powered Legal Assistant
+          </h1>
 
-      <p className="mt-6 text-lg md:text-xl text-foreground/70 max-w-2xl mx-auto">
-        Automate research, summarize cases, manage intake, and review contracts —
-        all in one secure platform built for solo and small law firms.
-      </p>
+          <p className="mt-6 text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
+            Automate research, summarize cases, manage intake, and review contracts —
+            all in one secure platform built for solo and small law firms.
+          </p>
 
       <div className="mt-6 flex items-center justify-center text-sm text-foreground/60">
         <ShieldCheck className="mr-2 h-4 w-4 text-green-500" aria-hidden="true" />

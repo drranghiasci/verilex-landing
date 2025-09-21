@@ -9,6 +9,10 @@
   --foreground: #171717;
 }
 
+html, body {
+  height: 100%;
+}
+
 /* Auto-switch for users on dark preference */
 @media (prefers-color-scheme: dark) {
   :root {
