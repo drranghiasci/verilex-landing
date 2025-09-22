@@ -163,7 +163,7 @@ export default function Home() {
           <section id="hero" className="relative w-full min-h-screen overflow-hidden border-b border-white/10">
             <div className="pt-24 pb-24 px-4 h-full flex items-center">
               <div className="mx-auto max-w-6xl text-center w-full">
-                <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-300 to-purple-400 bg-clip-text text-transparent">
+                <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.15] bg-gradient-to-r from-indigo-300 to-purple-400 bg-clip-text text-transparent">
                   Your AI-Powered Legal Assistant
                 </h1>
 
