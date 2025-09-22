@@ -17,9 +17,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="h-full">
       <body
-        className="min-h-screen scroll-smooth antialiased 
-                   bg-gradient-to-br from-black via-[#0a0014] to-[#190033] text-white"
-      >
+  className="min-h-screen scroll-smooth antialiased 
+             bg-gradient-to-br from-black via-[#0a0014] to-[#190033] 
+             text-white bg-fixed"
+>
         <ThemeProvider attribute="class" enableSystem>
           {children}
         </ThemeProvider>
