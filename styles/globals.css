@@ -3,31 +3,47 @@
 /* Tailwind v4: one import boots everything */
 @import "tailwindcss";
 
-/* ---------- custom global styles ---------- */
+/* ---------- Theme tokens ---------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Gradient (light) */
+  --g1: #0e1226;   /* top-left */
+  --g2: #1a0f2a;   /* mid */
+  --g3: #2a1040;   /* bottom-right */
+
+  /* Surfaces (light) */
+  --surface-0: rgba(0, 0, 0, 0.08);
+  --surface-1: rgba(255, 255, 255, 0.06);
+
+  /* Text (light) */
+  --text-0: #0f1222;          /* headings */
+  --text-1: rgba(15,18,34,0.78);
+  --text-2: rgba(15,18,34,0.62);
 }
 
+.dark {
+  /* Gradient (dark) */
+  --g1: #000000;
+  --g2: #0a0014;
+  --g3: #190033;
+
+  /* Surfaces (dark) */
+  --surface-0: rgba(0, 0, 0, 0.4);
+  --surface-1: rgba(255, 255, 255, 0.06);
+
+  /* Text (dark) */
+  --text-0: #ffffff;
+  --text-1: rgba(255,255,255,0.82);
+  --text-2: rgba(255,255,255,0.64);
+}
+
+/* ---------- Global sizing ---------- */
 html, body {
   height: 100%;
 }
 
-/* Auto-switch for users on dark preference */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ---------- Background behavior ---------- */
 body {
   background-attachment: fixed;
   background-repeat: no-repeat;
   background-size: cover;
-}
-
-body {
-  background-color: var(--background);
-  color: var(--foreground);
-  transition: background-color 300ms, color 300ms; /* Equivalent CSS */
 }

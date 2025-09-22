@@ -2,26 +2,25 @@
 import '@styles/globals.css';
 import type { Metadata } from 'next';
 import { ThemeProvider } from 'next-themes';
-import '@/styles/landing-bg.css';
 
 export const metadata: Metadata = {
   title: 'VeriLex AI',
   description: 'AI-powered legal software for solo and small firms',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full">
       <body
-  className="min-h-screen scroll-smooth antialiased 
-             bg-gradient-to-br from-black via-[#0a0014] to-[#190033] 
-             text-white bg-fixed"
->
-        <ThemeProvider attribute="class" enableSystem>
+        className={[
+          // layout & rendering
+          'min-h-screen scroll-smooth antialiased bg-fixed',
+          // theme tokens
+          'text-[color:var(--text-0)]',
+          'bg-gradient-to-br from-[var(--g1)] via-[var(--g2)] to-[var(--g3)]',
+        ].join(' ')}
+      >
+        <ThemeProvider attribute="class" enableSystem defaultTheme="system">
           {children}
         </ThemeProvider>
       </body>

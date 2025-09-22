@@ -1,29 +1,21 @@
 'use client';
-
-import { Moon, Sun, Monitor } from 'lucide-react';
-import { useTheme } from '@/lib/theme-context';
+import { useTheme } from 'next-themes';
+import { Moon, Sun } from 'lucide-react';
 
 export default function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme();
-
-  const buttons = [
-    { icon: <Sun />, label: 'Light', value: 'light' },
-    { icon: <Moon />, label: 'Dark', value: 'dark' },
-    { icon: <Monitor />, label: 'System', value: 'system' },
-  ];
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
   return (
-    <div className="flex gap-2 items-center px-2">
-      {buttons.map(({ icon, label, value }) => (
-        <button
-          key={value}
-          onClick={() => toggleTheme(value)}
-          className={`rounded-full p-2 transition ${theme === value ? 'bg-gray-300 dark:bg-zinc-700' : 'hover:bg-gray-200 dark:hover:bg-zinc-800'}`}
-          aria-label={label}
-        >
-          {icon}
-        </button>
-      ))}
-    </div>
+    <button
+      aria-label="Toggle theme"
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5
+                 border border-white/10 bg-[var(--surface-1)]
+                 hover:bg-white/10 transition"
+    >
+      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      <span className="text-sm">{isDark ? 'Light' : 'Dark'}</span>
+    </button>
   );
 }
