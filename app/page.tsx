@@ -161,7 +161,7 @@ export default function Home() {
 
           {/* ───────────── Hero (no section background) */}
           <section id="hero" className="relative w-full min-h-screen overflow-hidden border-b border-white/10">
-            <div className="pt-32 pb-24 px-4 h-full flex items-center">
+            <div className="pt-28 pb-24 px-4 h-full flex items-center">
               <div className="mx-auto max-w-6xl text-center w-full">
                 <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-300 to-purple-400 bg-clip-text text-transparent">
                   Your AI-Powered Legal Assistant
@@ -302,23 +302,29 @@ export default function Home() {
 
           {/* Waitlist (no band background) */}
           <section id="waitlist" className="w-full border-t border-white/10 py-24">
-            <div className="px-4 max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">Join the Waitlist</h2>
-              <p className="text-lg text-white/80 mb-10 max-w-2xl mx-auto">
-                Early adopters receive priority onboarding, exclusive lifetime discounts, and direct access to our founding team.
-              </p>
+  <div className="px-4 max-w-4xl mx-auto text-center">
+    {/* 1) Single CTA headline */}
+    <h2 className="text-3xl md:text-4xl font-bold mb-6">
+      Get Early Access to VeriLex AI
+    </h2>
 
-              <div className="rounded-xl p-8 border border-white/10 bg-white/5 shadow-md">
-                <h3 className="text-2xl font-semibold mb-4">Join the Waitlist</h3>
-                <p className="text-white/80 mb-6">
-                  Early adopters get beta access, direct feedback opportunities, and exclusive offers.
-                </p>
-                <div className="max-w-md mx-auto">
-                  <WaitlistForm />
-                </div>
-              </div>
-            </div>
-          </section>
+    {/* 2) Clear benefit-driven subhead */}
+    <p className="text-lg text-white/80 mb-10 max-w-2xl mx-auto">
+      Secure your beta spot today — priority onboarding, up to <span className="font-semibold">50% lifetime discounts</span>,
+      and direct feedback loops with the founding team.
+    </p>
+
+    {/* 3) Form card (no repeated headings inside) */}
+    <div className="rounded-xl p-8 border border-white/10 bg-white/5 shadow-md">
+      <div className="max-w-md mx-auto">
+        <WaitlistForm />
+        <p className="mt-4 text-sm text-white/70">
+          No spam. We’ll email you as soon as your spot opens.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
 
           {/* FAQ */}
           <section className="py-20">
