@@ -13,9 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning className="h-full">
       <body
         className={[
-          // layout & rendering
           'min-h-screen scroll-smooth antialiased bg-fixed',
-          // theme tokens
           'text-[color:var(--text-0)]',
           'bg-gradient-to-br from-[var(--g1)] via-[var(--g2)] to-[var(--g3)]',
         ].join(' ')}

@@ -18,6 +18,11 @@
   --text-0: #0f1222;          /* headings */
   --text-1: rgba(15,18,34,0.78);
   --text-2: rgba(15,18,34,0.62);
+
+  /* Accent (light) */
+  --accent: #4f46e5;        /* Indigo 600 */
+  --accent-light: #6366f1;  /* Indigo 500 */
+  --accent-soft: #a5b4fc;   /* Indigo 300 */
 }
 
 .dark {
@@ -34,6 +39,11 @@
   --text-0: #ffffff;
   --text-1: rgba(255,255,255,0.82);
   --text-2: rgba(255,255,255,0.64);
+
+  /* Accent (dark) */
+  --accent: #818cf8;        /* Indigo 400 */
+  --accent-light: #a5b4fc;  /* Indigo 300 */
+  --accent-soft: #c7d2fe;   /* Indigo 200 */
 }
 
 /* ---------- Global sizing ---------- */

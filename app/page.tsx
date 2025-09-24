@@ -4,7 +4,7 @@ import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ShieldCheck, ChevronRight, Clock, Users, Zap, Shield, CheckCircle } from 'lucide-react';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import WaitlistForm from '@/components/WaitlistForm';
 import CookieBanner from '@/components/CookieBanner';
@@ -14,15 +14,63 @@ import ThemeToggle from '@/components/ThemeToggle';
 /* optional background */
 const WaveBackground = dynamic(() => import('@/components/WaveBackground'), { ssr: false });
 
+/* Gradient headline with safe fallback + size/center props */
+function GradientHeadline({
+  children,
+  size = 'lg',
+  center = true,
+}: {
+  children: React.ReactNode;
+  size?: 'xl' | 'lg' | 'md';
+  center?: boolean;
+}) {
+  const ref = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    // Solid accent fallback on first paint / unsupported browsers
+    el.style.color = 'var(--accent)';
+    const supportsClip =
+      (window.CSS && CSS.supports('background-clip: text')) ||
+      (window.CSS && CSS.supports('-webkit-background-clip: text'));
+
+    if (supportsClip) {
+      el.style.backgroundImage = 'linear-gradient(90deg, var(--accent-soft), var(--accent))';
+      // @ts-ignore vendor
+      (el.style as any).webkitBackgroundClip = 'text';
+      el.style.backgroundClip = 'text';
+      // @ts-ignore vendor
+      (el.style as any).webkitTextFillColor = 'transparent';
+      el.style.color = 'transparent';
+    }
+  }, []);
+
+  const sizes: Record<string, string> = {
+    xl: 'text-5xl md:text-7xl font-extrabold',
+    lg: 'text-3xl md:text-4xl font-bold',
+    md: 'text-2xl md:text-3xl font-semibold',
+  };
+
+  const align = center ? 'text-center' : 'text-left';
+
+  return (
+    <h2 ref={ref} className={`${sizes[size]} tracking-tight leading-[1.15] ${align}`}>
+      {children}
+    </h2>
+  );
+}
+
 /* countdown utils */
 const calcCountdown = (target: Date) => {
   const now = Date.now();
   const diff = target.getTime() - now;
   if (diff <= 0) return { months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 };
 
-  const months  = Math.floor(diff / (1000 * 60 * 60 * 24 * 30));
-  const days    = Math.floor((diff % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24));
-  const hours   = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const months = Math.floor(diff / (1000 * 60 * 60 * 24 * 30));
+  const days = Math.floor((diff % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((diff % (1000 * 60)) / 1000);
   return { months, days, hours, minutes, seconds };
@@ -49,16 +97,16 @@ const ROADMAP = [
 ];
 
 const STAT_MESSAGES = [
-  { stat: '12 hours',  description: 'saved per week by automating case law and statute research',              icon: <Clock className="h-8 w-8 text-[color:var(--accent)]" /> },
-  { stat: '30% more',  description: 'clients handled using streamlined AI-powered intake',                     icon: <Users className="h-8 w-8 text-green-500" /> },
-  { stat: '40% faster',description: 'document drafting with AI-generated summaries and templates',            icon: <Zap className="h-8 w-8 text-yellow-500" /> },
-  { stat: '60% reduction', description: 'in response times with automated client messaging tools',            icon: <CheckCircle className="h-8 w-8 text-blue-500" /> },
-  { stat: '25% savings',   description: 'in overhead costs by automating repetitive legal admin',             icon: <Shield className="h-8 w-8 text-[color:var(--accent)]" /> },
+  { stat: '12 hours', description: 'saved per week by automating case law and statute research', icon: <Clock className="h-8 w-8 text-[color:var(--accent)]" /> },
+  { stat: '30% more', description: 'clients handled using streamlined AI-powered intake', icon: <Users className="h-8 w-8 text-green-500" /> },
+  { stat: '40% faster', description: 'document drafting with AI-generated summaries and templates', icon: <Zap className="h-8 w-8 text-yellow-500" /> },
+  { stat: '60% reduction', description: 'in response times with automated client messaging tools', icon: <CheckCircle className="h-8 w-8 text-blue-500" /> },
+  { stat: '25% savings', description: 'in overhead costs by automating repetitive legal admin', icon: <Shield className="h-8 w-8 text-[color:var(--accent)]" /> },
 ];
 
 function StatRotator({ messages }: { messages: typeof STAT_MESSAGES }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAnimating, setIsAnimating]   = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const rotateToNext = useCallback(() => {
     setIsAnimating(true);
@@ -86,9 +134,7 @@ function StatRotator({ messages }: { messages: typeof STAT_MESSAGES }) {
         {messages.map((_, i) => (
           <div
             key={i}
-            className={`h-2 w-2 rounded-full transition-all duration-300 ${
-              i === currentIndex ? 'bg-[color:var(--accent)]' : 'bg-[color:var(--accent-soft)]/60'
-            }`}
+            className={`h-2 w-2 rounded-full transition-all duration-300 ${i === currentIndex ? 'bg-[color:var(--accent)]' : 'bg-[color:var(--accent-soft)]/60'}`}
             style={i === currentIndex ? undefined : { backgroundColor: 'color-mix(in srgb, var(--accent-soft) 60%, transparent)' }}
           />
         ))}
@@ -99,7 +145,7 @@ function StatRotator({ messages }: { messages: typeof STAT_MESSAGES }) {
 
 export default function Home() {
   const launchDate = new Date('2026-01-01T05:00:00Z');
-  const countdown  = useCountdown(launchDate);
+  const countdown = useCountdown(launchDate);
 
   return (
     <>
@@ -166,20 +212,7 @@ export default function Home() {
           <section id="hero" className="relative w-full min-h-screen overflow-hidden border-b border-white/10">
             <div className="pt-24 pb-24 px-4 h-full flex items-center">
               <div className="mx-auto max-w-6xl text-center w-full">
-              <h1
-              className="
-                text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.15]
-               text-[color:var(--accent)]
-               supports-[background-clip:text]:bg-gradient-to-r
-                supports-[background-clip:text]:from-[var(--accent-soft)]
-                supports-[background-clip:text]:to-[var(--accent)]
-                supports-[background-clip:text]:bg-clip-text
-                supports-[background-clip:text]:text-transparent
-               supports-[background-clip:text]:[-webkit-text-fill-color:transparent]
-              "
-              >
-                Your AI-Powered Legal Assistant
-              </h1>
+                <GradientHeadline size="xl">Your AI-Powered Legal Assistant</GradientHeadline>
 
                 <p className="mt-6 text-lg md:text-xl text-[color:var(--text-1)] max-w-2xl mx-auto">
                   Automate research, summarize cases, manage intake, and review contracts — all in one secure platform built for solo and small law firms.
@@ -213,8 +246,8 @@ export default function Home() {
           {/* Impact Stats */}
           <section className="py-20">
             <div className="text-center">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Transform Your Practice</h2>
-              <p className="text-lg text-[color:var(--text-1)] mb-12 max-w-2xl mx-auto">
+              <GradientHeadline size="lg">Transform Your Practice</GradientHeadline>
+              <p className="text-lg text-[color:var(--text-1)] mb-12 max-w-2xl mx-auto mt-4">
                 See how VeriLex AI empowers solo attorneys and small firms to work smarter, not harder.
               </p>
               <StatRotator messages={STAT_MESSAGES} />
@@ -224,9 +257,9 @@ export default function Home() {
           {/* Our Story */}
           <section id="story" className="py-20">
             <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Why We Built VeriLex AI</h2>
+              <GradientHeadline size="lg">Why We Built VeriLex AI</GradientHeadline>
 
-              <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div className="grid md:grid-cols-2 gap-12 items-center mt-12">
                 <div className="space-y-6">
                   <div className="bg-[var(--surface-1)] p-6 rounded-lg border-l-4 border-[color:var(--accent-light)]">
                     <p className="text-lg font-medium text-[color:var(--accent-soft)] mb-2">The Problem We Discovered</p>
@@ -259,21 +292,14 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-
-              <div className="mt-12 text-center">
-                <blockquote className="text-xl md:text-2xl font-medium text-[color:var(--text-0)] italic max-w-3xl mx-auto">
-                  “We’re not just building software—we’re building the future of legal practice. One where technology amplifies human expertise instead of replacing it.”
-                </blockquote>
-                <cite className="block mt-4 text-[color:var(--accent-soft)] font-semibold">— The VeriLex AI Team</cite>
-              </div>
             </div>
           </section>
 
           {/* Roadmap */}
           <section className="py-20">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Roadmap</h2>
+            <GradientHeadline size="lg">Roadmap</GradientHeadline>
 
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto mt-12">
               <div className="relative">
                 <div
                   className="absolute left-4 md:left-8 top-0 bottom-0 w-0.5"
@@ -325,8 +351,8 @@ export default function Home() {
           {/* Waitlist */}
           <section id="waitlist" className="w-full border-t border-white/10 py-24">
             <div className="px-4 max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">Get Early Access to VeriLex AI</h2>
-              <p className="text-lg text-[color:var(--text-1)] mb-10 max-w-2xl mx-auto">
+              <GradientHeadline size="lg">Get Early Access to VeriLex AI</GradientHeadline>
+              <p className="text-lg text-[color:var(--text-1)] mb-10 max-w-2xl mx-auto mt-4">
                 Secure your beta spot today — priority onboarding, up to <span className="font-semibold">50% lifetime discounts</span>, and direct feedback loops with the founding team.
               </p>
 
@@ -341,8 +367,8 @@ export default function Home() {
 
           {/* FAQ */}
           <section className="py-20">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Frequently Asked Questions</h2>
-            <div className="max-w-3xl mx-auto space-y-4">
+            <GradientHeadline size="lg">Frequently Asked Questions</GradientHeadline>
+            <div className="max-w-3xl mx-auto space-y-4 mt-12">
               {[
                 { q: 'Is VeriLex AI a law firm?', a: 'No. VeriLex AI is a legal-automation platform and does not provide legal advice. Always consult a licensed attorney for legal matters.' },
                 { q: 'When does beta access start?', a: 'Closed beta begins October 1st, 2025 for the first 50 firms on the waitlist. Private alpha testing starts in August 2025.' },
@@ -368,8 +394,8 @@ export default function Home() {
 
           {/* Contact */}
           <section id="contact" className="py-20 text-center">
-            <div className="max-w-2xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">Get In Touch</h2>
+            <GradientHeadline size="lg">Get In Touch</GradientHeadline>
+            <div className="max-w-2xl mx-auto mt-8">
               <p className="text-lg text-[color:var(--text-1)] mb-8">
                 Questions about VeriLex AI? Partnership opportunities? We&apos;d love to hear from you.
               </p>
