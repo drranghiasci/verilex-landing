@@ -166,20 +166,22 @@ export default function Home() {
           <section id="hero" className="relative w-full min-h-screen overflow-hidden border-b border-white/10">
             <div className="pt-24 pb-24 px-4 h-full flex items-center">
               <div className="mx-auto max-w-6xl text-center w-full">
-              <h1
-              className="
-                text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.15]
-               text-[color:var(--accent)]
-               supports-[background-clip:text]:bg-gradient-to-r
-                supports-[background-clip:text]:from-[var(--accent-soft)]
-                supports-[background-clip:text]:to-[var(--accent)]
-                supports-[background-clip:text]:bg-clip-text
-                supports-[background-clip:text]:text-transparent
-               [-webkit-text-fill-color:transparent]
-              "
-              >
-                Your AI-Powered Legal Assistant
-              </h1>
+
+                {/* PATCHED HEADLINE */}
+                <h1
+                  className="
+                    text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.15]
+                    text-[color:var(--accent)]
+                    supports-[background-clip:text]:bg-gradient-to-r
+                    supports-[background-clip:text]:from-[var(--accent-soft)]
+                    supports-[background-clip:text]:to-[var(--accent)]
+                    supports-[background-clip:text]:bg-clip-text
+                    supports-[background-clip:text]:text-transparent
+                    supports-[background-clip:text]:[-webkit-text-fill-color:transparent]
+                  "
+                >
+                  Your AI-Powered Legal Assistant
+                </h1>
 
                 <p className="mt-6 text-lg md:text-xl text-[color:var(--text-1)] max-w-2xl mx-auto">
                   Automate research, summarize cases, manage intake, and review contracts — all in one secure platform built for solo and small law firms.
