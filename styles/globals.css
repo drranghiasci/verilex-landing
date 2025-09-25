@@ -6,9 +6,9 @@
 /* ---------- Theme tokens ---------- */
 :root {
   /* Gradient (light) */
-  --g1: #0e1226;   /* top-left */
-  --g2: #1a0f2a;   /* mid */
-  --g3: #2a1040;   /* bottom-right */
+  --g1: #f5f3ff;   /* lavender / near white */
+  --g2: #ede9fe;   /* light violet */
+  --g3: #ddd6fe;   /* soft violet */
 
   /* Surfaces (light) */
   --surface-0: rgba(0, 0, 0, 0.08);
