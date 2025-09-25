@@ -5,19 +5,19 @@
 
 /* ---------- Theme tokens ---------- */
 :root {
-  /* Gradient (light) */
-  --g1: #f5f3ff;   /* lavender / near white */
-  --g2: #ede9fe;   /* light violet */
-  --g3: #ddd6fe;   /* soft violet */
+  /* Gradient (light) — stronger violet */
+  --g1: #faf7ff;   /* near-white lavender */
+  --g2: #e9d5ff;   /* violet-200 */
+  --g3: #c4b5fd;   /* violet-300 */
 
   /* Surfaces (light) */
-  --surface-0: rgba(0, 0, 0, 0.08);
-  --surface-1: rgba(255, 255, 255, 0.06);
+  --surface-0: rgba(0, 0, 0, 0.05);  /* subtle shadow wash */
+  --surface-1: rgba(255, 255, 255, 0.65); /* card glass on light bg */
 
-  /* Text (light) */
-  --text-0: #0f1222;          /* headings */
-  --text-1: rgba(15,18,34,0.78);
-  --text-2: rgba(15,18,34,0.62);
+  /* Text (light) — darker for contrast */
+  --text-0: #0b0f1a;          /* headings */
+  --text-1: rgba(11,15,26,0.84);  /* body */
+  --text-2: rgba(11,15,26,0.64);  /* meta */
 
   /* Accent (light) */
   --accent: #4f46e5;        /* Indigo 600 */
@@ -26,7 +26,7 @@
 }
 
 .dark {
-  /* Gradient (dark) */
+  /* Gradient (dark) — unchanged */
   --g1: #000000;
   --g2: #0a0014;
   --g3: #190033;
@@ -37,8 +37,8 @@
 
   /* Text (dark) */
   --text-0: #ffffff;
-  --text-1: rgba(255,255,255,0.82);
-  --text-2: rgba(255,255,255,0.64);
+  --text-1: rgba(255,255,255,0.88);  /* slightly brighter for readability */
+  --text-2: rgba(255,255,255,0.68);
 
   /* Accent (dark) */
   --accent: #818cf8;        /* Indigo 400 */

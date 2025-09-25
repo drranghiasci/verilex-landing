@@ -170,26 +170,27 @@ export default function Home() {
         {/* Header */}
         <header className="fixed inset-x-0 top-0 z-50 bg-[var(--surface-0)] backdrop-blur-sm border-b border-white/10">
           <nav className="flex h-16 w-full items-center justify-between px-4 sm:px-6 max-w-7xl mx-auto" aria-label="Main Navigation">
-            <Link href="/" className="relative flex items-center focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] rounded-lg">
-              <Image
-                src="/verilex-logo-name.png"
-                alt="VeriLex AI"
-                width={150}
-                height={46}
-                priority
-                unoptimized
-                className="object-contain transition-opacity dark:opacity-0"
-              />
-              <Image
-                src="/verilex-logo-name-darkmode.png"
-                alt="VeriLex AI (dark)"
-                width={150}
-                height={46}
-                priority
-                unoptimized
-                className="absolute inset-0 object-contain opacity-0 transition-opacity dark:opacity-100"
-              />
-            </Link>
+          <Link href="/" className="relative flex items-center focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] rounded-lg">
+  <Image
+    src="/verilex-logo-name.png"
+    alt="VeriLex AI"
+    width={150}
+    height={46}
+    priority
+    unoptimized
+    className="object-contain transition-opacity duration-500 ease-out dark:opacity-0"
+  />
+  <Image
+    src="/verilex-logo-name-darkmode.png"
+    alt="VeriLex AI (dark)"
+    width={150}
+    height={46}
+    priority
+    unoptimized
+    className="absolute inset-0 object-contain opacity-0 transition-opacity duration-500 ease-out dark:opacity-100"
+  />
+</Link>
+
 
             <div className="flex items-center gap-3 sm:gap-6 text-sm font-medium">
               <ThemeToggle />
