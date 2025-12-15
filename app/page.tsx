@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { ShieldCheck, ChevronRight, Clock, Users, Zap, Shield, CheckCircle } from 'lucide-react';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import WaitlistForm from '@/components/WaitlistForm';
 import CookieBanner from '@/components/CookieBanner';
 import { Analytics } from '@vercel/analytics/react';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -62,32 +61,9 @@ function GradientHeadline({
   );
 }
 
-/* countdown utils */
-const calcCountdown = (target: Date) => {
-  const now = Date.now();
-  const diff = target.getTime() - now;
-  if (diff <= 0) return { months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 };
-
-  const months = Math.floor(diff / (1000 * 60 * 60 * 24 * 30));
-  const days = Math.floor((diff % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-  return { months, days, hours, minutes, seconds };
-};
-
-function useCountdown(target: Date) {
-  const [time, setTime] = useState(() => calcCountdown(target));
-  useEffect(() => {
-    const t = setInterval(() => setTime(calcCountdown(target)), 1000);
-    return () => clearInterval(t);
-  }, [target]);
-  return time;
-}
-
 /* content data */
 const ROADMAP = [
-  { date: 'Apr 2025', title: 'Waitlist Opens', desc: 'Gather early-adopter attorneys & gauge feature priorities.', icon: '🔒', status: 'completed' },
+  { date: 'Apr 2025', title: 'Early Access Outreach', desc: 'Gather early-adopter attorneys & gauge feature priorities.', icon: '🔒', status: 'completed' },
   { date: 'Aug 2025', title: 'Private Alpha', desc: 'Research & summary engine available to internal testers.', icon: '🧪', status: 'current' },
   { date: 'Oct 2025', title: 'Closed Beta', desc: 'Invite-only beta for 50 firms. Feedback loops & bug fixes.', icon: '🚧', status: 'upcoming' },
   { date: 'Nov 2025', title: 'Contract Analyzer Alpha', desc: 'Risk-clause detection and key-term extraction.', icon: '📑', status: 'upcoming' },
@@ -144,9 +120,6 @@ function StatRotator({ messages }: { messages: typeof STAT_MESSAGES }) {
 }
 
 export default function Home() {
-  const launchDate = new Date('2026-01-01T05:00:00Z');
-  const countdown = useCountdown(launchDate);
-
   return (
     <>
       {/* SEO / OG */}
@@ -170,11 +143,7 @@ export default function Home() {
         {/* Header */}
         <header className="fixed inset-x-0 top-0 z-50 bg-[var(--surface-0)] backdrop-blur-sm border-b border-white/10">
           <nav className="flex h-16 w-full items-center justify-between px-4 sm:px-6 max-w-7xl mx-auto" aria-label="Main Navigation">
-          <Link href="/" className="relative flex items-center focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] rounded-lg"></Link>
-          <Link
-          href="/"
-         className="relative flex items-center focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] rounded-lg"
-            >
+            <Link href="/" className="relative flex items-center focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] rounded-lg">
               {/* Light Mode logo */}
               <Image
                 src="/verilex-logo-name.png"
@@ -198,16 +167,16 @@ export default function Home() {
               />
             </Link>
 
-
             <div className="flex items-center gap-3 sm:gap-6 text-sm font-medium">
               <ThemeToggle />
               <Link href="/login" className="hover:text-[color:var(--accent-soft)] transition-colors">Log In</Link>
+              <Link href="/myclient" className="hover:text-[color:var(--accent-soft)] transition-colors">MyClient</Link>
               <Link href="#contact" className="hover:text-[color:var(--accent-soft)] transition-colors">Contact</Link>
               <Link
-                href="/register"
+                href="/firm-intake"
                 className="rounded-lg border border-[color:var(--accent-light)] px-4 py-1.5 text-[color:var(--accent-soft)] hover:bg-[color:var(--accent-light)] hover:text-white transition-all"
               >
-                Sign Up
+                Firm Intake
               </Link>
             </div>
           </nav>
@@ -233,19 +202,20 @@ export default function Home() {
 
                 <div className="mt-10 flex flex-col sm:flex-row items-center gap-4 justify-center">
                   <Link
-                    href="#waitlist"
+                    href="/firm-intake"
                     className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--accent-light)] px-6 py-3 text-white font-semibold shadow-lg hover:bg-[color:var(--accent)] transition-all hover:scale-[1.02]"
                   >
-                    Join Waitlist
+                    Firm Intake
                     <ChevronRight className="h-4 w-4" />
                   </Link>
 
-                  <div className="inline-block rounded-lg/8 border border-white/10 bg-[var(--surface-1)] px-5 py-3 text-sm font-medium">
-                    Public launch in{' '}
-                    <span className="font-mono tabular-nums font-bold text-[color:var(--accent-soft)]">
-                      {countdown.months}mo {countdown.days}d {countdown.hours}h {countdown.minutes}m {countdown.seconds}s
-                    </span>
-                  </div>
+                  <Link
+                    href="/myclient"
+                    className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--accent-light)] px-6 py-3 text-white font-semibold shadow-lg hover:bg-[color:var(--accent)] transition-all hover:scale-[1.02]"
+                  >
+                    MyClient
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
                 </div>
               </div>
             </div>
@@ -356,34 +326,17 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Waitlist */}
-          <section id="waitlist" className="w-full border-t border-white/10 py-24">
-            <div className="px-4 max-w-4xl mx-auto text-center">
-              <GradientHeadline size="lg">Get Early Access to VeriLex AI</GradientHeadline>
-              <p className="text-lg text-[color:var(--text-1)] mb-10 max-w-2xl mx-auto mt-4">
-                Secure your beta spot today — priority onboarding, up to <span className="font-semibold">50% lifetime discounts</span>, and direct feedback loops with the founding team.
-              </p>
-
-              <div className="rounded-xl p-8 border border-white/10 bg-[var(--surface-1)] shadow-md">
-                <div className="max-w-md mx-auto">
-                  <WaitlistForm />
-                  <p className="mt-4 text-sm text-[color:var(--text-2)]">No spam. We’ll email you as soon as your spot opens.</p>
-                </div>
-              </div>
-            </div>
-          </section>
-
           {/* FAQ */}
           <section className="py-20">
             <GradientHeadline size="lg">Frequently Asked Questions</GradientHeadline>
             <div className="max-w-3xl mx-auto space-y-4 mt-12">
               {[
                 { q: 'Is VeriLex AI a law firm?', a: 'No. VeriLex AI is a legal-automation platform and does not provide legal advice. Always consult a licensed attorney for legal matters.' },
-                { q: 'When does beta access start?', a: 'Closed beta begins October 1st, 2025 for the first 50 firms on the waitlist. Private alpha testing starts in August 2025.' },
+                { q: 'When can I start using VeriLex AI?', a: 'Private alpha begins August 2025 with a phased rollout to partner firms, followed by a broader beta in October 2025.' },
                 { q: 'How secure is my data?', a: 'All data is encrypted in transit (TLS 1.3) and at rest (AES-256). We are pursuing SOC 2 Type II certification and never train our AI on client data.' },
                 { q: 'Do I need to install anything?', a: 'VeriLex AI runs in the cloud and is accessible from any modern browser — nothing to install.' },
                 { q: 'What practice areas are supported?', a: "We're starting with divorce/family law, and expanding to immigration, estate planning, and business law by Q1 2026." },
-                { q: 'How much will it cost?', a: 'Tiered pricing by firm size. Early waitlist members receive lifetime discounts up to 50% off.' },
+                { q: 'How much will it cost?', a: 'Tiered pricing by firm size with discounts for annual commitments and bundled product access.' },
                 { q: 'Can I request features?', a: 'Absolutely. We prioritize feedback from beta users and solo firms when planning new features.' },
                 { q: 'What makes VeriLex AI different?', a: 'It’s built specifically for legal workflows with privilege protection and legal-tuned models.' },
               ].map(({ q, a }) => (
@@ -415,12 +368,13 @@ export default function Home() {
                   Contact Founder
                   <ChevronRight className="h-4 w-4" />
                 </a>
-                <a
-                  href="#waitlist"
-                  className="inline-flex items-center gap-2 rounded-lg border border-[color:var(--accent-light)] px-6 py-3 text-[color:var(--accent-soft)] hover:bg-[var(--surface-1)] transition-colors"
+                <Link
+                  href="/myclient"
+                  className="inline-flex items-center gap-2 rounded-lg border border-[color:var(--accent-light)] px-6 py-3 text-[color:var(--accent-soft)] hover:bg-[color:var(--surface-1)] transition-colors"
                 >
-                  Join Waitlist
-                </a>
+                  Explore MyClient
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
               </div>
             </div>
           </section>
