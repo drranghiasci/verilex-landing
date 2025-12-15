@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     return res.status(500).json({
-      error: 'Server misconfigured: missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY.',
+      error: 'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY',
     });
   }
 
@@ -94,19 +94,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
 
   try {
-    const { data, error } = await supabase
-      .from('firm_intakes')
-      .insert(insertRow)
-      .select('id')
-      .single();
+    const { data, error } = await supabase.from('firm_intakes').insert(insertRow).select('id').single();
 
     if (error) {
-      // Helpful for debugging RLS / schema mismatches:
-      return res.status(500).json({ error: error.message });
+      // eslint-disable-next-line no-console
+      console.error('Supabase firm intake insert failed', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+      return res.status(500).json({ error: error.message, code: error.code });
     }
 
     return res.status(200).json({ ok: true, intakeId: data.id });
-  } catch (e: any) {
-        return res.status(500).json({ error: 'An unexpected error occurred.' });
-      }
-    }
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Unexpected firm intake handler error', error);
+    return res.status(500).json({ error: 'An unexpected error occurred.' });
+  }
+}

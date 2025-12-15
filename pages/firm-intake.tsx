@@ -114,13 +114,48 @@ export default function FirmIntakePage() {
     setSubmitError(null);
 
     try {
+      const payload = {
+        firmName: form.firmName,
+        website: form.firmWebsite,
+        state: form.state,
+        county: form.county,
+        practiceFocus: form.practiceFocus,
+        monthlyMatters: form.monthlyMatters,
+        adminName: form.adminName,
+        adminEmail: form.adminEmail,
+        adminPhone: form.adminPhone,
+        attorneyUsers: form.attorneyUsers,
+        staffUsers: form.staffUsers,
+        additionalUserEmails: form.additionalUserEmails,
+        billingEmail: form.billingEmail,
+        cms: form.cms,
+        cmsOther: form.cmsOther,
+        migrationNeeded: form.dataMigrationNeeded,
+        notes: form.notes,
+      };
+
       const response = await fetch('/api/firm-intake', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error('Unable to submit this intake. Please try again.');
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        if (process.env.NODE_ENV !== 'production') {
+          // eslint-disable-next-line no-console
+          console.error('Firm intake failed', response.status, data);
+        }
+        const message =
+          typeof data.error === 'string'
+            ? data.code
+              ? `${data.error} (${data.code})`
+              : data.error
+            : 'Unable to submit this intake. Please try again.';
+        setSubmitError(message);
+        return;
+      }
 
       setIsSuccess(true);
       setForm(INITIAL_FORM_STATE);
