@@ -73,9 +73,10 @@ export default function AdminFirmIntakes() {
         body: JSON.stringify({ intakeId }),
       });
       const data: ApproveResponse = await res.json();
-      if (!res.ok || ('error' in data && data.error)) {
+      if (!res.ok || ('error' in data && data.error) || data?.ok !== true) {
         setActionState((prev) => ({ ...prev, [intakeId]: 'Failed' }));
-        setFeedback('error' in data && data.error ? data.error : 'Approval failed');
+        const msg = 'error' in data && data.error ? data.error : 'Approval failed';
+        setFeedback(msg);
         return;
       }
       const inviteMsg = data.inviteSent
