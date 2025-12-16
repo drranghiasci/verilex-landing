@@ -13,7 +13,7 @@ type IntakeRow = {
 
 type ApproveResponse =
   | { ok: true; firmId: string; inviteSent: boolean; inviteError?: string }
-  | { error: string; firmId?: string | null };
+  | { ok?: false; error: string; firmId?: string | null };
 
 const ADMIN_TOKEN = process.env.NEXT_PUBLIC_ADMIN_DASH_TOKEN;
 
@@ -73,9 +73,9 @@ export default function AdminFirmIntakes() {
         body: JSON.stringify({ intakeId }),
       });
       const data: ApproveResponse = await res.json();
-      if (!res.ok || 'error' in data) {
+      if (!res.ok || ('error' in data && data.error)) {
         setActionState((prev) => ({ ...prev, [intakeId]: 'Failed' }));
-        setFeedback(data.error || 'Approval failed');
+        setFeedback('error' in data && data.error ? data.error : 'Approval failed');
         return;
       }
       const inviteMsg = data.inviteSent
