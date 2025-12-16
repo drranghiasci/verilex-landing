@@ -3,6 +3,22 @@ import { supabaseAdmin } from '@/lib/supabaseAdminClient';
 
 type ApproveBody = { intakeId?: string };
 
+type FirmIntakeRow = {
+  id: string;
+  status: 'new' | 'reviewing' | 'approved' | 'rejected';
+  approved_firm_id: string | null;
+  firm_name: string;
+  firm_website: string | null;
+  office_state: string | null;
+  office_county: string | null;
+  practice_focus: string[];
+  admin_email: string;
+};
+
+type FirmRow = {
+  id: string;
+};
+
 const ADMIN_TOKEN = process.env.ADMIN_DASH_TOKEN;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -21,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'intakeId is required' });
   }
 
-  const { data: intake, error: intakeError } = await supabaseAdmin
+  const { data: intakeData, error: intakeError } = await supabaseAdmin
     .from('firm_intakes')
     .select(
       [
@@ -37,7 +53,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ].join(', '),
     )
     .eq('id', intakeId)
-    .single();
+    .single<FirmIntakeRow>();
+
+  const intake = intakeData ?? null;
 
   if (intakeError || !intake) {
     return res.status(404).json({ error: intakeError?.message || 'Firm intake not found' });
@@ -50,7 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
-  const { data: firmInsert, error: firmError } = await supabaseAdmin
+  const { data: firmInsertData, error: firmError } = await supabaseAdmin
     .from('firms')
     .insert({
       name: intake.firm_name,
@@ -60,7 +78,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       practice_focus: intake.practice_focus,
     })
     .select('id')
-    .single();
+    .single<FirmRow>();
+
+  const firmInsert = firmInsertData ?? null;
 
   if (firmError || !firmInsert) {
     return res.status(500).json({ error: firmError?.message || 'Unable to create firm' });

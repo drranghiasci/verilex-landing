@@ -144,7 +144,6 @@ export default function FirmIntakePage() {
 
       if (!response.ok) {
         if (process.env.NODE_ENV !== 'production') {
-          // eslint-disable-next-line no-console
           console.error('Firm intake failed', response.status, data);
         }
         const message =
