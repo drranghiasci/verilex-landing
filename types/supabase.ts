@@ -33,6 +33,66 @@ export type Database = {
         }
         Relationships: []
       }
+      firm_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_user_id: string | null
+          email: string
+          firm_id: string
+          id: string
+          invited_at: string | null
+          role: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_user_id?: string | null
+          email: string
+          firm_id: string
+          id?: string
+          invited_at?: string | null
+          role?: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_user_id?: string | null
+          email?: string
+          firm_id?: string
+          id?: string
+          invited_at?: string | null
+          role?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      firm_members: {
+        Row: {
+          created_at: string | null
+          firm_id: string
+          is_active: boolean | null
+          role: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          firm_id: string
+          is_active?: boolean | null
+          role?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          firm_id?: string
+          is_active?: boolean | null
+          role?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       cases: {
         Row: {
           case_type: string | null

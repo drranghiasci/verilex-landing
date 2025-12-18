@@ -19,6 +19,10 @@ type FirmRow = {
   id: string;
 };
 
+type FirmInviteRow = {
+  id: string;
+};
+
 const ADMIN_TOKEN = process.env.ADMIN_DASH_TOKEN;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -99,8 +103,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: updateError.message });
   }
 
+  const { data: inviteRow, error: inviteInsertError } = await supabaseAdmin
+    .from('firm_invites')
+    .insert({
+      firm_id: firmInsert.id,
+      email: intake.admin_email,
+      role: 'owner',
+      status: 'pending',
+    })
+    .select('id')
+    .single<FirmInviteRow>();
+
+  if (inviteInsertError || !inviteRow) {
+    return res.status(500).json({ error: inviteInsertError?.message || 'Unable to create invite record' });
+  }
+
+  const redirectUrl = `https://myclient.verilex.us/myclient/auth/callback?invite=${inviteRow.id}`;
+
   const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(intake.admin_email, {
-    redirectTo: 'https://myclient.verilex.us/auth/callback',
+    redirectTo: redirectUrl,
   });
 
   if (inviteError) {
