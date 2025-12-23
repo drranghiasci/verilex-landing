@@ -118,7 +118,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: inviteInsertError?.message || 'Unable to create invite record' });
   }
 
-  const redirectUrl = `https://myclient.verilex.us/myclient/auth/callback?invite=${inviteRow.id}`;
+  const redirectUrl = 'https://myclient.verilex.us/auth/callback';
 
   const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(intake.admin_email, {
     redirectTo: redirectUrl,
