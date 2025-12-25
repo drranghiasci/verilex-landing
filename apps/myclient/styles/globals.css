@@ -1,0 +1,31 @@
+/* styles/globals.css ------------------------------------------------------ */
+
+@import "tailwindcss";
+
+:root {
+  --g1: #000000;
+  --g2: #0a0014;
+  --g3: #190033;
+
+  --surface-0: rgba(0, 0, 0, 0.6);
+  --surface-1: rgba(255, 255, 255, 0.06);
+
+  --text-0: #ffffff;
+  --text-1: rgba(255, 255, 255, 0.88);
+  --text-2: rgba(255, 255, 255, 0.68);
+
+  --accent: #818cf8;
+  --accent-light: #a5b4fc;
+  --accent-soft: #c7d2fe;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
