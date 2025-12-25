@@ -5,51 +5,63 @@ import { supabase } from '@/lib/supabaseClient';
 
 type Phase = 'auth' | 'claim' | 'error';
 
+type HashTokens = {
+  accessToken?: string;
+  refreshToken?: string;
+};
+
+const parseHashTokens = (hash: string): HashTokens => {
+  const params = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
+  const accessToken = params.get('access_token') ?? undefined;
+  const refreshToken = params.get('refresh_token') ?? undefined;
+  return { accessToken, refreshToken };
+};
+
 export default function AuthCallback() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>('auth');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<string>('Finishing sign-in…');
 
   const runFlow = useCallback(async () => {
     setPhase('auth');
-    setErrorMessage(null);
+    setMessage('Finishing sign-in…');
 
     try {
-      let {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { accessToken, refreshToken } = parseHashTokens(window.location.hash);
 
-      if (!session) {
+      if (accessToken && refreshToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (error) throw error;
+        window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+      } else {
         const exchange = (supabase.auth as typeof supabase.auth & {
-          exchangeCodeForSession?: (code: string) => Promise<{ data: { session: typeof session } | null; error: Error | null }>;
+          exchangeCodeForSession?: (url: string) => Promise<{ data: { session: unknown } | null; error: Error | null }>;
         }).exchangeCodeForSession;
 
         if (typeof exchange === 'function') {
-          const code = new URL(window.location.href).searchParams.get('code') ?? window.location.href;
-          const { data, error } = await exchange(code);
+          const { error } = await exchange(window.location.href);
           if (error) throw error;
-          session = data?.session ?? null;
-        } else {
-          await new Promise((resolve) => setTimeout(resolve, 400));
-          ({
-            data: { session },
-          } = await supabase.auth.getSession());
         }
       }
 
-      if (!session) {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
         throw new Error('We could not complete sign-in. Please try the invite link again.');
       }
 
       setPhase('claim');
-      const { error } = await supabase.rpc('claim_firm_membership');
-      if (error) throw error;
+      setMessage('Claiming firm access…');
+      const { error: claimError } = await supabase.rpc('claim_firm_membership');
+      if (claimError) throw claimError;
 
       router.replace('/myclient/app');
     } catch (error) {
       console.error('Auth callback error', error);
       setPhase('error');
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to finish sign-in. Please try again.');
+      setMessage(error instanceof Error ? error.message : 'Unable to finish sign-in. Please try again.');
     }
   }, [router]);
 
@@ -62,30 +74,22 @@ export default function AuthCallback() {
   return (
     <>
       <Head>
-        <title>VeriLex | Completing Sign-in</title>
+        <title>MyClient</title>
       </Head>
       <div className="min-h-screen bg-[var(--surface-0)] px-6 py-20 text-[color:var(--text-1)]">
         <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 text-center shadow-2xl">
           <p className="text-sm uppercase tracking-[0.35em] text-[color:var(--accent-soft)]">MyClient</p>
           <h1 className="mt-4 text-3xl font-semibold text-white">
-            {phase === 'auth' ? 'Finishing sign-in…' : phase === 'claim' ? 'Claiming firm access…' : 'Something went wrong'}
+            {phase === 'error' ? 'Setup failed' : 'Finishing setup'}
           </h1>
-          {phase === 'auth' && (
-            <p className="mt-4 text-[color:var(--text-2)]">Verifying your invite link. This only takes a moment.</p>
-          )}
-          {phase === 'claim' && (
-            <p className="mt-4 text-[color:var(--text-2)]">Provisioning your firm membership now.</p>
-          )}
+          <p className="mt-4 text-[color:var(--text-2)]">{message}</p>
           {phase === 'error' && (
-            <div className="mt-6 space-y-4 text-sm text-[color:var(--text-1)]">
-              <p className="text-red-300">{errorMessage}</p>
-              <button
-                onClick={runFlow}
-                className="w-full rounded-lg bg-[color:var(--accent-light)] px-4 py-2 font-semibold text-white hover:bg-[color:var(--accent)] transition"
-              >
-                Try again
-              </button>
-            </div>
+            <button
+              onClick={runFlow}
+              className="mt-6 w-full rounded-lg bg-[color:var(--accent-light)] px-4 py-2 font-semibold text-white hover:bg-[color:var(--accent)] transition"
+            >
+              Try again
+            </button>
           )}
         </div>
       </div>
