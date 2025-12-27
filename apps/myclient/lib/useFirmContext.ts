@@ -44,13 +44,13 @@ export function useFirmContext(): { state: FirmContextState; refresh: () => Prom
     const userId = data.session.user.id;
     const email = data.session.user.email ?? null;
 
-    const { data: member, error: memberError } = await supabase
+    const { data: members, error: memberError } = await supabase
       .from('firm_members')
       .select('firm_id, role')
       .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+
+    const member = Array.isArray(members) && members.length > 0 ? members[0] : null;
 
     setState({
       loading: false,

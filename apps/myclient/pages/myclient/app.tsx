@@ -9,11 +9,29 @@ export default function MyClientApp() {
   const { state, refresh } = useFirmContext();
   const [claimStatus, setClaimStatus] = useState<string | null>(null);
 
+  const fetchMembership = async (userId: string) => {
+    const { data } = await supabase
+      .from('firm_members')
+      .select('firm_id, role')
+      .eq('user_id', userId)
+      .limit(1);
+    const member = Array.isArray(data) && data.length > 0 ? data[0] : null;
+    return member?.firm_id ?? null;
+  };
+
   const handleClaimAccess = async () => {
     setClaimStatus('Claiming…');
     try {
       const { error } = await supabase.rpc('claim_firm_membership');
       if (error) {
+        if (error.message.includes('No pending invite found')) {
+          await refresh();
+          const firmId = state.userId ? await fetchMembership(state.userId) : null;
+          if (firmId) {
+            setClaimStatus('Claimed');
+            return;
+          }
+        }
         setClaimStatus(`Error: ${error.message}`);
         return;
       }
@@ -72,6 +90,9 @@ export default function MyClientApp() {
                     Finalize Firm Access
                   </button>
                 </div>
+              )}
+              {state.error && (
+                <p className="mt-4 text-sm text-red-300">Error: {state.error}</p>
               )}
               {claimStatus && (
                 <p
