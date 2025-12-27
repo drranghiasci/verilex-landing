@@ -1,12 +1,11 @@
 import Head from 'next/head';
-import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { useFirmContext } from '@/lib/useFirmContext';
+import { useFirm } from '@/lib/FirmProvider';
 
 export default function MyClientApp() {
-  const router = useRouter();
-  const { state, refresh } = useFirmContext();
+  const { state, refresh } = useFirm();
   const [claimStatus, setClaimStatus] = useState<string | null>(null);
 
   const fetchMembership = async (userId: string) => {
@@ -45,7 +44,6 @@ export default function MyClientApp() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    router.replace('/');
   };
 
   return (
@@ -53,65 +51,97 @@ export default function MyClientApp() {
       <Head>
         <title>MyClient</title>
       </Head>
-      <div className="min-h-screen bg-[var(--surface-0)] px-6 py-20 text-[color:var(--text-1)]">
-        <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 text-center shadow-2xl">
-          {state.loading ? (
-            <>
+      <div className="mx-auto max-w-5xl space-y-8">
+        <div className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
               <p className="text-sm uppercase tracking-[0.35em] text-[color:var(--accent-soft)]">MyClient</p>
-              <h1 className="mt-4 text-3xl font-semibold text-white">Checking session…</h1>
-              <p className="mt-4 text-[color:var(--text-2)]">Validating your account.</p>
-            </>
-          ) : !state.authed ? (
-            <>
-              <h1 className="text-3xl font-semibold text-white">Please sign in</h1>
-              <p className="mt-4 text-[color:var(--text-2)]">
-                {state.error ?? 'Please sign in to access MyClient.'}
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-sm uppercase tracking-[0.35em] text-[color:var(--accent-soft)]">MyClient</p>
-              <h1 className="mt-4 text-4xl font-semibold text-white">You&apos;re signed in.</h1>
-              <p className="mt-4 text-[color:var(--text-2)]">Signed in as {state.email}</p>
-              {state.firmId ? (
-                <div className="mt-6 rounded-2xl border border-white/10 bg-[var(--surface-0)] p-4 text-left text-sm text-[color:var(--text-1)]">
-                  <p className="font-semibold text-white">Firm Membership</p>
-                  <p className="mt-2">Firm ID: {state.firmId}</p>
-                  <p>Role: {state.role ?? 'member'}</p>
-                </div>
-              ) : (
-                <div className="mt-6 rounded-2xl border border-white/10 bg-[var(--surface-0)] p-4 text-sm text-[color:var(--text-2)]">
-                  <p className="text-[color:var(--text-1)]">No firm linked yet.</p>
-                  <p className="mt-2 text-[color:var(--text-2)]">Having trouble? Finalize your firm access below.</p>
-                  <button
-                    onClick={handleClaimAccess}
-                    className="mt-4 w-full rounded-lg border border-white/15 px-4 py-2 font-semibold text-white hover:bg-white/10 transition"
-                  >
-                    Finalize Firm Access
-                  </button>
-                </div>
-              )}
-              {state.error && (
-                <p className="mt-4 text-sm text-red-300">Error: {state.error}</p>
-              )}
-              {claimStatus && (
-                <p
-                  className={`mt-4 text-sm ${
-                    claimStatus.startsWith('Error') ? 'text-red-300' : claimStatus === 'Claimed' ? 'text-green-300' : 'text-[color:var(--text-2)]'
-                  }`}
-                >
-                  {claimStatus}
-                </p>
-              )}
+              <h1 className="mt-3 text-3xl font-semibold text-white">Dashboard</h1>
+              <p className="mt-2 text-[color:var(--text-2)]">Welcome back{state.email ? `, ${state.email}` : ''}.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <span className="rounded-full border border-white/15 bg-[var(--surface-0)] px-3 py-1 text-[color:var(--text-1)]">
+                Firm {state.firmId ? state.firmId.slice(0, 8) : 'No firm'}
+              </span>
+              <span className="rounded-full border border-white/15 bg-[var(--surface-0)] px-3 py-1 text-[color:var(--text-1)]">
+                Role {state.role ?? 'member'}
+              </span>
               <button
                 onClick={handleSignOut}
-                className="mt-8 rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition"
+                className="rounded-full border border-white/15 px-3 py-1 text-white hover:bg-white/10 transition"
               >
                 Sign out
               </button>
-            </>
-          )}
+            </div>
+          </div>
         </div>
+
+        {state.firmId ? (
+          <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+            <div className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
+              <h2 className="text-lg font-semibold text-white">Today&apos;s Snapshot</h2>
+              <p className="mt-3 text-[color:var(--text-2)]">
+                Your firm&apos;s latest activity and workload trends will appear here soon.
+              </p>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                {['Active Cases', 'Upcoming Deadlines', 'Client Messages', 'Documents Reviewed'].map((label) => (
+                  <div
+                    key={label}
+                    className="rounded-2xl border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-sm text-[color:var(--text-2)]"
+                  >
+                    <p className="text-white">{label}</p>
+                    <p className="mt-2 text-[color:var(--text-2)]">Coming soon</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
+              <h2 className="text-lg font-semibold text-white">Quick Actions</h2>
+              <div className="mt-6 grid gap-4">
+                {[
+                  { label: 'Active Cases', href: '/myclient/cases' },
+                  { label: 'New Intake', href: '/myclient/intake' },
+                  { label: 'Documents', href: '/myclient/documents' },
+                  { label: 'Members', href: '/myclient/members' },
+                ].map((item) => (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="rounded-2xl border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-sm text-[color:var(--text-1)] hover:bg-white/10 transition"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 text-center shadow-2xl">
+            <h2 className="text-2xl font-semibold text-white">No firm linked yet</h2>
+            <p className="mt-3 text-[color:var(--text-2)]">
+              We&apos;re finalizing your access. If you&apos;re stuck, finalize firm access below.
+            </p>
+            <button
+              onClick={handleClaimAccess}
+              className="mt-6 inline-flex items-center justify-center rounded-lg border border-white/15 px-4 py-2 font-semibold text-white hover:bg-white/10 transition"
+            >
+              Finalize Firm Access
+            </button>
+            {claimStatus && (
+              <p
+                className={`mt-4 text-sm ${
+                  claimStatus.startsWith('Error') ? 'text-red-300' : claimStatus === 'Claimed' ? 'text-green-300' : 'text-[color:var(--text-2)]'
+                }`}
+              >
+                {claimStatus}
+              </p>
+            )}
+          </div>
+        )}
+        {state.error && (
+          <p className="text-sm text-red-300">Error: {state.error}</p>
+        )}
       </div>
     </>
   );
