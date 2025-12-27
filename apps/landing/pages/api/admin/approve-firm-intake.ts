@@ -108,7 +108,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .insert({
       firm_id: firmInsert.id,
       email: intake.admin_email,
-      role: 'owner',
+      role: 'admin',
       status: 'pending',
     })
     .select('id')
