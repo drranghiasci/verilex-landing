@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
 type Phase = 'auth' | 'claim' | 'error';
-type Step = 'setSession' | 'getSession' | 'rpc' | 'redirect';
+type Step = 'signIn' | 'claim' | 'redirect';
 
 type HashTokens = {
   accessToken?: string;
@@ -22,22 +22,29 @@ export default function AuthCallback() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>('auth');
   const [message, setMessage] = useState<string>('Finishing sign-in…');
-  const [step, setStep] = useState<Step>('setSession');
+  const [step, setStep] = useState<Step>('signIn');
 
   const runFlow = useCallback(async () => {
     setPhase('auth');
     setMessage('Finishing sign-in…');
-    setStep('setSession');
+    setStep('signIn');
 
     try {
       const { accessToken, refreshToken } = parseHashTokens(window.location.hash);
 
       if (accessToken && refreshToken) {
-        const { error } = await supabase.auth.setSession({
+        const { error: setSessionError } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
         });
-        if (error) throw error;
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          throw new Error(
+            setSessionError?.message
+              ? `Unable to complete sign-in: ${setSessionError.message}`
+              : 'Unable to complete sign-in. Please try the invite link again.',
+          );
+        }
         window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
       } else {
         const exchange = (supabase.auth as typeof supabase.auth & {
@@ -48,17 +55,15 @@ export default function AuthCallback() {
           const { error } = await exchange(window.location.href);
           if (error) throw error;
         }
-      }
-
-      setStep('getSession');
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        throw new Error('We could not complete sign-in. Please try the invite link again.');
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          throw new Error('We could not complete sign-in. Please try the invite link again.');
+        }
       }
 
       setPhase('claim');
       setMessage('Claiming firm access…');
-      setStep('rpc');
+      setStep('claim');
       const { error: claimError } = await supabase.rpc('claim_firm_membership');
       if (claimError) throw claimError;
 
@@ -68,7 +73,7 @@ export default function AuthCallback() {
       console.error('Auth callback error', error);
       setPhase('error');
       const detail = error instanceof Error ? error.message : 'Unable to finish sign-in. Please try again.';
-      setMessage(`Step: ${step}. ${detail}`);
+      setMessage(detail);
     }
   }, [router]);
 
@@ -89,6 +94,7 @@ export default function AuthCallback() {
           <h1 className="mt-4 text-3xl font-semibold text-white">
             {phase === 'error' ? 'Setup failed' : 'Finishing setup'}
           </h1>
+          <p className="mt-3 text-xs uppercase tracking-[0.2em] text-[color:var(--text-2)]">Step: {step}</p>
           <p className="mt-4 text-[color:var(--text-2)]">{message}</p>
           {phase === 'error' && (
             <button
