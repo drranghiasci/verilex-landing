@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useFirm } from '@/lib/FirmProvider';
 import { supabase } from '@/lib/supabaseClient';
@@ -98,7 +99,11 @@ export default function CasesPage() {
                 <tbody className="divide-y divide-white/5 text-[color:var(--text-1)]">
                   {cases.map((row) => (
                     <tr key={row.id}>
-                      <td className="px-4 py-3 text-white">{row.client_name}</td>
+                      <td className="px-4 py-3 text-white">
+                        <Link href={`/myclient/cases/${row.id}`} className="hover:text-[color:var(--accent-light)]">
+                          {row.client_name}
+                        </Link>
+                      </td>
                       <td className="px-4 py-3">
                         <span className="rounded-full border border-white/15 bg-[var(--surface-0)] px-2 py-1 text-xs uppercase tracking-wide text-[color:var(--text-2)]">
                           {row.status}
