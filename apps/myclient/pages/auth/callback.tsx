@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
 type Phase = 'auth' | 'claim' | 'error';
+type Step = 'setSession' | 'getSession' | 'rpc' | 'redirect';
 
 type HashTokens = {
   accessToken?: string;
@@ -21,10 +22,12 @@ export default function AuthCallback() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>('auth');
   const [message, setMessage] = useState<string>('Finishing sign-in…');
+  const [step, setStep] = useState<Step>('setSession');
 
   const runFlow = useCallback(async () => {
     setPhase('auth');
     setMessage('Finishing sign-in…');
+    setStep('setSession');
 
     try {
       const { accessToken, refreshToken } = parseHashTokens(window.location.hash);
@@ -47,6 +50,7 @@ export default function AuthCallback() {
         }
       }
 
+      setStep('getSession');
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
         throw new Error('We could not complete sign-in. Please try the invite link again.');
@@ -54,14 +58,17 @@ export default function AuthCallback() {
 
       setPhase('claim');
       setMessage('Claiming firm access…');
+      setStep('rpc');
       const { error: claimError } = await supabase.rpc('claim_firm_membership');
       if (claimError) throw claimError;
 
+      setStep('redirect');
       router.replace('/myclient/app');
     } catch (error) {
       console.error('Auth callback error', error);
       setPhase('error');
-      setMessage(error instanceof Error ? error.message : 'Unable to finish sign-in. Please try again.');
+      const detail = error instanceof Error ? error.message : 'Unable to finish sign-in. Please try again.';
+      setMessage(`Step: ${step}. ${detail}`);
     }
   }, [router]);
 
