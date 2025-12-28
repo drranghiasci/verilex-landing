@@ -104,6 +104,7 @@ export default function MyClientApp() {
                   { label: 'New Intake', href: '/myclient/intake' },
                   { label: 'Documents', href: '/myclient/documents' },
                   { label: 'Members', href: '/myclient/members' },
+                  { label: 'Profile', href: '/myclient/profile' },
                 ].map((item) => (
                   <Link
                     key={item.label}
