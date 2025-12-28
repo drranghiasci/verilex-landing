@@ -30,6 +30,7 @@ export default function MembersPage() {
   const [inviteStatus, setInviteStatus] = useState<string | null>(null);
   const [pendingInvites, setPendingInvites] = useState<InviteRow[]>([]);
   const [pendingLoading, setPendingLoading] = useState(false);
+  const [resendStatus, setResendStatus] = useState<Record<string, string>>({});
 
   const firmLabel = useMemo(() => (state.firmId ? state.firmId.slice(0, 8) : 'No firm'), [state.firmId]);
 
@@ -156,6 +157,32 @@ export default function MembersPage() {
     }
   };
 
+  const handleResendInvite = async (invite: InviteRow) => {
+    setResendStatus((prev) => ({ ...prev, [invite.id]: 'Sending…' }));
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !sessionData.session?.access_token) {
+      setResendStatus((prev) => ({ ...prev, [invite.id]: sessionError?.message || 'Sign in required' }));
+      return;
+    }
+
+    const res = await fetch('/api/myclient/members/resend-invite', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionData.session.access_token}`,
+      },
+      body: JSON.stringify({ email: invite.email, role: invite.role }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+      setResendStatus((prev) => ({ ...prev, [invite.id]: data.error || 'Unable to resend invite.' }));
+      return;
+    }
+
+    setResendStatus((prev) => ({ ...prev, [invite.id]: 'Sent' }));
+  };
+
   return (
     <>
       <Head>
@@ -218,6 +245,9 @@ export default function MembersPage() {
                 </button>
               </div>
               {inviteStatus && <p className="mt-3 text-sm text-[color:var(--text-2)]">{inviteStatus}</p>}
+              <p className="mt-3 text-sm text-[color:var(--text-2)]">
+                If a user already has an account but can’t sign in, ask them to use the ‘Forgot password’ link on the sign-in page to set a password.
+              </p>
             </div>
 
             <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
@@ -276,9 +306,21 @@ export default function MembersPage() {
                       <span className="rounded-full border border-white/15 px-2 py-1 text-xs uppercase tracking-wide text-[color:var(--text-2)]">
                         {invite.role}
                       </span>
-                      <span className="text-xs text-[color:var(--text-2)]">
-                        {new Date(invite.created_at).toLocaleDateString()}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-[color:var(--text-2)]">
+                          {new Date(invite.created_at).toLocaleDateString()}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleResendInvite(invite)}
+                          className="rounded-lg border border-white/15 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                        >
+                          Resend
+                        </button>
+                        {resendStatus[invite.id] && (
+                          <span className="text-xs text-[color:var(--text-2)]">{resendStatus[invite.id]}</span>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>

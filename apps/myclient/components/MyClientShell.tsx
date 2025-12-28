@@ -46,10 +46,10 @@ export default function MyClientShell({ children }: { children: React.ReactNode 
               You need to authenticate before accessing MyClient.
             </p>
             <Link
-              href="/"
+              href="/auth/sign-in"
               className="mt-6 inline-flex items-center justify-center rounded-lg bg-[color:var(--accent-light)] px-5 py-2.5 font-semibold text-white hover:bg-[color:var(--accent)] transition"
             >
-              Back to Home
+              Sign in
             </Link>
           </div>
         </main>
