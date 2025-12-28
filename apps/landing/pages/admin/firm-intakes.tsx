@@ -9,6 +9,7 @@ type IntakeRow = {
   office_county: string | null;
   status: string;
   created_at: string;
+  team_size_estimate?: string | null;
 };
 
 type ApproveResponse =
@@ -139,6 +140,7 @@ export default function AdminFirmIntakes() {
                     <th className="px-6 py-3 font-semibold">Firm</th>
                     <th className="px-6 py-3 font-semibold">Admin Email</th>
                     <th className="px-6 py-3 font-semibold">State / County</th>
+                    <th className="px-6 py-3 font-semibold">Team Size</th>
                     <th className="px-6 py-3 font-semibold">Submitted</th>
                     <th className="px-6 py-3 font-semibold">Status</th>
                     <th className="px-6 py-3 font-semibold text-right">Action</th>
@@ -147,19 +149,20 @@ export default function AdminFirmIntakes() {
                 <tbody className="divide-y divide-white/5 text-[color:var(--text-1)]">
                   {loading ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-[color:var(--text-2)]">
+                      <td colSpan={7} className="px-6 py-12 text-center text-[color:var(--text-2)]">
                         Loading firm intakes…
                       </td>
                     </tr>
                   ) : rows.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-[color:var(--text-2)]">
+                      <td colSpan={7} className="px-6 py-12 text-center text-[color:var(--text-2)]">
                         No pending submissions.
                       </td>
                     </tr>
                   ) : (
                     rows.map((row) => {
                       const stateCounty = [row.office_state, row.office_county].filter(Boolean).join(' • ') || '—';
+                      const teamSize = row.team_size_estimate || '—';
                       const statusLabel = actionState[row.id] ?? row.status;
                       return (
                         <tr key={row.id}>
@@ -168,6 +171,7 @@ export default function AdminFirmIntakes() {
                           </td>
                           <td className="px-6 py-4">{row.admin_email}</td>
                           <td className="px-6 py-4">{stateCounty}</td>
+                          <td className="px-6 py-4">{teamSize}</td>
                           <td className="px-6 py-4">{new Date(row.created_at).toLocaleString()}</td>
                           <td className="px-6 py-4 capitalize">{statusLabel}</td>
                           <td className="px-6 py-4 text-right">

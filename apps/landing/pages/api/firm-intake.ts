@@ -8,14 +8,12 @@ type FirmIntakePayload = {
   county?: string;
   practiceFocus?: string[];
   monthlyMatters?: string;
+  team_size_estimate?: string | null;
+  teamSizeEstimate?: string | null;
 
   adminName?: string;
   adminEmail?: string;
   adminPhone?: string;
-
-  attorneyUsers?: string;
-  staffUsers?: string;
-  additionalUserEmails?: string;
 
   billingEmail?: string;
   cms?: string;
@@ -78,14 +76,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     practice_focus: practiceFocus,
     monthly_new_matters: (body.monthlyMatters ?? '').trim() || null,
+    team_size_estimate: (body.team_size_estimate ?? body.teamSizeEstimate ?? '').trim() || null,
 
     admin_name: adminName,
     admin_email: adminEmail,
     admin_phone: adminPhone || null,
-
-    attorney_users: (body.attorneyUsers ?? '').trim() || null,
-    staff_users: (body.staffUsers ?? '').trim() || null,
-    additional_user_emails: (body.additionalUserEmails ?? '').trim() || null,
 
     billing_email: (body.billingEmail ?? '').trim() || null,
     case_management_system: (body.cms ?? '').trim() || null,

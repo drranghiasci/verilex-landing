@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { data, error } = await supabaseAdmin
     .from('firm_intakes')
-    .select('id, firm_name, admin_email, office_state, office_county, status, created_at')
+    .select('id, firm_name, admin_email, office_state, office_county, status, created_at, team_size_estimate')
     .in('status', statuses)
     .order('created_at', { ascending: false });
 

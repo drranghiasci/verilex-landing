@@ -4,7 +4,7 @@ import { useState, FormEvent, ChangeEvent } from 'react';
 
 const PRACTICE_OPTIONS = ['Divorce', 'Custody', 'Support', 'Protective Orders', 'Mediation'] as const;
 const MONTHLY_MATTER_OPTIONS = ['< 10', '10 - 24', '25 - 49', '50 - 99', '100+'] as const;
-const USER_COUNT_OPTIONS = ['1', '2-3', '4-6', '7-10', '10+'] as const;
+const TEAM_SIZE_OPTIONS = ['1', '2-5', '6-15', '16-50', '50+'] as const;
 const CMS_OPTIONS = ['Clio', 'MyCase', 'PracticePanther', 'Smokeball', 'Not Using One', 'Other'] as const;
 
 type PracticeOption = (typeof PRACTICE_OPTIONS)[number];
@@ -16,12 +16,10 @@ interface FormState {
   county: string;
   practiceFocus: PracticeOption[];
   monthlyMatters: string;
+  teamSizeEstimate: string;
   adminName: string;
   adminEmail: string;
   adminPhone: string;
-  attorneyUsers: string;
-  staffUsers: string;
-  additionalUserEmails: string;
   billingEmail: string;
   cms: string;
   cmsOther: string;
@@ -38,12 +36,10 @@ const INITIAL_FORM_STATE: FormState = {
   county: '',
   practiceFocus: [],
   monthlyMatters: '',
+  teamSizeEstimate: '',
   adminName: '',
   adminEmail: '',
   adminPhone: '',
-  attorneyUsers: '',
-  staffUsers: '',
-  additionalUserEmails: '',
   billingEmail: '',
   cms: '',
   cmsOther: '',
@@ -91,8 +87,6 @@ export default function FirmIntakePage() {
     if (!form.adminName.trim()) nextErrors.adminName = 'Primary admin contact is required.';
     if (!form.adminEmail.trim() || !emailRegex.test(form.adminEmail)) nextErrors.adminEmail = 'Enter a valid email.';
     if (!form.adminPhone.trim()) nextErrors.adminPhone = 'Enter a phone number.';
-    if (!form.attorneyUsers) nextErrors.attorneyUsers = 'Select attorney count.';
-    if (!form.staffUsers) nextErrors.staffUsers = 'Select staff count.';
     if (!form.cms) nextErrors.cms = 'Select a case management system.';
     if (form.cms === 'Other' && !form.cmsOther.trim()) nextErrors.cmsOther = 'Provide the system name.';
     if (!form.dataMigrationNeeded) nextErrors.dataMigrationNeeded = 'Let us know if migration is needed.';
@@ -121,12 +115,10 @@ export default function FirmIntakePage() {
         county: form.county,
         practiceFocus: form.practiceFocus,
         monthlyMatters: form.monthlyMatters,
+        team_size_estimate: form.teamSizeEstimate || null,
         adminName: form.adminName,
         adminEmail: form.adminEmail,
         adminPhone: form.adminPhone,
-        attorneyUsers: form.attorneyUsers,
-        staffUsers: form.staffUsers,
-        additionalUserEmails: form.additionalUserEmails,
         billingEmail: form.billingEmail,
         cms: form.cms,
         cmsOther: form.cmsOther,
@@ -169,7 +161,7 @@ export default function FirmIntakePage() {
     <div className="mx-auto max-w-2xl rounded-2xl border border-white/10 bg-[var(--surface-1)] p-10 text-center shadow-2xl">
       <h2 className="text-3xl font-semibold text-[color:var(--accent)]">We received your firm details.</h2>
       <p className="mt-4 text-[color:var(--text-1)]">
-        Our onboarding team will review your information and reach out within one business day to finalize your multi-account setup and migration plan.
+        Our onboarding team will review your information and reach out within one business day to finalize next steps.
       </p>
       <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
         <Link
@@ -201,7 +193,7 @@ export default function FirmIntakePage() {
             <p className="text-sm uppercase tracking-[0.2em] text-[color:var(--accent-soft)]">Firm Onboarding</p>
             <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">Family Law Intake</h1>
             <p className="mt-4 text-lg text-[color:var(--text-2)]">
-              Share the details we need to configure VeriLex for your divorce and custody team, including multi-account access for partners and support staff.
+              Share the details we need to configure VeriLex for your divorce and custody practice and begin onboarding.
             </p>
           </div>
           {isSuccess ? (
@@ -342,6 +334,25 @@ export default function FirmIntakePage() {
                     {errors.cmsOther && <p className="mt-1 text-sm text-red-400">{errors.cmsOther}</p>}
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-white">Team Size Estimate (optional)</label>
+                  <select
+                    value={form.teamSizeEstimate}
+                    onChange={updateField('teamSizeEstimate')}
+                    className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text-1)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                  >
+                    <option value="">Select team size</option>
+                    {TEAM_SIZE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-2 text-sm text-[color:var(--text-2)]">
+                    You&apos;ll invite team members from inside the MyClient portal after approval.
+                  </p>
+                </div>
               </section>
 
               <section className="space-y-6">
@@ -390,57 +401,6 @@ export default function FirmIntakePage() {
                   </div>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div>
-                    <label className="block text-sm font-semibold text-white">
-                      Attorney Accounts Needed <span className="text-[color:var(--accent)]">*</span>
-                    </label>
-                    <select
-                      value={form.attorneyUsers}
-                      onChange={updateField('attorneyUsers')}
-                      className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text-1)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-                    >
-                      <option value="">Select count</option>
-                      {USER_COUNT_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.attorneyUsers && <p className="mt-1 text-sm text-red-400">{errors.attorneyUsers}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-white">
-                      Staff / Paralegal Accounts <span className="text-[color:var(--accent)]">*</span>
-                    </label>
-                    <select
-                      value={form.staffUsers}
-                      onChange={updateField('staffUsers')}
-                      className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text-1)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-                    >
-                      <option value="">Select count</option>
-                      {USER_COUNT_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.staffUsers && <p className="mt-1 text-sm text-red-400">{errors.staffUsers}</p>}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-white">
-                    Additional User Emails <span className="text-[color:var(--text-2)] font-normal">(comma or newline separated)</span>
-                  </label>
-                  <textarea
-                    value={form.additionalUserEmails}
-                    onChange={updateField('additionalUserEmails')}
-                    rows={3}
-                    className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-                    placeholder="partner@firm.com, intake@firm.com"
-                  />
-                </div>
               </section>
 
               <section className="space-y-6">
@@ -480,7 +440,7 @@ export default function FirmIntakePage() {
               {submitError && <div className="rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">{submitError}</div>}
 
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-[color:var(--text-2)]">We’ll configure multi-account access and data migration in under 5 business days.</p>
+                <p className="text-sm text-[color:var(--text-2)]">We’ll confirm onboarding and migration details within 5 business days.</p>
                 <button
                   type="submit"
                   disabled={isSubmitting}
