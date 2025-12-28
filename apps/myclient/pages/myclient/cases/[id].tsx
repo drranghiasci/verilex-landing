@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useFirm } from '@/lib/FirmProvider';
 
@@ -18,6 +18,12 @@ type CaseRecord = {
   updated_at: string;
 };
 
+type DocumentRow = {
+  id: string;
+  filename: string;
+  created_at: string;
+};
+
 const STATUS_OPTIONS = ['open', 'pending', 'closed'] as const;
 
 export default function CaseDetailPage() {
@@ -28,6 +34,13 @@ export default function CaseDetailPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [documents, setDocuments] = useState<DocumentRow[]>([]);
+  const [documentsLoading, setDocumentsLoading] = useState(false);
+  const [documentsError, setDocumentsError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [downloadId, setDownloadId] = useState<string | null>(null);
 
   const caseId = useMemo(() => (typeof router.query.id === 'string' ? router.query.id : null), [router.query.id]);
 
@@ -65,6 +78,30 @@ export default function CaseDetailPage() {
       mounted = false;
     };
   }, [state.authed, state.firmId, caseId]);
+
+  const loadDocuments = useCallback(async () => {
+    if (!state.authed || !state.firmId || !caseId) return;
+    setDocumentsLoading(true);
+    setDocumentsError(null);
+    const { data, error: docsError } = await supabase
+      .from('case_documents')
+      .select('id, filename, created_at')
+      .eq('case_id', caseId)
+      .eq('firm_id', state.firmId)
+      .order('created_at', { ascending: false });
+
+    if (docsError) {
+      setDocumentsError(docsError.message);
+      setDocuments([]);
+    } else {
+      setDocuments(data ?? []);
+    }
+    setDocumentsLoading(false);
+  }, [caseId, state.authed, state.firmId]);
+
+  useEffect(() => {
+    loadDocuments();
+  }, [loadDocuments]);
 
   const handleChange = (field: keyof CaseRecord) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     if (!record) return;
@@ -126,6 +163,91 @@ export default function CaseDetailPage() {
       setError(err instanceof Error ? err.message : 'Unable to save changes.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!caseId || !selectedFile) {
+      setUploadError('Please choose a file to upload.');
+      return;
+    }
+
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        setUploadError(sessionError.message);
+        return;
+      }
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        setUploadError('Please sign in to upload files.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('caseId', caseId);
+      formData.append('file', selectedFile);
+
+      const res = await fetch('/api/myclient/documents/upload', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: formData,
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setUploadError(data.error || 'Unable to upload document.');
+        return;
+      }
+
+      setSelectedFile(null);
+      await loadDocuments();
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Unable to upload document.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDownload = async (documentId: string) => {
+    setDownloadId(documentId);
+    setDocumentsError(null);
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        setDocumentsError(sessionError.message);
+        return;
+      }
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        setDocumentsError('Please sign in to download documents.');
+        return;
+      }
+
+      const res = await fetch('/api/myclient/documents/download', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ documentId }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) {
+        setDocumentsError(data.error || 'Unable to generate download link.');
+        return;
+      }
+
+      window.open(data.url, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      setDocumentsError(err instanceof Error ? err.message : 'Unable to download document.');
+    } finally {
+      setDownloadId(null);
     }
   };
 
@@ -230,6 +352,66 @@ export default function CaseDetailPage() {
                 {saving ? 'Saving…' : 'Save'}
               </button>
               {message && <span className="text-sm text-green-300">{message}</span>}
+            </div>
+
+            <div className="mt-10 rounded-2xl border border-white/10 bg-[var(--surface-0)] p-6">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-white">Documents</h2>
+                  <p className="text-sm text-[color:var(--text-2)]">Case files uploaded to this matter.</p>
+                </div>
+              </div>
+
+              {documentsError && (
+                <div className="mt-4 rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">
+                  {documentsError}
+                </div>
+              )}
+
+              <div className="mt-4 grid gap-4">
+                {documentsLoading ? (
+                  <p className="text-sm text-[color:var(--text-2)]">Loading documents...</p>
+                ) : documents.length === 0 ? (
+                  <p className="text-sm text-[color:var(--text-2)]">No documents uploaded yet.</p>
+                ) : (
+                  <ul className="divide-y divide-white/10">
+                    {documents.map((doc) => (
+                      <li key={doc.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm text-white">{doc.filename}</p>
+                          <p className="text-xs text-[color:var(--text-2)]">{new Date(doc.created_at).toLocaleString()}</p>
+                        </div>
+                        <button
+                          onClick={() => handleDownload(doc.id)}
+                          disabled={downloadId === doc.id}
+                          className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white disabled:opacity-60"
+                        >
+                          {downloadId === doc.id ? 'Preparing…' : 'Download'}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="mt-6 rounded-xl border border-white/10 bg-[var(--surface-1)] p-4">
+                <p className="text-sm text-[color:var(--text-2)]">Upload a document (PDF, image, or doc).</p>
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <input
+                    type="file"
+                    onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+                    className="w-full text-sm text-[color:var(--text-2)] file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--surface-0)] file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white"
+                  />
+                  <button
+                    onClick={handleUpload}
+                    disabled={uploading || !selectedFile}
+                    className="rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--accent)] disabled:opacity-60"
+                  >
+                    {uploading ? 'Uploading…' : 'Upload'}
+                  </button>
+                </div>
+                {uploadError && <p className="mt-3 text-sm text-red-200">{uploadError}</p>}
+              </div>
             </div>
           </>
         )}
