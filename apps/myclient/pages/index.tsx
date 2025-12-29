@@ -33,18 +33,12 @@ export default function MyClientHome() {
           <p className="mt-4 text-[color:var(--text-2)]">
             Sign in to access your firm workspace.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <div className="mt-8 flex justify-center">
             <Link
               href="/auth/sign-in"
               className="inline-flex items-center justify-center rounded-lg bg-[color:var(--accent-light)] px-5 py-2.5 font-semibold text-white hover:bg-[color:var(--accent)] transition"
             >
               Sign in
-            </Link>
-            <Link
-              href="/auth/forgot-password"
-              className="inline-flex items-center justify-center rounded-lg border border-white/15 px-5 py-2.5 font-semibold text-white hover:bg-white/10 transition"
-            >
-              Forgot password
             </Link>
           </div>
         </div>
