@@ -257,9 +257,14 @@ export default function CaseDetailPage() {
         <title>MyClient | Case Detail</title>
       </Head>
       <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
-        <Link href="/myclient/cases" className="text-sm text-[color:var(--text-2)] hover:text-white transition">
-          ← Back to Active Cases
-        </Link>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <Link href="/myclient/cases" className="text-sm text-[color:var(--text-2)] hover:text-white transition">
+            ← Back
+          </Link>
+          <h1 className="text-2xl font-semibold text-white">
+            {record?.client_name ? 'Case Detail' : 'Case Detail'}
+          </h1>
+        </div>
 
         {state.loading && <p className="mt-6 text-[color:var(--text-2)]">Loading...</p>}
         {!state.loading && !state.authed && <p className="mt-6 text-[color:var(--text-2)]">Please sign in.</p>}
@@ -275,7 +280,7 @@ export default function CaseDetailPage() {
           <>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h1 className="text-3xl font-semibold text-white">{record.client_name}</h1>
+                <h2 className="text-3xl font-semibold text-white">{record.client_name}</h2>
                 <p className="mt-2 text-sm text-[color:var(--text-2)]">Matter type: {record.matter_type}</p>
               </div>
               <span className="rounded-full border border-white/15 bg-[var(--surface-0)] px-3 py-1 text-xs uppercase tracking-wide text-[color:var(--text-2)]">

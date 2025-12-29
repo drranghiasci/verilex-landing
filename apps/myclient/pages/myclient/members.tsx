@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useFirm } from '@/lib/FirmProvider';
 import { supabase } from '@/lib/supabaseClient';
@@ -189,7 +190,15 @@ export default function MembersPage() {
         <title>MyClient | Members</title>
       </Head>
       <div className="mx-auto max-w-3xl rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
-        <h1 className="text-3xl font-semibold text-white">Members</h1>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <Link
+            href="/myclient/app"
+            className="text-sm text-[color:var(--text-2)] hover:text-white transition"
+          >
+            ← Back
+          </Link>
+          <h1 className="text-3xl font-semibold text-white">Firm Members</h1>
+        </div>
         <p className="mt-2 text-sm text-[color:var(--text-2)]">
           Firm {firmLabel} · Role {state.role ?? 'member'}
         </p>

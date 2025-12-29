@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -84,7 +85,15 @@ export default function ProfilePage() {
         <title>MyClient | Profile</title>
       </Head>
       <div className="mx-auto max-w-3xl rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
-        <h1 className="text-3xl font-semibold text-white">Profile</h1>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <Link
+            href="/myclient/app"
+            className="text-sm text-[color:var(--text-2)] hover:text-white transition"
+          >
+            ← Back
+          </Link>
+          <h1 className="text-3xl font-semibold text-white">Profile</h1>
+        </div>
         <p className="mt-2 text-sm text-[color:var(--text-2)]">Update your display name for your firm.</p>
 
         {loading ? (

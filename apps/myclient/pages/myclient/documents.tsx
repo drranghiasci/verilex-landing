@@ -120,7 +120,15 @@ export default function DocumentsPage() {
         <title>MyClient | Documents</title>
       </Head>
       <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
-        <h1 className="text-3xl font-semibold text-white">Documents</h1>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <Link
+            href="/myclient/app"
+            className="text-sm text-[color:var(--text-2)] hover:text-white transition"
+          >
+            ← Back
+          </Link>
+          <h1 className="text-3xl font-semibold text-white">Documents</h1>
+        </div>
         <p className="mt-2 text-sm text-[color:var(--text-2)]">
           Firm {state.firmId ? state.firmId.slice(0, 8) : 'No firm'} · Role {state.role ?? 'member'}
         </p>

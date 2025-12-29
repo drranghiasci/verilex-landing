@@ -12,31 +12,42 @@ export default function MyClientShell({ children }: { children: React.ReactNode 
     router.replace('/');
   };
 
-  const firmLabel = state.firmId ? state.firmId.slice(0, 8) : 'No firm';
-
   return (
     <div className="min-h-screen bg-[var(--surface-0)] text-[color:var(--text-1)]">
       <header className="border-b border-white/10 bg-[var(--surface-1)] px-6 py-4">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-col text-sm">
-            <span className="uppercase tracking-[0.25em] text-[color:var(--accent-soft)]">MyClient</span>
-            <span className="text-white">Firm: {firmLabel}</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-4 text-sm text-[color:var(--text-2)]">
-            <span>Role: {state.role ?? 'member'}</span>
-            <span>{state.email ?? 'Signed out'}</span>
-            {state.authed && (
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-6">
+          <Link href="/myclient/app" className="text-lg font-semibold text-white">
+            MyClient
+          </Link>
+          {state.authed && state.firmId && (
+            <nav className="flex flex-wrap items-center gap-4 text-sm text-[color:var(--text-2)]">
+              <Link href="/myclient/cases" className="hover:text-white transition">
+                Cases
+              </Link>
+              <Link href="/myclient/intake" className="hover:text-white transition">
+                Intake
+              </Link>
+              <Link href="/myclient/documents" className="hover:text-white transition">
+                Documents
+              </Link>
+              <Link href="/myclient/members" className="hover:text-white transition">
+                Members
+              </Link>
+            </nav>
+          )}
+          {state.authed && (
+            <div className="flex items-center gap-3 text-sm text-[color:var(--text-2)]">
               <Link href="/myclient/profile" className="text-white hover:text-[color:var(--accent-soft)] transition">
                 Profile
               </Link>
-            )}
-            <button
-              onClick={handleSignOut}
-              className="rounded-lg border border-white/20 px-3 py-1.5 text-white hover:bg-white/10 transition"
-            >
-              Sign out
-            </button>
-          </div>
+              <button
+                onClick={handleSignOut}
+                className="rounded-lg border border-white/20 px-3 py-1.5 text-white hover:bg-white/10 transition"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
         </div>
       </header>
       {state.authed ? (
