@@ -41,16 +41,24 @@ export default function MyClientShell({ children }: { children: React.ReactNode 
       ) : (
         <main className="px-6 py-20">
           <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 text-center shadow-2xl">
-            <h1 className="text-3xl font-semibold text-white">Please sign in</h1>
+            <h1 className="text-3xl font-semibold text-white">MyClient Portal</h1>
             <p className="mt-4 text-[color:var(--text-2)]">
-              You need to authenticate before accessing MyClient.
+              Sign in to access your firm workspace.
             </p>
-            <Link
-              href="/auth/sign-in"
-              className="mt-6 inline-flex items-center justify-center rounded-lg bg-[color:var(--accent-light)] px-5 py-2.5 font-semibold text-white hover:bg-[color:var(--accent)] transition"
-            >
-              Sign in
-            </Link>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Link
+                href="/auth/sign-in"
+                className="inline-flex items-center justify-center rounded-lg bg-[color:var(--accent-light)] px-5 py-2.5 font-semibold text-white hover:bg-[color:var(--accent)] transition"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/auth/forgot-password"
+                className="inline-flex items-center justify-center rounded-lg border border-white/15 px-5 py-2.5 font-semibold text-white hover:bg-white/10 transition"
+              >
+                Forgot password
+              </Link>
+            </div>
           </div>
         </main>
       )}
