@@ -25,6 +25,11 @@ export default function MyClientShell({ children }: { children: React.ReactNode 
           <div className="flex flex-wrap items-center gap-4 text-sm text-[color:var(--text-2)]">
             <span>Role: {state.role ?? 'member'}</span>
             <span>{state.email ?? 'Signed out'}</span>
+            {state.authed && (
+              <Link href="/myclient/profile" className="text-white hover:text-[color:var(--accent-soft)] transition">
+                Profile
+              </Link>
+            )}
             <button
               onClick={handleSignOut}
               className="rounded-lg border border-white/20 px-3 py-1.5 text-white hover:bg-white/10 transition"

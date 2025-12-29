@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [fullName, setFullName] = useState('');
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -23,11 +24,11 @@ export default function ProfilePage() {
         return;
       }
 
-      const userId = sessionData.session.user.id;
+      const authedUserId = sessionData.session.user.id;
       const { data, error: profileError } = await supabase
         .from('profiles')
         .select('id, email, full_name')
-        .eq('id', userId)
+        .eq('id', authedUserId)
         .limit(1);
 
       if (!isMounted) return;
@@ -39,6 +40,7 @@ export default function ProfilePage() {
 
       const profile = Array.isArray(data) && data.length > 0 ? data[0] : null;
       setEmail(profile?.email ?? sessionData.session.user.email ?? null);
+      setUserId(authedUserId);
       setFullName(profile?.full_name ?? '');
       setLoading(false);
     };
@@ -90,6 +92,9 @@ export default function ProfilePage() {
         ) : (
           <div className="mt-6 space-y-4">
             {email && <p className="text-sm text-[color:var(--text-2)]">Signed in as {email}</p>}
+            {userId && (
+              <p className="text-sm text-[color:var(--text-2)]">User ID: {userId.slice(0, 8)}</p>
+            )}
             <label className="block text-sm font-semibold text-white">
               Full name
               <input
