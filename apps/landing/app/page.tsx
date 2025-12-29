@@ -170,7 +170,7 @@ export default function Home() {
             <div className="flex items-center gap-3 sm:gap-6 text-sm font-medium">
               <ThemeToggle />
               <Link href="/login" className="hover:text-[color:var(--accent-soft)] transition-colors">Log In</Link>
-              <Link href="/myclient" className="hover:text-[color:var(--accent-soft)] transition-colors">MyClient</Link>
+              <Link href="https://myclient.verilex.us/" className="hover:text-[color:var(--accent-soft)] transition-colors">MyClient Portal</Link>
               <Link href="#contact" className="hover:text-[color:var(--accent-soft)] transition-colors">Contact</Link>
               <Link
                 href="/firm-intake"
@@ -210,10 +210,10 @@ export default function Home() {
                   </Link>
 
                   <Link
-                    href="/myclient"
+                    href="https://myclient.verilex.us/"
                     className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--accent-light)] px-6 py-3 text-white font-semibold shadow-lg hover:bg-[color:var(--accent)] transition-all hover:scale-[1.02]"
                   >
-                    MyClient
+                    Open MyClient Portal
                     <ChevronRight className="h-4 w-4" />
                   </Link>
                 </div>
@@ -369,10 +369,10 @@ export default function Home() {
                   <ChevronRight className="h-4 w-4" />
                 </a>
                 <Link
-                  href="/myclient"
+                  href="https://myclient.verilex.us/"
                   className="inline-flex items-center gap-2 rounded-lg border border-[color:var(--accent-light)] px-6 py-3 text-[color:var(--accent-soft)] hover:bg-[color:var(--surface-1)] transition-colors"
                 >
-                  Explore MyClient
+                  Open MyClient Portal
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>

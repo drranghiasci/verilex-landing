@@ -101,17 +101,19 @@ export default function MyClientApp() {
               <div className="mt-6 grid gap-4">
                 {[
                   { label: 'Active Cases', href: '/myclient/cases' },
-                  { label: 'New Intake', href: '/myclient/intake' },
-                  { label: 'Documents', href: '/myclient/documents' },
+                  { label: 'New Case Intake', href: '/myclient/intake' },
+                  { label: 'Documents', href: '/myclient/cases', helper: 'Manage documents inside each case.' },
                   { label: 'Members', href: '/myclient/members' },
-                  { label: 'Profile', href: '/myclient/profile' },
                 ].map((item) => (
                   <Link
                     key={item.label}
                     href={item.href}
                     className="rounded-2xl border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-sm text-[color:var(--text-1)] hover:bg-white/10 transition"
                   >
-                    {item.label}
+                    <div className="font-medium text-white">{item.label}</div>
+                    {item.helper && (
+                      <p className="mt-1 text-xs text-[color:var(--text-2)]">{item.helper}</p>
+                    )}
                   </Link>
                 ))}
               </div>
