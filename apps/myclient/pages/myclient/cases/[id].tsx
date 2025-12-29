@@ -21,6 +21,7 @@ type CaseRecord = {
 type DocumentRow = {
   id: string;
   filename: string;
+  storage_path: string;
   created_at: string;
 };
 
@@ -85,7 +86,7 @@ export default function CaseDetailPage() {
     setDocumentsError(null);
     const { data, error: docsError } = await supabase
       .from('case_documents')
-      .select('id, filename, created_at')
+      .select('id, filename, storage_path, created_at')
       .eq('case_id', caseId)
       .eq('firm_id', state.firmId)
       .order('created_at', { ascending: false });
@@ -114,33 +115,20 @@ export default function CaseDetailPage() {
     setMessage(null);
     setError(null);
     try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        setError(sessionError.message);
-        return;
-      }
-      const accessToken = sessionData.session?.access_token;
-      if (!accessToken) {
-        setError('Please sign in to save changes.');
-        return;
-      }
-      const res = await fetch('/api/myclient/cases/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          id: record.id,
+      const { error: updateError } = await supabase
+        .from('cases')
+        .update({
           client_name: record.client_name,
           matter_type: record.matter_type,
           status: record.status,
-          internal_notes: record.internal_notes ?? '',
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error || 'Unable to save changes.');
+          internal_notes: record.internal_notes ?? null,
+          last_activity_at: new Date().toISOString(),
+        })
+        .eq('id', record.id);
+
+      if (updateError) {
+        const message = updateError.message.toLowerCase().includes('jwt') ? 'Session expired — sign in again.' : updateError.message;
+        setError(message);
         return;
       }
 
@@ -217,33 +205,19 @@ export default function CaseDetailPage() {
     setDownloadId(documentId);
     setDocumentsError(null);
     try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        setDocumentsError(sessionError.message);
-        return;
-      }
-      const accessToken = sessionData.session?.access_token;
-      if (!accessToken) {
-        setDocumentsError('Please sign in to download documents.');
+      const doc = documents.find((item) => item.id === documentId);
+      if (!doc?.storage_path) {
+        setDocumentsError('Document is missing a storage path.');
         return;
       }
 
-      const res = await fetch('/api/myclient/documents/download', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ documentId }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.url) {
-        setDocumentsError(data.error || 'Unable to generate download link.');
+      const { data, error } = await supabase.storage.from('case-documents').createSignedUrl(doc.storage_path, 60);
+      if (error || !data?.signedUrl) {
+        setDocumentsError(error?.message || 'Unable to generate download link.');
         return;
       }
 
-      window.open(data.url, '_blank', 'noopener,noreferrer');
+      window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
     } catch (err) {
       setDocumentsError(err instanceof Error ? err.message : 'Unable to download document.');
     } finally {

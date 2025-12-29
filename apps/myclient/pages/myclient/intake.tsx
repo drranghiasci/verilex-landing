@@ -28,37 +28,39 @@ export default function IntakePage() {
 
     setSubmitting(true);
     try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !sessionData.session?.access_token) {
-        setError(sessionError?.message || 'Please sign in.');
+      if (!state.firmId) {
+        setError('No firm linked yet.');
         return;
       }
 
-      const payload = {
-        client_first_name: firstName,
-        client_last_name: lastName,
-        client_email: email || undefined,
-        client_phone: phone || undefined,
-        matter_title: matterTitle || undefined,
-        notes: notes || undefined,
-      };
+      const clientName = `${firstName.trim()} ${lastName.trim()}`.trim();
+      const summaryParts: string[] = [];
+      if (matterTitle.trim()) summaryParts.push(`Matter: ${matterTitle.trim()}`);
+      if (email.trim()) summaryParts.push(`Email: ${email.trim()}`);
+      if (phone.trim()) summaryParts.push(`Phone: ${phone.trim()}`);
+      if (notes.trim()) summaryParts.push(notes.trim());
 
-      const res = await fetch('/api/myclient/cases/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionData.session.access_token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+      const intakeSummary = summaryParts.length > 0 ? summaryParts.join('\n') : null;
 
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.caseId) {
-        setError(data.error || 'Unable to create case.');
+      const { data, error: insertError } = await supabase
+        .from('cases')
+        .insert({
+          firm_id: state.firmId,
+          client_name: clientName,
+          matter_type: 'divorce',
+          status: 'open',
+          intake_summary: intakeSummary,
+          last_activity_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+
+      if (insertError || !data?.id) {
+        setError(insertError?.message || 'Unable to create case.');
         return;
       }
 
-      router.push(`/myclient/cases/${data.caseId}`);
+      router.push(`/myclient/cases/${data.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to create case.');
     } finally {

@@ -8,6 +8,7 @@ type DocumentRow = {
   id: string;
   case_id: string;
   filename: string;
+  storage_path: string;
   created_at: string;
 };
 
@@ -44,33 +45,41 @@ export default function DocumentsPage() {
     const loadDocuments = async () => {
       setLoading(true);
       setError(null);
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !sessionData.session?.access_token) {
-        if (mounted) {
-          setError(sessionError?.message || 'Please sign in.');
-          setLoading(false);
-        }
+
+      const { data: docs, error: docsError } = await supabase
+        .from('case_documents')
+        .select('id, case_id, filename, storage_path, created_at')
+        .eq('firm_id', state.firmId)
+        .order('created_at', { ascending: false });
+
+      if (!mounted) return;
+      if (docsError) {
+        setError(docsError.message);
+        setLoading(false);
         return;
       }
 
-      const res = await fetch('/api/myclient/documents/list', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${sessionData.session.access_token}`,
-        },
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.ok) {
-        if (mounted) {
-          setError(data.error || 'Unable to load documents.');
+      const docRows = docs ?? [];
+      const caseIds = Array.from(new Set(docRows.map((doc) => doc.case_id)));
+
+      let caseRows: CaseRow[] = [];
+      if (caseIds.length > 0) {
+        const { data: caseData, error: caseError } = await supabase
+          .from('cases')
+          .select('id, client_name')
+          .in('id', caseIds);
+
+        if (caseError) {
+          setError(caseError.message);
           setLoading(false);
+          return;
         }
-        return;
+        caseRows = (caseData ?? []) as CaseRow[];
       }
 
       if (mounted) {
-        setDocuments(Array.isArray(data.documents) ? data.documents : []);
-        setCases(Array.isArray(data.cases) ? data.cases : []);
+        setDocuments(docRows);
+        setCases(caseRows);
         setLoading(false);
       }
     };
@@ -85,28 +94,19 @@ export default function DocumentsPage() {
     setDownloadId(documentId);
     setError(null);
     try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !sessionData.session?.access_token) {
-        setError(sessionError?.message || 'Please sign in.');
+      const doc = documents.find((item) => item.id === documentId);
+      if (!doc?.storage_path) {
+        setError('Document is missing a storage path.');
         return;
       }
 
-      const res = await fetch('/api/myclient/documents/download', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionData.session.access_token}`,
-        },
-        body: JSON.stringify({ documentId }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.url) {
-        setError(data.error || 'Unable to generate download link.');
+      const { data, error: signedError } = await supabase.storage.from('case-documents').createSignedUrl(doc.storage_path, 60);
+      if (signedError || !data?.signedUrl) {
+        setError(signedError?.message || 'Unable to generate download link.');
         return;
       }
 
-      window.open(data.url, '_blank', 'noopener,noreferrer');
+      window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to download document.');
     } finally {
