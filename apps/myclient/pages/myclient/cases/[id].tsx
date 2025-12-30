@@ -598,7 +598,7 @@ export default function CaseDetailPage() {
       if ((original.display_name || original.filename) !== editDocName.trim()) {
         await logActivity(supabase, {
           firm_id: state.firmId,
-          case_id: original.case_id,
+          case_id: caseId,
           actor_user_id: state.userId,
           event_type: 'document_renamed',
           message: `Document renamed: ${(original.display_name || original.filename)} → ${editDocName.trim()}`,
@@ -608,7 +608,7 @@ export default function CaseDetailPage() {
       if (original.doc_type !== editDocType || original.tags.join(',') !== tags.join(',')) {
         await logActivity(supabase, {
           firm_id: state.firmId,
-          case_id: original.case_id,
+          case_id: caseId,
           actor_user_id: state.userId,
           event_type: 'document_updated',
           message: `Document updated: ${editDocName.trim() || original.filename}`,
