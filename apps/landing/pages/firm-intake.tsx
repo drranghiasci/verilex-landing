@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState, FormEvent, ChangeEvent } from 'react';
 
@@ -159,8 +160,9 @@ export default function FirmIntakePage() {
 
   const renderSuccessState = () => (
     <div className="mx-auto max-w-2xl rounded-2xl border border-white/10 bg-[var(--surface-1)] p-10 text-center shadow-2xl">
-      <h2 className="text-3xl font-semibold text-[color:var(--accent)]">We received your firm details.</h2>
-      <p className="mt-4 text-[color:var(--text-1)]">
+      <p className="text-sm uppercase tracking-[0.2em] text-[color:var(--accent-soft)]">Submission received</p>
+      <h2 className="mt-3 text-4xl font-bold tracking-tight text-white">We received your firm details.</h2>
+      <p className="mt-4 text-lg text-[color:var(--text-2)]">
         Our onboarding team will review your information and reach out within one business day to finalize next steps.
       </p>
       <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
@@ -187,8 +189,44 @@ export default function FirmIntakePage() {
         <title>VeriLex AI | Firm Intake</title>
         <meta name="description" content="Onboard your family law firm to VeriLex AI. Provide firm details, contacts, and migration needs to get started." />
       </Head>
-      <div className="min-h-screen bg-[var(--surface-0)] px-4 py-16 text-[color:var(--text-1)] sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl">
+      <div className="relative min-h-screen scroll-smooth bg-gradient-to-br from-[var(--g1)] via-[var(--g2)] to-[var(--g3)] text-[color:var(--text-1)]">
+        <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[var(--surface-0)] backdrop-blur-sm">
+          <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6" aria-label="Main Navigation">
+            <Link href="/" className="relative flex items-center focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] rounded-lg">
+              <Image
+                src="/verilex-logo-name.png"
+                alt="VeriLex AI"
+                width={150}
+                height={46}
+                priority
+                unoptimized
+                className="object-contain transition-opacity duration-500 ease-in-out dark:opacity-0"
+              />
+              <Image
+                src="/verilex-logo-name-darkmode.png"
+                alt="VeriLex AI (dark)"
+                width={150}
+                height={46}
+                priority
+                unoptimized
+                className="absolute inset-0 object-contain opacity-0 transition-opacity duration-500 ease-in-out dark:opacity-100"
+              />
+            </Link>
+            <div className="flex items-center gap-3 text-sm font-medium sm:gap-6">
+              <Link href="/" className="hover:text-[color:var(--accent-soft)] transition-colors">
+                Home
+              </Link>
+              <Link href="https://myclient.verilex.us/" className="hover:text-[color:var(--accent-soft)] transition-colors">
+                MyClient Portal
+              </Link>
+              <span className="rounded-lg border border-[color:var(--accent-light)] px-4 py-1.5 text-[color:var(--accent-soft)]">
+                Firm Intake
+              </span>
+            </div>
+          </nav>
+        </header>
+
+        <div className="mx-auto max-w-6xl px-4 pb-16 pt-28 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
             <p className="text-sm uppercase tracking-[0.2em] text-[color:var(--accent-soft)]">Firm Onboarding</p>
             <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">Family Law Intake</h1>
