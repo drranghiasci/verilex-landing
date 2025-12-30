@@ -62,16 +62,6 @@ function GradientHeadline({
 }
 
 /* content data */
-const ROADMAP = [
-  { date: 'Apr 2025', title: 'Early Access Outreach', desc: 'Gather early-adopter attorneys & gauge feature priorities.', icon: '🔒', status: 'completed' },
-  { date: 'Aug 2025', title: 'Private Alpha', desc: 'Research & summary engine available to internal testers.', icon: '🧪', status: 'current' },
-  { date: 'Oct 2025', title: 'Closed Beta', desc: 'Invite-only beta for 50 firms. Feedback loops & bug fixes.', icon: '🚧', status: 'upcoming' },
-  { date: 'Nov 2025', title: 'Contract Analyzer Alpha', desc: 'Risk-clause detection and key-term extraction.', icon: '📑', status: 'upcoming' },
-  { date: 'Dec 2025', title: 'Smart Assistant Preview', desc: 'Natural-language Q&A on statutes, rulings, and firm docs.', icon: '🤖', status: 'upcoming' },
-  { date: 'Jan 2026', title: 'Public Launch', desc: 'Self-serve onboarding, billing, and live support.', icon: '🚀', status: 'upcoming' },
-  { date: 'Q1 2026', title: 'Practice-Area Expansion', desc: 'Immigration, family, and business-law playbooks.', icon: '🌐', status: 'upcoming' },
-];
-
 const STAT_MESSAGES = [
   { stat: '12 hours', description: 'saved per week by automating case law and statute research', icon: <Clock className="h-8 w-8 text-[color:var(--accent)]" /> },
   { stat: '30% more', description: 'clients handled using streamlined AI-powered intake', icon: <Users className="h-8 w-8 text-green-500" /> },
@@ -169,14 +159,13 @@ export default function Home() {
 
             <div className="flex items-center gap-3 sm:gap-6 text-sm font-medium">
               <ThemeToggle />
-              <Link href="/login" className="hover:text-[color:var(--accent-soft)] transition-colors">Log In</Link>
-              <Link href="https://myclient.verilex.us/" className="hover:text-[color:var(--accent-soft)] transition-colors">MyClient Portal</Link>
-              <Link href="#contact" className="hover:text-[color:var(--accent-soft)] transition-colors">Contact</Link>
+              <Link href="/feedback" className="hover:text-[color:var(--accent-soft)] transition-colors">Feedback</Link>
+              <Link href="/firm-intake" className="hover:text-[color:var(--accent-soft)] transition-colors">New Firm Intake</Link>
               <Link
-                href="/firm-intake"
+                href="https://myclient.verilex.us/myclient/app"
                 className="rounded-lg border border-[color:var(--accent-light)] px-4 py-1.5 text-[color:var(--accent-soft)] hover:bg-[color:var(--accent-light)] hover:text-white transition-all"
               >
-                Firm Intake
+                MyClient Portal
               </Link>
             </div>
           </nav>
@@ -273,59 +262,6 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Roadmap */}
-          <section className="py-20">
-            <GradientHeadline size="lg">Roadmap</GradientHeadline>
-
-            <div className="max-w-4xl mx-auto mt-12">
-              <div className="relative">
-                <div
-                  className="absolute left-4 md:left-8 top-0 bottom-0 w-0.5"
-                  style={{ backgroundColor: 'color-mix(in srgb, var(--accent-soft) 40%, transparent)' }}
-                />
-                <div className="space-y-8">
-                  {ROADMAP.map((item) => (
-                    <div key={item.title} className="relative flex items-start">
-                      <div
-                        className={`absolute left-2 md:left-6 w-4 h-4 rounded-full border-2 ${
-                          item.status === 'completed'
-                            ? 'bg-green-400 border-green-400'
-                            : item.status === 'current'
-                              ? 'bg-[color:var(--accent)] border-[color:var(--accent)]'
-                              : 'bg-transparent border-white/30'
-                        }`}
-                      />
-                      <div className="ml-12 md:ml-16 flex-1">
-                        <div className="rounded-lg p-6 border border-white/10 bg-[var(--surface-0)] shadow-sm hover:shadow-md transition-shadow">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-lg font-semibold flex items-center gap-2">
-                              <span className="text-xl">{item.icon}</span>
-                              {item.title}
-                            </h3>
-                            <span className="text-sm text-[color:var(--text-2)] font-medium">{item.date}</span>
-                          </div>
-                          <p className="text-[color:var(--text-1)]">{item.desc}</p>
-                          {item.status === 'current' && (
-                            <div
-                              className="mt-3 inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded"
-                              style={{
-                                color: 'var(--accent-soft)',
-                                backgroundColor: 'color-mix(in srgb, var(--accent) 12%, transparent)',
-                              }}
-                            >
-                              <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: 'var(--accent)' }} />
-                              In Progress
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-
           {/* FAQ */}
           <section className="py-20">
             <GradientHeadline size="lg">Frequently Asked Questions</GradientHeadline>
@@ -353,26 +289,26 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Contact */}
-          <section id="contact" className="py-20 text-center">
-            <GradientHeadline size="lg">Get In Touch</GradientHeadline>
+          {/* Feedback */}
+          <section id="feedback" className="py-20 text-center">
+            <GradientHeadline size="lg">Feedback</GradientHeadline>
             <div className="max-w-2xl mx-auto mt-8">
               <p className="text-lg text-[color:var(--text-1)] mb-8">
-                Questions about VeriLex AI? Partnership opportunities? We&apos;d love to hear from you.
+                We&apos;re building VeriLex AI with early firm input. Share feedback below.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a
-                  href="mailto:founder@verilex.us"
+                <Link
+                  href="/feedback"
                   className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--accent-light)] px-6 py-3 text-white font-semibold hover:bg-[color:var(--accent)] transition-colors"
                 >
-                  Contact Founder
+                  Leave Feedback
                   <ChevronRight className="h-4 w-4" />
-                </a>
+                </Link>
                 <Link
-                  href="https://myclient.verilex.us/"
+                  href="https://myclient.verilex.us/myclient/app"
                   className="inline-flex items-center gap-2 rounded-lg border border-[color:var(--accent-light)] px-6 py-3 text-[color:var(--accent-soft)] hover:bg-[color:var(--surface-1)] transition-colors"
                 >
-                  Open MyClient Portal
+                  MyClient Portal
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
