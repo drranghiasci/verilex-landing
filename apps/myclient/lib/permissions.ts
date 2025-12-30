@@ -1,17 +1,31 @@
-export type FirmRole = 'admin' | 'attorney' | 'staff' | null | undefined;
+export type FirmRole = 'admin' | 'attorney' | 'staff';
 
-export function canEditCases(role: FirmRole): boolean {
-  return role === 'admin' || role === 'attorney';
+export function isFirmRole(value: unknown): value is FirmRole {
+  return value === 'admin' || value === 'attorney' || value === 'staff';
 }
 
-export function canEditDocuments(role: FirmRole): boolean {
-  return role === 'admin' || role === 'attorney';
+function normalizeRole(role: unknown): FirmRole | null {
+  if (typeof role !== 'string') return null;
+  const normalized = role.toLowerCase();
+  return isFirmRole(normalized) ? normalized : null;
 }
 
-export function canDeleteDocuments(role: FirmRole): boolean {
-  return role === 'admin' || role === 'attorney';
+export function canEditCases(role: unknown | null | undefined): boolean {
+  const normalized = normalizeRole(role);
+  return normalized === 'admin' || normalized === 'attorney';
 }
 
-export function canManageMembers(role: FirmRole): boolean {
-  return role === 'admin';
+export function canEditDocuments(role: unknown | null | undefined): boolean {
+  const normalized = normalizeRole(role);
+  return normalized === 'admin' || normalized === 'attorney';
+}
+
+export function canDeleteDocuments(role: unknown | null | undefined): boolean {
+  const normalized = normalizeRole(role);
+  return normalized === 'admin' || normalized === 'attorney';
+}
+
+export function canManageMembers(role: unknown | null | undefined): boolean {
+  const normalized = normalizeRole(role);
+  return normalized === 'admin';
 }
