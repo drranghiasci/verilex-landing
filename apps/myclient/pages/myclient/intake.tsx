@@ -35,7 +35,7 @@ export default function IntakePage() {
   const [caseCountLoading, setCaseCountLoading] = useState(false);
 
   const canEdit = canEditCases(state.role);
-  const isReadOnly = state.authed && state.firmId && !canEdit;
+  const isReadOnly = Boolean(state.authed && state.firmId && !canEdit);
   const limitCheck =
     caseCount === null ? { ok: true } : canCreateCase({ plan, currentCaseCount: caseCount });
   const limitReached = !planLoading && caseCount !== null && !limitCheck.ok;
