@@ -5,12 +5,16 @@ import { useEffect, useState } from 'react';
 import { useFirm } from '@/lib/FirmProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { CaseCreateSchema, buildCaseTitle } from '@/lib/caseSchema';
+import { canEditCases } from '@/lib/permissions';
+import { useFirmPlan } from '@/lib/useFirmPlan';
+import { canCreateCase } from '@/lib/plans';
 
 const STATUS_OPTIONS = ['open', 'paused', 'closed'] as const;
 
 export default function IntakePage() {
   const router = useRouter();
   const { state } = useFirm();
+  const { plan, loading: planLoading } = useFirmPlan();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -27,6 +31,20 @@ export default function IntakePage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ firstName?: string; lastName?: string }>({});
+  const [caseCount, setCaseCount] = useState<number | null>(null);
+  const [caseCountLoading, setCaseCountLoading] = useState(false);
+
+  const canEdit = canEditCases(state.role);
+  const isReadOnly = state.authed && state.firmId && !canEdit;
+  const limitCheck =
+    caseCount === null ? { ok: true } : canCreateCase({ plan, currentCaseCount: caseCount });
+  const limitReached = !planLoading && caseCount !== null && !limitCheck.ok;
+
+  const isPermissionError = (message?: string | null) => {
+    if (!message) return false;
+    const lower = message.toLowerCase();
+    return lower.includes('permission') || lower.includes('policy') || lower.includes('not allowed');
+  };
 
   useEffect(() => {
     if (hasCustomTitle) return;
@@ -51,6 +69,32 @@ export default function IntakePage() {
     setTitle(generated);
   }, [county, courtName, email, firstName, hasCustomTitle, lastName, matterType, notes, phone, caseNumber, stateField, status]);
 
+  useEffect(() => {
+    if (!state.authed || !state.firmId) return;
+
+    let mounted = true;
+    const loadCount = async () => {
+      setCaseCountLoading(true);
+      const { count, error: countError } = await supabase
+        .from('cases')
+        .select('id', { count: 'exact', head: true })
+        .eq('firm_id', state.firmId);
+
+      if (!mounted) return;
+      if (countError) {
+        setCaseCount(null);
+      } else {
+        setCaseCount(count ?? 0);
+      }
+      setCaseCountLoading(false);
+    };
+
+    loadCount();
+    return () => {
+      mounted = false;
+    };
+  }, [state.authed, state.firmId]);
+
   const handleTitleChange = (value: string) => {
     setTitle(value);
     setHasCustomTitle(value.trim().length > 0);
@@ -63,6 +107,16 @@ export default function IntakePage() {
 
     if (!state.firmId) {
       setError('No firm linked yet.');
+      return;
+    }
+
+    if (!canEdit) {
+      setError('You don’t have permission to perform this action. Please contact your firm admin.');
+      return;
+    }
+
+    if (limitReached) {
+      setError(`${limitCheck.reason} Upgrade to Pro to add more cases.`);
       return;
     }
 
@@ -96,13 +150,19 @@ export default function IntakePage() {
     try {
       const input = parsed.data;
       const finalTitle = buildCaseTitle(input);
-      const clientName = `${input.client_first_name} ${input.client_last_name}`.trim();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session?.access_token) {
+        setError(sessionError?.message || 'Please sign in to create a case.');
+        return;
+      }
 
-      const { data, error: insertError } = await supabase
-        .from('cases')
-        .insert({
-          firm_id: state.firmId,
-          client_name: clientName,
+      const res = await fetch('/api/myclient/cases/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
+        body: JSON.stringify({
           client_first_name: input.client_first_name,
           client_last_name: input.client_last_name,
           client_email: input.client_email || null,
@@ -115,32 +175,17 @@ export default function IntakePage() {
           court_name: input.court_name || null,
           case_number: input.case_number || null,
           internal_notes: input.internal_notes || null,
-          last_activity_at: new Date().toISOString(),
-        })
-        .select('id')
-        .single();
+        }),
+      });
 
-      if (insertError || !data?.id) {
-        setError(insertError?.message || 'Unable to create case.');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        const msg = data.error || 'Unable to create case.';
+        setError(isPermissionError(msg) ? 'You don’t have permission to perform this action. Please contact your firm admin.' : msg);
         return;
       }
 
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const actorId = sessionData.session?.user?.id ?? null;
-        await supabase.from('case_activity').insert({
-          firm_id: state.firmId,
-          case_id: data.id,
-          actor_user_id: actorId,
-          event_type: 'case_created',
-          message: `Case created for ${input.client_last_name}, ${input.client_first_name}`,
-          metadata: { source: 'intake' },
-        });
-      } catch {
-        // best-effort logging
-      }
-
-      router.push(`/myclient/cases/${data.id}`);
+      router.push(`/myclient/cases/${data.caseId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to create case.');
     } finally {
@@ -175,6 +220,19 @@ export default function IntakePage() {
 
         {state.authed && state.firmId && (
           <form onSubmit={handleSubmit} className="mt-8 space-y-8">
+            {isReadOnly && (
+              <div className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-sm text-[color:var(--text-2)]">
+                You have read-only access. Please contact your firm admin to create a case.
+              </div>
+            )}
+            {limitReached && (
+              <div className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-sm text-[color:var(--text-2)]">
+                {limitCheck.reason} Upgrade to Pro to add more cases.
+                <Link href="/myclient/upgrade" className="ml-2 text-white underline underline-offset-4">
+                  Upgrade
+                </Link>
+              </div>
+            )}
             {error && (
               <div className="rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
                 {error}
@@ -188,27 +246,29 @@ export default function IntakePage() {
                   <p className="mt-1 text-sm text-[color:var(--text-2)]">Who is this case for?</p>
                 </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm text-[color:var(--text-2)]">
-                First name *
-                <input
-                  value={firstName}
-                  onChange={(event) => setFirstName(event.target.value)}
-                  className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-                  required
-                />
-                {fieldErrors.firstName && <span className="mt-1 block text-xs text-red-300">{fieldErrors.firstName}</span>}
-              </label>
-              <label className="block text-sm text-[color:var(--text-2)]">
-                Last name *
-                <input
-                  value={lastName}
-                  onChange={(event) => setLastName(event.target.value)}
-                  className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-                  required
-                />
-                {fieldErrors.lastName && <span className="mt-1 block text-xs text-red-300">{fieldErrors.lastName}</span>}
-              </label>
-            </div>
+                  <label className="block text-sm text-[color:var(--text-2)]">
+                    First name *
+                    <input
+                      value={firstName}
+                      onChange={(event) => setFirstName(event.target.value)}
+                      disabled={isReadOnly}
+                      className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                      required
+                    />
+                    {fieldErrors.firstName && <span className="mt-1 block text-xs text-red-300">{fieldErrors.firstName}</span>}
+                  </label>
+                  <label className="block text-sm text-[color:var(--text-2)]">
+                    Last name *
+                    <input
+                      value={lastName}
+                      onChange={(event) => setLastName(event.target.value)}
+                      disabled={isReadOnly}
+                      className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                      required
+                    />
+                    {fieldErrors.lastName && <span className="mt-1 block text-xs text-red-300">{fieldErrors.lastName}</span>}
+                  </label>
+                </div>
 
                 <div>
                   <h3 className="text-sm font-semibold text-white">Contact</h3>
@@ -219,6 +279,7 @@ export default function IntakePage() {
                         type="email"
                         value={email}
                         onChange={(event) => setEmail(event.target.value)}
+                        disabled={isReadOnly}
                         className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       />
                     </label>
@@ -228,6 +289,7 @@ export default function IntakePage() {
                         type="tel"
                         value={phone}
                         onChange={(event) => setPhone(event.target.value)}
+                        disabled={isReadOnly}
                         className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       />
                     </label>
@@ -245,6 +307,7 @@ export default function IntakePage() {
                   <input
                     value={matterType}
                     onChange={(event) => setMatterType(event.target.value)}
+                    disabled={isReadOnly}
                     className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                   />
                 </label>
@@ -253,6 +316,7 @@ export default function IntakePage() {
                   <select
                     value={status}
                     onChange={(event) => setStatus(event.target.value)}
+                    disabled={isReadOnly}
                     className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                   >
                     {STATUS_OPTIONS.map((option) => (
@@ -267,6 +331,7 @@ export default function IntakePage() {
                   <input
                     value={title}
                     onChange={(event) => handleTitleChange(event.target.value)}
+                    disabled={isReadOnly}
                     className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                   />
                   <span className="mt-2 block text-xs text-[color:var(--text-2)]">
@@ -282,6 +347,7 @@ export default function IntakePage() {
                       <input
                         value={stateField}
                         onChange={(event) => setStateField(event.target.value)}
+                        disabled={isReadOnly}
                         className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       />
                     </label>
@@ -290,6 +356,7 @@ export default function IntakePage() {
                       <input
                         value={county}
                         onChange={(event) => setCounty(event.target.value)}
+                        disabled={isReadOnly}
                         className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       />
                     </label>
@@ -298,6 +365,7 @@ export default function IntakePage() {
                       <input
                         value={courtName}
                         onChange={(event) => setCourtName(event.target.value)}
+                        disabled={isReadOnly}
                         className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       />
                     </label>
@@ -306,6 +374,7 @@ export default function IntakePage() {
                       <input
                         value={caseNumber}
                         onChange={(event) => setCaseNumber(event.target.value)}
+                        disabled={isReadOnly}
                         className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       />
                     </label>
@@ -320,6 +389,7 @@ export default function IntakePage() {
               <textarea
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
+                disabled={isReadOnly}
                 rows={5}
                 className="mt-3 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
               />
@@ -328,7 +398,7 @@ export default function IntakePage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || isReadOnly || limitReached || caseCountLoading}
                 className="rounded-lg bg-[color:var(--accent-light)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[color:var(--accent)] disabled:opacity-60"
               >
                 {submitting ? 'Creating…' : 'Create Case'}

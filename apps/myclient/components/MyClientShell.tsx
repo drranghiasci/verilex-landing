@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabaseClient';
 import { useFirm } from '@/lib/FirmProvider';
+import { canManageMembers } from '@/lib/permissions';
 
 export default function MyClientShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -33,6 +34,16 @@ export default function MyClientShell({ children }: { children: React.ReactNode 
               <Link href="/myclient/members" className="hover:text-white transition">
                 Members
               </Link>
+              {canManageMembers(state.role) && (
+                <Link href="/myclient/settings" className="hover:text-white transition">
+                  Settings
+                </Link>
+              )}
+              {canManageMembers(state.role) && (
+                <Link href="/myclient/upgrade" className="hover:text-white transition">
+                  Upgrade
+                </Link>
+              )}
             </nav>
           )}
           {state.authed && (

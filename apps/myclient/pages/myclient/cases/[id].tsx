@@ -4,6 +4,10 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useFirm } from '@/lib/FirmProvider';
+import { canEditCases, canEditDocuments, canDeleteDocuments } from '@/lib/permissions';
+import { logActivity } from '@/lib/activity';
+import { useFirmPlan } from '@/lib/useFirmPlan';
+import { canUploadDocument } from '@/lib/plans';
 
 type CaseRecord = {
   id: string;
@@ -44,6 +48,15 @@ type ActivityRow = {
   created_at: string;
 };
 
+type TaskRow = {
+  id: string;
+  title: string;
+  status: string;
+  due_date: string | null;
+  completed_at: string | null;
+  created_at: string;
+};
+
 function getCaseDisplay(record: CaseRecord) {
   const displayName =
     record.client_last_name || record.client_first_name
@@ -65,9 +78,16 @@ const STATUS_STYLES: Record<string, string> = {
   closed: 'border-slate-400/40 text-slate-200',
 };
 
+function sanitizeFilename(name: string) {
+  const trimmed = name.replace(/[/\\]/g, '').trim();
+  const safe = trimmed.replace(/[^a-zA-Z0-9._-]/g, '_');
+  return safe.length > 0 ? safe : 'document';
+}
+
 export default function CaseDetailPage() {
   const router = useRouter();
   const { state } = useFirm();
+  const { plan, loading: planLoading } = useFirmPlan();
   const [record, setRecord] = useState<CaseRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,11 +100,19 @@ export default function CaseDetailPage() {
   const [editDocName, setEditDocName] = useState('');
   const [editDocType, setEditDocType] = useState('other');
   const [editDocTags, setEditDocTags] = useState('');
+  const [tasks, setTasks] = useState<TaskRow[]>([]);
+  const [tasksLoading, setTasksLoading] = useState(false);
+  const [tasksError, setTasksError] = useState<string | null>(null);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDue, setNewTaskDue] = useState('');
+  const [taskActionError, setTaskActionError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [documentCount, setDocumentCount] = useState<number | null>(null);
+  const [documentCountLoading, setDocumentCountLoading] = useState(false);
   const [downloadId, setDownloadId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'notes' | 'documents' | 'activity'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'notes' | 'documents' | 'tasks' | 'activity'>('overview');
   const [notesDraft, setNotesDraft] = useState('');
   const [notesStatus, setNotesStatus] = useState<'Saving…' | 'Saved' | 'Error saving' | null>(null);
   const notesInitialized = useRef(false);
@@ -92,7 +120,39 @@ export default function CaseDetailPage() {
   const [activityLoading, setActivityLoading] = useState(false);
   const [activityError, setActivityError] = useState<string | null>(null);
 
+  const canEdit = canEditCases(state.role);
+  const canEditDocs = canEditDocuments(state.role);
+  const canDeleteDocs = canDeleteDocuments(state.role);
+  const documentLimitCheck =
+    documentCount === null ? { ok: true } : canUploadDocument({ plan, currentDocumentCount: documentCount });
+  const documentLimitReached = !planLoading && documentCount !== null && !documentLimitCheck.ok;
+  const isPermissionError = (message?: string | null) => {
+    if (!message) return false;
+    const lower = message.toLowerCase();
+    return lower.includes('permission') || lower.includes('policy') || lower.includes('not allowed');
+  };
+
   const caseId = useMemo(() => (typeof router.query.id === 'string' ? router.query.id : null), [router.query.id]);
+
+  const refreshDocumentCount = useCallback(async () => {
+    if (!state.authed || !state.firmId) return;
+    setDocumentCountLoading(true);
+    const { count, error: countError } = await supabase
+      .from('case_documents')
+      .select('id', { count: 'exact', head: true })
+      .eq('firm_id', state.firmId)
+      .is('deleted_at', null);
+    if (countError) {
+      setDocumentCount(null);
+    } else {
+      setDocumentCount(count ?? 0);
+    }
+    setDocumentCountLoading(false);
+  }, [state.authed, state.firmId]);
+
+  useEffect(() => {
+    refreshDocumentCount();
+  }, [refreshDocumentCount]);
 
   useEffect(() => {
     if (!state.authed || !state.firmId || !caseId) {
@@ -138,6 +198,7 @@ export default function CaseDetailPage() {
       .select('id, filename, display_name, doc_type, tags, storage_path, created_at')
       .eq('case_id', caseId)
       .eq('firm_id', state.firmId)
+      .not('storage_path', 'is', null)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
@@ -172,7 +233,7 @@ export default function CaseDetailPage() {
   }, [record?.id]);
 
   useEffect(() => {
-    if (!record || !notesInitialized.current) return;
+    if (!record || !notesInitialized.current || !canEdit) return;
     const handle = setTimeout(async () => {
       if (notesDraft === (record.internal_notes ?? '')) return;
       setNotesStatus('Saving…');
@@ -188,23 +249,21 @@ export default function CaseDetailPage() {
           return;
         }
 
-        const res = await fetch('/api/myclient/cases/update', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            id: record.id,
-            client_name: record.client_name,
-            matter_type: record.matter_type,
-            status: record.status,
+        const clientName = `${record.client_first_name ?? ''} ${record.client_last_name ?? ''}`.trim();
+        const { error: updateError } = await supabase
+          .from('cases')
+          .update({
+            client_name: clientName || record.client_name,
             internal_notes: notesDraft,
-          }),
-        });
+            last_activity_at: new Date().toISOString(),
+          })
+          .eq('id', record.id);
 
-        if (!res.ok) {
+        if (updateError) {
           setNotesStatus('Error saving');
+          if (isPermissionError(updateError.message)) {
+            setError('You don’t have permission to perform this action. Please contact your firm admin.');
+          }
           return;
         }
 
@@ -256,46 +315,211 @@ export default function CaseDetailPage() {
     loadActivity();
   }, [activeTab, loadActivity]);
 
+  const loadTasks = useCallback(async () => {
+    if (!state.authed || !state.firmId || !caseId) return;
+    setTasksLoading(true);
+    setTasksError(null);
+    const { data, error: taskError } = await supabase
+      .from('case_tasks')
+      .select('id, title, status, due_date, completed_at, created_at')
+      .eq('case_id', caseId)
+      .eq('firm_id', state.firmId)
+      .order('status', { ascending: true })
+      .order('due_date', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: false });
+
+    if (taskError) {
+      setTasksError(taskError.message);
+      setTasks([]);
+    } else {
+      setTasks(data ?? []);
+    }
+    setTasksLoading(false);
+  }, [caseId, state.authed, state.firmId]);
+
+  useEffect(() => {
+    if (activeTab !== 'tasks') return;
+    loadTasks();
+  }, [activeTab, loadTasks]);
+
+  const handleAddTask = async () => {
+    setTaskActionError(null);
+    if (!newTaskTitle.trim()) {
+      setTaskActionError('Task title is required.');
+      return;
+    }
+    if (!record || !state.firmId) return;
+    if (!canEdit) {
+      setTaskActionError('You don’t have permission to perform this action. Please contact your firm admin.');
+      return;
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const actorId = sessionData.session?.user?.id ?? null;
+
+    const { data, error: insertError } = await supabase
+      .from('case_tasks')
+      .insert({
+        firm_id: state.firmId,
+        case_id: record.id,
+        title: newTaskTitle.trim(),
+        due_date: newTaskDue || null,
+        created_by: actorId,
+      })
+      .select('id, title, status, due_date, completed_at, created_at')
+      .single();
+
+    if (insertError || !data) {
+      setTaskActionError(
+        isPermissionError(insertError?.message)
+          ? 'You don’t have permission to perform this action. Please contact your firm admin.'
+          : insertError?.message || 'Unable to add task.',
+      );
+      return;
+    }
+
+    setTasks((prev) => [data, ...prev]);
+    setNewTaskTitle('');
+    setNewTaskDue('');
+    await logActivity(supabase, {
+      firm_id: state.firmId,
+      case_id: record.id,
+      actor_user_id: actorId,
+      event_type: 'task_created',
+      message: `Task created: ${data.title}`,
+      metadata: { due_date: data.due_date },
+    });
+  };
+
+  const handleToggleTask = async (task: TaskRow, nextStatus: 'open' | 'done') => {
+    setTaskActionError(null);
+    if (!record || !state.firmId) return;
+    if (!canEdit) {
+      setTaskActionError('You don’t have permission to perform this action. Please contact your firm admin.');
+      return;
+    }
+
+    const updates =
+      nextStatus === 'done'
+        ? { status: 'done', completed_at: new Date().toISOString() }
+        : { status: 'open', completed_at: null };
+
+    const { error: updateError } = await supabase.from('case_tasks').update(updates).eq('id', task.id);
+    if (updateError) {
+      setTaskActionError(
+        isPermissionError(updateError.message)
+          ? 'You don’t have permission to perform this action. Please contact your firm admin.'
+          : updateError.message,
+      );
+      return;
+    }
+
+    setTasks((prev) => prev.map((row) => (row.id === task.id ? { ...row, ...updates } : row)));
+
+    await logActivity(supabase, {
+      firm_id: state.firmId,
+      case_id: record.id,
+      actor_user_id: state.userId,
+      event_type: 'task_completed',
+      message: nextStatus === 'done' ? `Task completed: ${task.title}` : `Task reopened: ${task.title}`,
+      metadata: {},
+    });
+  };
+
   const handleUpload = async () => {
     if (!caseId || !selectedFile) {
       setUploadError('Please choose a file to upload.');
+      return;
+    }
+    if (!state.firmId) {
+      setUploadError('No firm linked yet.');
+      return;
+    }
+    if (!canEditDocs) {
+      setUploadError('You don’t have permission to perform this action. Please contact your firm admin.');
+      return;
+    }
+    if (documentLimitReached) {
+      setUploadError(`${documentLimitCheck.reason} Upgrade to Pro to upload more documents.`);
       return;
     }
 
     setUploading(true);
     setUploadError(null);
     try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        setUploadError(sessionError.message);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const actorId = sessionData.session?.user?.id ?? null;
+
+      const { data: draft, error: draftError } = await supabase
+        .from('case_documents')
+        .insert({
+          firm_id: state.firmId,
+          case_id: caseId,
+          filename: selectedFile.name,
+          display_name: selectedFile.name,
+          doc_type: 'other',
+          tags: [],
+          storage_path: null,
+        })
+        .select('id')
+        .single();
+
+      if (draftError || !draft?.id) {
+        setUploadError(
+          isPermissionError(draftError?.message)
+            ? 'You don’t have permission to perform this action. Please contact your firm admin.'
+            : draftError?.message || 'Unable to create upload record.',
+        );
         return;
       }
-      const accessToken = sessionData.session?.access_token;
-      if (!accessToken) {
-        setUploadError('Please sign in to upload files.');
+
+      const safeName = sanitizeFilename(selectedFile.name);
+      const storagePath = `${state.firmId}/cases/${caseId}/${draft.id}/${safeName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('case-documents')
+        .upload(storagePath, selectedFile, {
+          upsert: false,
+          contentType: selectedFile.type || 'application/octet-stream',
+        });
+
+      if (uploadError) {
+        await supabase.from('case_documents').update({ deleted_at: new Date().toISOString() }).eq('id', draft.id);
+        setUploadError(uploadError.message || 'Unable to upload document.');
         return;
       }
 
-      const formData = new FormData();
-      formData.append('caseId', caseId);
-      formData.append('file', selectedFile);
+      const { error: updateError } = await supabase
+        .from('case_documents')
+        .update({
+          storage_path: storagePath,
+          size_bytes: selectedFile.size,
+          mime_type: selectedFile.type || null,
+        })
+        .eq('id', draft.id);
 
-      const res = await fetch('/api/myclient/documents/upload', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: formData,
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setUploadError(data.error || 'Unable to upload document.');
+      if (updateError) {
+        await supabase.from('case_documents').update({ deleted_at: new Date().toISOString() }).eq('id', draft.id);
+        setUploadError(updateError.message || 'Unable to finalize upload.');
         return;
+      }
+
+      try {
+        await supabase.from('case_activity').insert({
+          firm_id: state.firmId,
+          case_id: caseId,
+          actor_user_id: actorId,
+          event_type: 'document_uploaded',
+          message: `Document uploaded: ${selectedFile.name}`,
+          metadata: { file_name: selectedFile.name },
+        });
+      } catch {
+        // best-effort logging
       }
 
       setSelectedFile(null);
       await loadDocuments();
+      await refreshDocumentCount();
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Unable to upload document.');
     } finally {
@@ -339,18 +563,27 @@ export default function CaseDetailPage() {
   const handleDocSave = async (docId: string) => {
     setDocumentAction(null);
     setDocumentActionError(null);
+    if (!canEditDocs) {
+      setDocumentActionError('You don’t have permission to perform this action. Please contact your firm admin.');
+      return;
+    }
     const tags = editDocTags
       .split(',')
       .map((tag) => tag.trim())
       .filter((tag) => tag.length > 0);
 
+    const original = documents.find((doc) => doc.id === docId);
     const { error: updateError } = await supabase
       .from('case_documents')
       .update({ display_name: editDocName.trim() || null, doc_type: editDocType, tags })
       .eq('id', docId);
 
     if (updateError) {
-      setDocumentActionError(updateError.message);
+      setDocumentActionError(
+        isPermissionError(updateError.message)
+          ? 'You don’t have permission to perform this action. Please contact your firm admin.'
+          : updateError.message,
+      );
       return;
     }
 
@@ -361,6 +594,28 @@ export default function CaseDetailPage() {
           : doc,
       ),
     );
+    if (original && state.firmId) {
+      if ((original.display_name || original.filename) !== editDocName.trim()) {
+        await logActivity(supabase, {
+          firm_id: state.firmId,
+          case_id: original.case_id,
+          actor_user_id: state.userId,
+          event_type: 'document_renamed',
+          message: `Document renamed: ${(original.display_name || original.filename)} → ${editDocName.trim()}`,
+          metadata: { document_id: docId },
+        });
+      }
+      if (original.doc_type !== editDocType || original.tags.join(',') !== tags.join(',')) {
+        await logActivity(supabase, {
+          firm_id: state.firmId,
+          case_id: original.case_id,
+          actor_user_id: state.userId,
+          event_type: 'document_updated',
+          message: `Document updated: ${editDocName.trim() || original.filename}`,
+          metadata: { document_id: docId },
+        });
+      }
+    }
     setDocumentAction('Saved');
     setEditingDocId(null);
   };
@@ -368,6 +623,10 @@ export default function CaseDetailPage() {
   const handleDocDelete = async (docId: string) => {
     setDocumentAction(null);
     setDocumentActionError(null);
+    if (!canDeleteDocs) {
+      setDocumentActionError('You don’t have permission to perform this action. Please contact your firm admin.');
+      return;
+    }
     const confirmed = window.confirm('Delete this document? This cannot be undone.');
     if (!confirmed) return;
 
@@ -387,11 +646,16 @@ export default function CaseDetailPage() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.ok) {
-      setDocumentActionError(data.error || 'Unable to delete document.');
+      setDocumentActionError(
+        isPermissionError(data.error)
+          ? 'You don’t have permission to perform this action. Please contact your firm admin.'
+          : data.error || 'Unable to delete document.',
+      );
       return;
     }
     setDocuments((prev) => prev.filter((doc) => doc.id !== docId));
     setDocumentAction('Deleted');
+    await refreshDocumentCount();
   };
 
   return (
@@ -451,6 +715,7 @@ export default function CaseDetailPage() {
                 { key: 'overview', label: 'Overview' },
                 { key: 'notes', label: 'Notes' },
                 { key: 'documents', label: 'Documents' },
+                { key: 'tasks', label: 'Tasks' },
                 { key: 'activity', label: 'Activity' },
               ].map((tab) => (
                 <button
@@ -504,9 +769,12 @@ export default function CaseDetailPage() {
                   value={notesDraft}
                   onChange={(event) => setNotesDraft(event.target.value)}
                   rows={8}
+                  readOnly={!canEdit}
                   className="w-full rounded-lg border border-white/10 bg-[var(--surface-1)] px-4 py-3 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                 />
-                <p className="mt-3 text-xs text-[color:var(--text-2)]">{notesStatus ?? 'Autosave enabled.'}</p>
+                <p className="mt-3 text-xs text-[color:var(--text-2)]">
+                  {canEdit ? notesStatus ?? 'Autosave enabled.' : 'Read-only access.'}
+                </p>
               </div>
             )}
 
@@ -535,103 +803,227 @@ export default function CaseDetailPage() {
                     <p className="text-sm text-[color:var(--text-2)]">No documents uploaded yet.</p>
                   ) : (
                     <ul className="divide-y divide-white/10">
-                      {documents.map((doc) => (
-                        <li key={doc.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div>
-                            <p className="text-sm text-white">{doc.display_name || doc.filename}</p>
-                            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[color:var(--text-2)]">
-                              <span className="rounded-full border border-white/15 px-2 py-0.5 uppercase tracking-wide">{doc.doc_type}</span>
-                              {doc.tags.length > 0 && (
-                                <span>
-                                  {doc.tags.slice(0, 2).join(', ')}
-                                  {doc.tags.length > 2 ? ` +${doc.tags.length - 2}` : ''}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-[color:var(--text-2)]">{new Date(doc.created_at).toLocaleString()}</p>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            {editingDocId === doc.id ? (
-                              <>
-                                <input
-                                  value={editDocName}
-                                  onChange={(event) => setEditDocName(event.target.value)}
-                                  className="w-full rounded-md border border-white/10 bg-[var(--surface-1)] px-2 py-1 text-xs text-white outline-none"
-                                  placeholder="Display name"
-                                />
-                                <input
-                                  value={editDocType}
-                                  onChange={(event) => setEditDocType(event.target.value)}
-                                  className="w-full rounded-md border border-white/10 bg-[var(--surface-1)] px-2 py-1 text-xs text-white outline-none"
-                                  placeholder="Type"
-                                />
-                                <input
-                                  value={editDocTags}
-                                  onChange={(event) => setEditDocTags(event.target.value)}
-                                  className="w-full rounded-md border border-white/10 bg-[var(--surface-1)] px-2 py-1 text-xs text-white outline-none"
-                                  placeholder="Tags (comma separated)"
-                                />
-                                <button
-                                  onClick={() => handleDocSave(doc.id)}
-                                  className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  onClick={() => setEditingDocId(null)}
-                                  className="rounded-lg border border-white/10 px-3 py-2 text-xs uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
-                                >
-                                  Cancel
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={() => startDocEdit(doc)}
-                                  className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
-                                >
-                                  Rename/Edit
-                                </button>
-                                <button
-                                  onClick={() => handleDownload(doc.id)}
-                                  disabled={downloadId === doc.id}
-                                  className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white disabled:opacity-60"
-                                >
-                                  {downloadId === doc.id ? 'Preparing…' : 'Download'}
-                                </button>
-                                <button
-                                  onClick={() => handleDocDelete(doc.id)}
-                                  className="rounded-lg border border-red-400/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-red-200 hover:text-white"
-                                >
-                                  Delete
-                                </button>
-                              </>
+                  {documents.map((doc) => (
+                    <li key={doc.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm text-white">{doc.display_name || doc.filename}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[color:var(--text-2)]">
+                          <span className="rounded-full border border-white/15 px-2 py-0.5 uppercase tracking-wide">{doc.doc_type}</span>
+                          {doc.tags.length > 0 && (
+                            <span>
+                              {doc.tags.slice(0, 2).join(', ')}
+                              {doc.tags.length > 2 ? ` +${doc.tags.length - 2}` : ''}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-[color:var(--text-2)]">{new Date(doc.created_at).toLocaleString()}</p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {editingDocId === doc.id ? (
+                          <>
+                            <input
+                              value={editDocName}
+                              onChange={(event) => setEditDocName(event.target.value)}
+                              disabled={!canEditDocs}
+                              className="w-full rounded-md border border-white/10 bg-[var(--surface-1)] px-2 py-1 text-xs text-white outline-none"
+                              placeholder="Display name"
+                            />
+                            <input
+                              value={editDocType}
+                              onChange={(event) => setEditDocType(event.target.value)}
+                              disabled={!canEditDocs}
+                              className="w-full rounded-md border border-white/10 bg-[var(--surface-1)] px-2 py-1 text-xs text-white outline-none"
+                              placeholder="Type"
+                            />
+                            <input
+                              value={editDocTags}
+                              onChange={(event) => setEditDocTags(event.target.value)}
+                              disabled={!canEditDocs}
+                              className="w-full rounded-md border border-white/10 bg-[var(--surface-1)] px-2 py-1 text-xs text-white outline-none"
+                              placeholder="Tags (comma separated)"
+                            />
+                            <button
+                              onClick={() => handleDocSave(doc.id)}
+                              disabled={!canEditDocs}
+                              className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setEditingDocId(null)}
+                              className="rounded-lg border border-white/10 px-3 py-2 text-xs uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            {canEditDocs && (
+                              <button
+                                onClick={() => startDocEdit(doc)}
+                                className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                              >
+                                Rename/Edit
+                              </button>
                             )}
-                          </div>
-                        </li>
-                      ))}
+                            <button
+                              onClick={() => handleDownload(doc.id)}
+                              disabled={downloadId === doc.id}
+                              className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white disabled:opacity-60"
+                            >
+                              {downloadId === doc.id ? 'Preparing…' : 'Download'}
+                            </button>
+                            {canDeleteDocs && (
+                              <button
+                                onClick={() => handleDocDelete(doc.id)}
+                                className="rounded-lg border border-red-400/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-red-200 hover:text-white"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </li>
+                  ))}
                     </ul>
                   )}
                 </div>
 
                 <div className="mt-6 rounded-xl border border-white/10 bg-[var(--surface-1)] p-4">
                   <p className="text-sm text-[color:var(--text-2)]">Upload a document (PDF, image, or doc).</p>
+                  {documentLimitReached && (
+                    <div className="mt-3 rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-[color:var(--text-2)]">
+                      {documentLimitCheck.reason} Upgrade to Pro to upload more documents.
+                      <Link href="/myclient/upgrade" className="ml-2 text-white underline underline-offset-4">
+                        Upgrade
+                      </Link>
+                    </div>
+                  )}
                   <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
                     <input
                       type="file"
                       onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+                      disabled={!canEditDocs || documentLimitReached || documentCountLoading}
                       className="w-full text-sm text-[color:var(--text-2)] file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--surface-0)] file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white"
                     />
                     <button
                       onClick={handleUpload}
-                      disabled={uploading || !selectedFile}
+                      disabled={uploading || !selectedFile || !canEditDocs || documentLimitReached || documentCountLoading}
                       className="rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--accent)] disabled:opacity-60"
                     >
                       {uploading ? 'Uploading…' : 'Upload'}
                     </button>
                   </div>
+                  {!canEditDocs && (
+                    <p className="mt-3 text-sm text-[color:var(--text-2)]">
+                      You have read-only access. Please contact your firm admin to upload documents.
+                    </p>
+                  )}
                   {uploadError && <p className="mt-3 text-sm text-red-200">{uploadError}</p>}
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'tasks' && (
+              <div className="mt-6 space-y-6">
+                {taskActionError && (
+                  <div className="rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">
+                    {taskActionError}
+                  </div>
+                )}
+                {!canEdit && (
+                  <p className="text-sm text-[color:var(--text-2)]">Read-only access to tasks.</p>
+                )}
+                {canEdit && (
+                  <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-4">
+                    <h3 className="text-sm font-semibold text-white">Add task</h3>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-[2fr_1fr_auto]">
+                      <input
+                        value={newTaskTitle}
+                        onChange={(event) => setNewTaskTitle(event.target.value)}
+                        placeholder="Task title"
+                        className="w-full rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                      />
+                      <input
+                        type="date"
+                        value={newTaskDue}
+                        onChange={(event) => setNewTaskDue(event.target.value)}
+                        className="w-full rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                      />
+                      <button
+                        onClick={handleAddTask}
+                        className="rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--accent)]"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-4">
+                  <h3 className="text-sm font-semibold text-white">Open tasks</h3>
+                  {tasksLoading ? (
+                    <p className="mt-3 text-sm text-[color:var(--text-2)]">Loading tasks...</p>
+                  ) : tasks.filter((task) => task.status === 'open').length === 0 ? (
+                    <p className="mt-3 text-sm text-[color:var(--text-2)]">No open tasks.</p>
+                  ) : (
+                    <ul className="mt-3 space-y-2 text-sm text-[color:var(--text-2)]">
+                      {tasks
+                        .filter((task) => task.status === 'open')
+                        .map((task) => (
+                          <li key={task.id} className="flex flex-col gap-2 rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                              <p className="text-white">{task.title}</p>
+                              {task.due_date && <p className="text-xs">Due {new Date(task.due_date).toLocaleDateString()}</p>}
+                            </div>
+                            {canEdit && (
+                              <button
+                                onClick={() => handleToggleTask(task, 'done')}
+                                className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                              >
+                                Mark done
+                              </button>
+                            )}
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-4">
+                  <h3 className="text-sm font-semibold text-white">Completed</h3>
+                  {tasks.filter((task) => task.status === 'done').length === 0 ? (
+                    <p className="mt-3 text-sm text-[color:var(--text-2)]">No completed tasks.</p>
+                  ) : (
+                    <ul className="mt-3 space-y-2 text-sm text-[color:var(--text-2)]">
+                      {tasks
+                        .filter((task) => task.status === 'done')
+                        .map((task) => (
+                          <li key={task.id} className="flex flex-col gap-2 rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                              <p className="text-white">{task.title}</p>
+                              {task.completed_at && <p className="text-xs">Completed {new Date(task.completed_at).toLocaleDateString()}</p>}
+                            </div>
+                            {canEdit && (
+                              <button
+                                onClick={() => handleToggleTask(task, 'open')}
+                                className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                              >
+                                Reopen
+                              </button>
+                            )}
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                </div>
+
+                {tasksError && (
+                  <div className="rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">
+                    {tasksError}
+                  </div>
+                )}
               </div>
             )}
 

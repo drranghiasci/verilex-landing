@@ -1,13 +1,21 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { CaseCreateSchema, buildCaseTitle } from '@/lib/caseSchema';
+import { canCreateCase } from '@/lib/plans';
 
 type CreateBody = {
   client_first_name?: string;
   client_last_name?: string;
   client_email?: string;
   client_phone?: string;
-  matter_title?: string;
-  notes?: string;
+  title?: string;
+  matter_type?: string;
+  status?: string;
+  state?: string;
+  county?: string;
+  court_name?: string;
+  case_number?: string;
+  internal_notes?: string;
 };
 
 type ErrorResponse = { ok: false; error: string };
@@ -41,15 +49,23 @@ export default async function handler(
   }
 
   const body = (req.body ?? {}) as CreateBody;
-  const firstName = typeof body.client_first_name === 'string' ? body.client_first_name.trim() : '';
-  const lastName = typeof body.client_last_name === 'string' ? body.client_last_name.trim() : '';
-  const email = typeof body.client_email === 'string' ? body.client_email.trim() : '';
-  const phone = typeof body.client_phone === 'string' ? body.client_phone.trim() : '';
-  const matterTitle = typeof body.matter_title === 'string' ? body.matter_title.trim() : '';
-  const notes = typeof body.notes === 'string' ? body.notes.trim() : '';
+  const parsed = CaseCreateSchema.safeParse({
+    client_first_name: body.client_first_name ?? '',
+    client_last_name: body.client_last_name ?? '',
+    client_email: body.client_email ?? '',
+    client_phone: body.client_phone ?? '',
+    title: body.title ?? '',
+    matter_type: body.matter_type ?? '',
+    status: body.status ?? '',
+    state: body.state ?? '',
+    county: body.county ?? '',
+    court_name: body.court_name ?? '',
+    case_number: body.case_number ?? '',
+    internal_notes: body.internal_notes ?? '',
+  });
 
-  if (!firstName || !lastName) {
-    return res.status(400).json({ ok: false, error: 'Client first and last name are required' });
+  if (!parsed.success) {
+    return res.status(400).json({ ok: false, error: parsed.error.errors[0]?.message || 'Invalid intake data' });
   }
 
   const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -66,7 +82,7 @@ export default async function handler(
 
   const { data: membershipRows, error: membershipError } = await adminClient
     .from('firm_members')
-    .select('firm_id')
+    .select('firm_id, role')
     .eq('user_id', authData.user.id)
     .limit(1);
 
@@ -79,24 +95,66 @@ export default async function handler(
     return res.status(403).json({ ok: false, error: 'No firm membership found' });
   }
 
-  const clientName = `${firstName} ${lastName}`.trim();
-  const summaryParts: string[] = [];
+  if (!['admin', 'attorney'].includes(membership.role)) {
+    return res.status(403).json({ ok: false, error: 'You do not have permission to create cases.' });
+  }
 
-  if (matterTitle) summaryParts.push(`Matter: ${matterTitle}`);
-  if (email) summaryParts.push(`Email: ${email}`);
-  if (phone) summaryParts.push(`Phone: ${phone}`);
-  if (notes) summaryParts.push(notes);
+  const { data: firmRow, error: firmError } = await adminClient
+    .from('firms')
+    .select('plan')
+    .eq('id', membership.firm_id)
+    .single();
 
-  const intakeSummary = summaryParts.length > 0 ? summaryParts.join('\n') : null;
+  if (firmError) {
+    return res.status(500).json({ ok: false, error: firmError.message });
+  }
+
+  const { count: caseCount, error: countError } = await adminClient
+    .from('cases')
+    .select('id', { count: 'exact', head: true })
+    .eq('firm_id', membership.firm_id);
+
+  if (countError) {
+    return res.status(500).json({ ok: false, error: countError.message });
+  }
+
+  const plan = (firmRow?.plan as 'free' | 'pro' | 'enterprise' | undefined) ?? 'free';
+  const limitCheck = canCreateCase({ plan, currentCaseCount: caseCount ?? 0 });
+  if (!limitCheck.ok) {
+    try {
+      await adminClient.from('case_activity').insert({
+        firm_id: membership.firm_id,
+        actor_user_id: authData.user.id,
+        event_type: 'plan_limit_hit',
+        message: 'Case limit reached',
+        metadata: { kind: 'cases' },
+      });
+    } catch {
+      // best-effort logging
+    }
+    return res.status(403).json({ ok: false, error: `${limitCheck.reason} Upgrade to Pro to add more cases.` });
+  }
+
+  const input = parsed.data;
+  const finalTitle = buildCaseTitle(input);
 
   const { data: inserted, error: insertError } = await adminClient
     .from('cases')
     .insert({
       firm_id: membership.firm_id,
-      client_name: clientName,
-      matter_type: 'divorce',
-      status: 'open',
-      intake_summary: intakeSummary,
+      client_name: `${input.client_first_name} ${input.client_last_name}`.trim(),
+      client_first_name: input.client_first_name,
+      client_last_name: input.client_last_name,
+      client_email: input.client_email || null,
+      client_phone: input.client_phone || null,
+      title: finalTitle,
+      matter_type: input.matter_type || 'Divorce',
+      status: input.status || 'open',
+      state: input.state || null,
+      county: input.county || null,
+      court_name: input.court_name || null,
+      case_number: input.case_number || null,
+      internal_notes: input.internal_notes || null,
       last_activity_at: new Date().toISOString(),
     })
     .select('id')
@@ -104,6 +162,19 @@ export default async function handler(
 
   if (insertError || !inserted) {
     return res.status(500).json({ ok: false, error: insertError?.message || 'Unable to create case' });
+  }
+
+  try {
+    await adminClient.from('case_activity').insert({
+      firm_id: membership.firm_id,
+      case_id: inserted.id,
+      actor_user_id: authData.user.id,
+      event_type: 'case_created',
+      message: `Case created for ${input.client_last_name}, ${input.client_first_name}`,
+      metadata: { source: 'intake' },
+    });
+  } catch {
+    // best-effort logging
   }
 
   return res.status(200).json({ ok: true, caseId: inserted.id });

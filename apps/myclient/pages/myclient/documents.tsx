@@ -3,6 +3,10 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useFirm } from '@/lib/FirmProvider';
 import { supabase } from '@/lib/supabaseClient';
+import { canEditDocuments, canDeleteDocuments } from '@/lib/permissions';
+import { logActivity } from '@/lib/activity';
+import { useFirmPlan } from '@/lib/useFirmPlan';
+import { canUploadDocument } from '@/lib/plans';
 
 type DocumentRow = {
   id: string;
@@ -24,6 +28,7 @@ type CaseRow = {
 
 export default function DocumentsPage() {
   const { state } = useFirm();
+  const { plan, loading: planLoading } = useFirmPlan();
   const [documents, setDocuments] = useState<DocumentRow[]>([]);
   const [cases, setCases] = useState<CaseRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -38,6 +43,16 @@ export default function DocumentsPage() {
   const [editTags, setEditTags] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionStatus, setActionStatus] = useState<string | null>(null);
+
+  const canEdit = canEditDocuments(state.role);
+  const canDelete = canDeleteDocuments(state.role);
+  const documentLimitCheck = canUploadDocument({ plan, currentDocumentCount: documents.length });
+  const documentLimitReached = !planLoading && !documentLimitCheck.ok;
+  const isPermissionError = (message?: string | null) => {
+    if (!message) return false;
+    const lower = message.toLowerCase();
+    return lower.includes('permission') || lower.includes('policy') || lower.includes('not allowed');
+  };
 
   const caseMap = useMemo(() => {
     const map = new Map<string, CaseRow>();
@@ -80,6 +95,7 @@ export default function DocumentsPage() {
         .select('id, case_id, filename, display_name, doc_type, tags, storage_path, created_at')
         .eq('firm_id', state.firmId)
         .is('deleted_at', null)
+        .not('storage_path', 'is', null)
         .order('created_at', { ascending: false });
 
       if (!mounted) return;
@@ -161,18 +177,27 @@ export default function DocumentsPage() {
   const handleSaveEdit = async (docId: string) => {
     setActionStatus(null);
     setActionError(null);
+    if (!canEdit) {
+      setActionError('You don’t have permission to perform this action. Please contact your firm admin.');
+      return;
+    }
     const tags = editTags
       .split(',')
       .map((tag) => tag.trim())
       .filter((tag) => tag.length > 0);
 
+    const original = documents.find((doc) => doc.id === docId);
     const { error: updateError } = await supabase
       .from('case_documents')
       .update({ display_name: editName.trim() || null, doc_type: editType, tags })
       .eq('id', docId);
 
     if (updateError) {
-      setActionError(updateError.message);
+      setActionError(
+        isPermissionError(updateError.message)
+          ? 'You don’t have permission to perform this action. Please contact your firm admin.'
+          : updateError.message,
+      );
       return;
     }
 
@@ -183,6 +208,28 @@ export default function DocumentsPage() {
           : doc,
       ),
     );
+    if (original) {
+      if ((original.display_name || original.filename) !== editName.trim()) {
+        await logActivity(supabase, {
+          firm_id: state.firmId!,
+          case_id: original.case_id,
+          actor_user_id: state.userId,
+          event_type: 'document_renamed',
+          message: `Document renamed: ${(original.display_name || original.filename)} → ${editName.trim()}`,
+          metadata: { document_id: docId },
+        });
+      }
+      if (original.doc_type !== editType || original.tags.join(',') !== tags.join(',')) {
+        await logActivity(supabase, {
+          firm_id: state.firmId!,
+          case_id: original.case_id,
+          actor_user_id: state.userId,
+          event_type: 'document_updated',
+          message: `Document updated: ${editName.trim() || original.filename}`,
+          metadata: { document_id: docId },
+        });
+      }
+    }
     setActionStatus('Saved');
     setEditingId(null);
   };
@@ -190,6 +237,10 @@ export default function DocumentsPage() {
   const handleDelete = async (docId: string) => {
     setActionStatus(null);
     setActionError(null);
+    if (!canDelete) {
+      setActionError('You don’t have permission to perform this action. Please contact your firm admin.');
+      return;
+    }
     const confirmed = window.confirm('Delete this document? This cannot be undone.');
     if (!confirmed) return;
 
@@ -209,7 +260,11 @@ export default function DocumentsPage() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.ok) {
-      setActionError(data.error || 'Unable to delete document.');
+      setActionError(
+        isPermissionError(data.error)
+          ? 'You don’t have permission to perform this action. Please contact your firm admin.'
+          : data.error || 'Unable to delete document.',
+      );
       return;
     }
     setDocuments((prev) => prev.filter((doc) => doc.id !== docId));
@@ -285,6 +340,19 @@ export default function DocumentsPage() {
                 {actionStatus}
               </div>
             )}
+            {documentLimitReached && (
+              <div className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-sm text-[color:var(--text-2)]">
+                {documentLimitCheck.reason} Upgrade to Pro to upload more documents.
+                <Link href="/myclient/upgrade" className="ml-2 text-white underline underline-offset-4">
+                  Upgrade
+                </Link>
+              </div>
+            )}
+            {!canEdit && (
+              <div className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-sm text-[color:var(--text-2)]">
+                You have read-only access. Please contact your firm admin to manage documents.
+              </div>
+            )}
 
             <div className="overflow-hidden rounded-2xl border border-white/10">
               {loading ? (
@@ -316,16 +384,17 @@ export default function DocumentsPage() {
                       return (
                         <tr key={doc.id}>
                           <td className="px-4 py-3 text-white">
-                            {editingId === doc.id ? (
-                              <input
-                                value={editName}
-                                onChange={(event) => setEditName(event.target.value)}
-                                className="w-full rounded-md border border-white/10 bg-[var(--surface-0)] px-2 py-1 text-sm text-white outline-none"
-                              />
-                            ) : (
-                              displayName
-                            )}
-                          </td>
+                              {editingId === doc.id ? (
+                                <input
+                                  value={editName}
+                                  onChange={(event) => setEditName(event.target.value)}
+                                  disabled={!canEdit}
+                                  className="w-full rounded-md border border-white/10 bg-[var(--surface-0)] px-2 py-1 text-sm text-white outline-none"
+                                />
+                              ) : (
+                                displayName
+                              )}
+                            </td>
                           <td className="px-4 py-3">
                             <Link href={`/myclient/cases/${doc.case_id}`} className="text-[color:var(--text-2)] hover:text-white">
                               {caseLabel}
@@ -336,6 +405,7 @@ export default function DocumentsPage() {
                               <input
                                 value={editType}
                                 onChange={(event) => setEditType(event.target.value)}
+                                disabled={!canEdit}
                                 className="w-full rounded-md border border-white/10 bg-[var(--surface-0)] px-2 py-1 text-sm text-white outline-none"
                               />
                             ) : (
@@ -347,6 +417,7 @@ export default function DocumentsPage() {
                               <input
                                 value={editTags}
                                 onChange={(event) => setEditTags(event.target.value)}
+                                disabled={!canEdit}
                                 className="w-full rounded-md border border-white/10 bg-[var(--surface-0)] px-2 py-1 text-sm text-white outline-none"
                               />
                             ) : (
@@ -365,7 +436,8 @@ export default function DocumentsPage() {
                                 <>
                                   <button
                                     onClick={() => handleSaveEdit(doc.id)}
-                                    className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                                    disabled={!canEdit}
+                                    className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white disabled:opacity-50"
                                   >
                                     Save
                                   </button>
@@ -378,12 +450,14 @@ export default function DocumentsPage() {
                                 </>
                               ) : (
                                 <>
-                                  <button
-                                    onClick={() => startEdit(doc)}
-                                    className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
-                                  >
-                                    Rename/Edit
-                                  </button>
+                                  {canEdit && (
+                                    <button
+                                      onClick={() => startEdit(doc)}
+                                      className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                                    >
+                                      Rename/Edit
+                                    </button>
+                                  )}
                                   <button
                                     onClick={() => handleDownload(doc.id)}
                                     disabled={downloadId === doc.id}
@@ -391,12 +465,14 @@ export default function DocumentsPage() {
                                   >
                                     {downloadId === doc.id ? 'Preparing…' : 'Download'}
                                   </button>
-                                  <button
-                                    onClick={() => handleDelete(doc.id)}
-                                    className="rounded-lg border border-red-400/40 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-red-200 hover:text-white"
-                                  >
-                                    Delete
-                                  </button>
+                                  {canDelete && (
+                                    <button
+                                      onClick={() => handleDelete(doc.id)}
+                                      className="rounded-lg border border-red-400/40 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-red-200 hover:text-white"
+                                    >
+                                      Delete
+                                    </button>
+                                  )}
                                 </>
                               )}
                             </div>

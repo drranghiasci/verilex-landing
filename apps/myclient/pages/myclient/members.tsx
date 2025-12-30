@@ -3,6 +3,9 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useFirm } from '@/lib/FirmProvider';
 import { supabase } from '@/lib/supabaseClient';
+import { canManageMembers } from '@/lib/permissions';
+import { useFirmPlan } from '@/lib/useFirmPlan';
+import { canInviteMember } from '@/lib/plans';
 
 type MemberRow = {
   user_id: string;
@@ -23,6 +26,7 @@ type InviteRow = {
 
 export default function MembersPage() {
   const { state } = useFirm();
+  const { plan, loading: planLoading } = useFirmPlan();
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +36,10 @@ export default function MembersPage() {
   const [pendingInvites, setPendingInvites] = useState<InviteRow[]>([]);
   const [pendingLoading, setPendingLoading] = useState(false);
   const [resendStatus, setResendStatus] = useState<Record<string, string>>({});
+
+  const canManage = canManageMembers(state.role);
+  const memberLimitCheck = canInviteMember({ plan, currentMemberCount: members.length });
+  const memberLimitReached = !planLoading && !memberLimitCheck.ok;
 
   const firmLabel = useMemo(() => (state.firmId ? state.firmId.slice(0, 8) : 'No firm'), [state.firmId]);
 
@@ -123,6 +131,10 @@ export default function MembersPage() {
 
   const handleInvite = async () => {
     setInviteStatus(null);
+    if (memberLimitReached) {
+      setInviteStatus(`${memberLimitCheck.reason} Upgrade to Pro to add more members.`);
+      return;
+    }
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     if (sessionError || !sessionData.session?.access_token) {
       setInviteStatus(sessionError?.message || 'Please sign in to invite members.');
@@ -160,6 +172,10 @@ export default function MembersPage() {
 
   const handleResendInvite = async (invite: InviteRow) => {
     setResendStatus((prev) => ({ ...prev, [invite.id]: 'Sending…' }));
+    if (memberLimitReached) {
+      setResendStatus((prev) => ({ ...prev, [invite.id]: `${memberLimitCheck.reason} Upgrade to Pro.` }));
+      return;
+    }
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     if (sessionError || !sessionData.session?.access_token) {
       setResendStatus((prev) => ({ ...prev, [invite.id]: sessionError?.message || 'Sign in required' }));
@@ -213,8 +229,10 @@ export default function MembersPage() {
           <p className="mt-6 text-[color:var(--text-2)]">No firm linked yet.</p>
         )}
 
-        {!state.loading && state.authed && state.firmId && state.role !== 'admin' && (
-          <p className="mt-6 text-[color:var(--text-2)]">You do not have access to view firm members.</p>
+        {!state.loading && state.authed && state.firmId && !canManage && (
+          <p className="mt-6 text-[color:var(--text-2)]">
+            Member management is admin-only. Please contact an admin for invites or changes.
+          </p>
         )}
 
         {error && (
@@ -223,22 +241,32 @@ export default function MembersPage() {
           </div>
         )}
 
-        {state.authed && state.firmId && state.role === 'admin' && (
+        {state.authed && state.firmId && canManage && (
           <>
             <div className="mt-6 rounded-2xl border border-white/10 bg-[var(--surface-1)] p-6">
               <h2 className="text-lg font-semibold text-white">Invite team member</h2>
               <p className="mt-1 text-sm text-[color:var(--text-2)]">Send an invite to join this firm.</p>
+              {memberLimitReached && (
+                <div className="mt-3 rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-[color:var(--text-2)]">
+                  {memberLimitCheck.reason} Upgrade to Pro to invite more members.
+                  <Link href="/myclient/upgrade" className="ml-2 text-white underline underline-offset-4">
+                    Upgrade
+                  </Link>
+                </div>
+              )}
               <div className="mt-4 grid gap-4 md:grid-cols-[2fr_1fr_auto]">
                 <input
                   type="email"
                   value={inviteEmail}
                   onChange={(event) => setInviteEmail(event.target.value)}
+                  disabled={memberLimitReached}
                   placeholder="teammate@firm.com"
                   className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                 />
                 <select
                   value={inviteRole}
                   onChange={(event) => setInviteRole(event.target.value as 'admin' | 'attorney' | 'staff')}
+                  disabled={memberLimitReached}
                   className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                 >
                   <option value="admin">Admin</option>
@@ -248,7 +276,8 @@ export default function MembersPage() {
                 <button
                   type="button"
                   onClick={handleInvite}
-                  className="rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--accent)]"
+                  disabled={memberLimitReached}
+                  className="rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--accent)] disabled:opacity-60"
                 >
                   Send invite
                 </button>
@@ -322,7 +351,8 @@ export default function MembersPage() {
                         <button
                           type="button"
                           onClick={() => handleResendInvite(invite)}
-                          className="rounded-lg border border-white/15 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                          disabled={memberLimitReached}
+                          className="rounded-lg border border-white/15 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white disabled:opacity-60"
                         >
                           Resend
                         </button>

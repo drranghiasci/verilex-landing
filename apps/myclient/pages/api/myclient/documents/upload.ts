@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import formidable, { type File as FormidableFile } from 'formidable';
 import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
+import { canUploadDocument } from '@/lib/plans';
 
 export const config = {
   api: {
@@ -119,7 +120,7 @@ export default async function handler(
 
   const { data: membershipRows, error: membershipError } = await adminClient
     .from('firm_members')
-    .select('firm_id')
+    .select('firm_id, role')
     .eq('user_id', authData.user.id)
     .limit(1);
 
@@ -130,6 +131,46 @@ export default async function handler(
   const membership = Array.isArray(membershipRows) && membershipRows.length > 0 ? membershipRows[0] : null;
   if (!membership?.firm_id) {
     return res.status(403).json({ ok: false, error: 'No firm membership found' });
+  }
+  if (!['admin', 'attorney'].includes(membership.role)) {
+    return res.status(403).json({ ok: false, error: 'You do not have permission to upload documents.' });
+  }
+
+  const { data: firmRow, error: firmError } = await adminClient
+    .from('firms')
+    .select('plan')
+    .eq('id', membership.firm_id)
+    .single();
+
+  if (firmError) {
+    return res.status(500).json({ ok: false, error: firmError.message });
+  }
+
+  const { count: documentCount, error: countError } = await adminClient
+    .from('case_documents')
+    .select('id', { count: 'exact', head: true })
+    .eq('firm_id', membership.firm_id)
+    .is('deleted_at', null);
+
+  if (countError) {
+    return res.status(500).json({ ok: false, error: countError.message });
+  }
+
+  const plan = (firmRow?.plan as 'free' | 'pro' | 'enterprise' | undefined) ?? 'free';
+  const limitCheck = canUploadDocument({ plan, currentDocumentCount: documentCount ?? 0 });
+  if (!limitCheck.ok) {
+    try {
+      await adminClient.from('case_activity').insert({
+        firm_id: membership.firm_id,
+        actor_user_id: authData.user.id,
+        event_type: 'plan_limit_hit',
+        message: 'Document limit reached',
+        metadata: { kind: 'documents' },
+      });
+    } catch {
+      // best-effort logging
+    }
+    return res.status(403).json({ ok: false, error: `${limitCheck.reason} Upgrade to Pro to upload more documents.` });
   }
 
   const { data: caseRows, error: caseError } = await adminClient

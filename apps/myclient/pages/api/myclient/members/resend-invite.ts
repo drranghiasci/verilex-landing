@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { canInviteMember } from '@/lib/plans';
 
 type ResendBody = { email?: string; role?: 'admin' | 'attorney' | 'staff' };
 
@@ -78,6 +79,42 @@ export default async function handler(
     return res.status(403).json({ ok: false, error: 'Admin access required' });
   }
 
+  const { data: firmRow, error: firmError } = await adminClient
+    .from('firms')
+    .select('plan')
+    .eq('id', membership.firm_id)
+    .single();
+
+  if (firmError) {
+    return res.status(500).json({ ok: false, error: firmError.message });
+  }
+
+  const { count: memberCount, error: countError } = await adminClient
+    .from('firm_members')
+    .select('user_id', { count: 'exact', head: true })
+    .eq('firm_id', membership.firm_id);
+
+  if (countError) {
+    return res.status(500).json({ ok: false, error: countError.message });
+  }
+
+  const plan = (firmRow?.plan as 'free' | 'pro' | 'enterprise' | undefined) ?? 'free';
+  const limitCheck = canInviteMember({ plan, currentMemberCount: memberCount ?? 0 });
+  if (!limitCheck.ok) {
+    try {
+      await adminClient.from('case_activity').insert({
+        firm_id: membership.firm_id,
+        actor_user_id: authData.user.id,
+        event_type: 'plan_limit_hit',
+        message: 'Member limit reached',
+        metadata: { kind: 'members' },
+      });
+    } catch {
+      // best-effort logging
+    }
+    return res.status(403).json({ ok: false, error: `${limitCheck.reason} Upgrade to Pro to add more members.` });
+  }
+
   const { error: inviteRowError } = await adminClient
     .from('firm_invites')
     .upsert(
@@ -108,6 +145,19 @@ export default async function handler(
       });
     }
     return res.status(500).json({ ok: false, error: message });
+  }
+
+  try {
+    await adminClient.from('case_activity').insert({
+      firm_id: membership.firm_id,
+      case_id: null,
+      actor_user_id: authData.user.id,
+      event_type: 'invite_resent',
+      message: `Resent invite to ${email}`,
+      metadata: { email, role },
+    });
+  } catch {
+    // best-effort logging
   }
 
   return res.status(200).json({ ok: true });
