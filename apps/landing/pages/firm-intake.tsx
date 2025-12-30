@@ -168,14 +168,14 @@ export default function FirmIntakePage() {
       <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
         <Link
           href="/"
-          className="inline-flex items-center justify-center rounded-lg border border-[color:var(--accent-light)] px-5 py-2.5 font-medium text-[color:var(--accent-soft)] hover:bg-[color:var(--accent-light)] hover:text-white transition-colors"
+          className="inline-flex items-center justify-center rounded-lg border border-[color:var(--accent-light)] px-5 py-2.5 font-medium text-[color:var(--accent-soft)] transition-all hover:bg-[color:var(--accent-light)] hover:text-white hover:scale-[1.02]"
         >
           Back to Home
         </Link>
         <button
           type="button"
           onClick={() => setIsSuccess(false)}
-          className="rounded-lg bg-[color:var(--accent-light)] px-5 py-2.5 font-semibold text-white shadow hover:bg-[color:var(--accent)] transition-colors"
+          className="rounded-lg bg-[color:var(--accent-light)] px-5 py-2.5 font-semibold text-white shadow-lg transition-all hover:bg-[color:var(--accent)] hover:scale-[1.02]"
         >
           Submit Another Firm
         </button>
@@ -247,7 +247,7 @@ export default function FirmIntakePage() {
                     type="text"
                     value={form.firmName}
                     onChange={updateField('firmName')}
-                    className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                    className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text-1)] placeholder:text-[color:var(--text-2)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                     placeholder="Smith & Delgado, PLLC"
                   />
                   {errors.firmName && <p className="mt-1 text-sm text-red-400">{errors.firmName}</p>}
@@ -259,7 +259,7 @@ export default function FirmIntakePage() {
                       type="url"
                       value={form.firmWebsite}
                       onChange={updateField('firmWebsite')}
-                      className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                      className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text-1)] placeholder:text-[color:var(--text-2)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       placeholder="https://"
                     />
                   </div>
@@ -269,7 +269,7 @@ export default function FirmIntakePage() {
                       type="email"
                       value={form.billingEmail}
                       onChange={updateField('billingEmail')}
-                      className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                      className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text-1)] placeholder:text-[color:var(--text-2)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       placeholder="billing@firm.com"
                     />
                     {errors.billingEmail && <p className="mt-1 text-sm text-red-400">{errors.billingEmail}</p>}
@@ -282,7 +282,7 @@ export default function FirmIntakePage() {
                       type="text"
                       value={form.state}
                       onChange={updateField('state')}
-                      className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                      className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text-1)] placeholder:text-[color:var(--text-2)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       placeholder="e.g., Virginia"
                     />
                   </div>
@@ -292,7 +292,7 @@ export default function FirmIntakePage() {
                       type="text"
                       value={form.county}
                       onChange={updateField('county')}
-                      className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                      className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text-1)] placeholder:text-[color:var(--text-2)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       placeholder="Fairfax County"
                     />
                   </div>
@@ -405,7 +405,7 @@ export default function FirmIntakePage() {
                         type="text"
                         value={form.adminName}
                         onChange={updateField('adminName')}
-                        className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                        className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text-1)] placeholder:text-[color:var(--text-2)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                         placeholder="Jordan Kim"
                       />
                       {errors.adminName && <p className="mt-1 text-sm text-red-400">{errors.adminName}</p>}
@@ -418,7 +418,7 @@ export default function FirmIntakePage() {
                         type="email"
                         value={form.adminEmail}
                         onChange={updateField('adminEmail')}
-                        className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                        className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text-1)] placeholder:text-[color:var(--text-2)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                         placeholder="operations@firm.com"
                       />
                       {errors.adminEmail && <p className="mt-1 text-sm text-red-400">{errors.adminEmail}</p>}
@@ -431,7 +431,7 @@ export default function FirmIntakePage() {
                         type="tel"
                         value={form.adminPhone}
                         onChange={updateField('adminPhone')}
-                        className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                        className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text-1)] placeholder:text-[color:var(--text-2)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                         placeholder="(555) 123-4567"
                       />
                       {errors.adminPhone && <p className="mt-1 text-sm text-red-400">{errors.adminPhone}</p>}
@@ -469,7 +469,7 @@ export default function FirmIntakePage() {
                     value={form.notes}
                     onChange={updateField('notes')}
                     rows={4}
-                    className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                    className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text-1)] placeholder:text-[color:var(--text-2)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                     placeholder="Share key workflows, integrations, or timelines."
                   />
                 </div>
@@ -482,7 +482,7 @@ export default function FirmIntakePage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex items-center justify-center rounded-lg bg-[color:var(--accent-light)] px-6 py-3 text-base font-semibold text-white shadow-lg transition hover:bg-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center justify-center rounded-lg bg-[color:var(--accent-light)] px-6 py-3 text-base font-semibold text-white shadow-lg transition-all hover:bg-[color:var(--accent)] hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit Intake'}
                 </button>
