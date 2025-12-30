@@ -179,5 +179,18 @@ export default async function handler(
     return res.status(500).json({ ok: false, error: insertError?.message || 'Unable to save document' });
   }
 
+  try {
+    await adminClient.from('case_activity').insert({
+      firm_id: membership.firm_id,
+      case_id: caseId,
+      actor_user_id: authData.user.id,
+      event_type: 'document_uploaded',
+      message: `Document uploaded: ${insertedDoc.filename}`,
+      metadata: { file_name: insertedDoc.filename },
+    });
+  } catch {
+    // best-effort logging
+  }
+
   return res.status(200).json({ ok: true, document: insertedDoc });
 }

@@ -8,13 +8,18 @@ type DocumentRow = {
   id: string;
   case_id: string;
   filename: string;
+  display_name: string | null;
+  doc_type: string;
+  tags: string[];
   storage_path: string;
   created_at: string;
 };
 
 type CaseRow = {
   id: string;
-  client_name: string | null;
+  title: string | null;
+  client_first_name: string | null;
+  client_last_name: string | null;
 };
 
 export default function DocumentsPage() {
@@ -25,6 +30,14 @@ export default function DocumentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [downloadId, setDownloadId] = useState<string | null>(null);
+  const [docTypeFilter, setDocTypeFilter] = useState('all');
+  const [tagFilter, setTagFilter] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editType, setEditType] = useState('other');
+  const [editTags, setEditTags] = useState('');
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionStatus, setActionStatus] = useState<string | null>(null);
 
   const caseMap = useMemo(() => {
     const map = new Map<string, CaseRow>();
@@ -32,11 +45,27 @@ export default function DocumentsPage() {
     return map;
   }, [cases]);
 
+  const docTypeOptions = useMemo(() => {
+    const values = documents.map((doc) => doc.doc_type).filter(Boolean);
+    return Array.from(new Set(values)).sort();
+  }, [documents]);
+
   const filteredDocuments = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return documents;
-    return documents.filter((doc) => doc.filename.toLowerCase().includes(term));
-  }, [documents, search]);
+    const tagTerm = tagFilter.trim().toLowerCase();
+    return documents.filter((doc) => {
+      if (docTypeFilter !== 'all' && doc.doc_type !== docTypeFilter) return false;
+      if (term) {
+        const name = (doc.display_name || doc.filename).toLowerCase();
+        if (!name.includes(term)) return false;
+      }
+      if (tagTerm) {
+        const tags = doc.tags.map((tag) => tag.toLowerCase());
+        if (!tags.includes(tagTerm)) return false;
+      }
+      return true;
+    });
+  }, [documents, search, docTypeFilter, tagFilter]);
 
   useEffect(() => {
     if (!state.authed || !state.firmId) return;
@@ -48,8 +77,9 @@ export default function DocumentsPage() {
 
       const { data: docs, error: docsError } = await supabase
         .from('case_documents')
-        .select('id, case_id, filename, storage_path, created_at')
+        .select('id, case_id, filename, display_name, doc_type, tags, storage_path, created_at')
         .eq('firm_id', state.firmId)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (!mounted) return;
@@ -59,14 +89,19 @@ export default function DocumentsPage() {
         return;
       }
 
-      const docRows = docs ?? [];
+      const docRows = (docs ?? []).map((doc) => ({
+        ...doc,
+        display_name: doc.display_name ?? null,
+        doc_type: doc.doc_type ?? 'other',
+        tags: doc.tags ?? [],
+      })) as DocumentRow[];
       const caseIds = Array.from(new Set(docRows.map((doc) => doc.case_id)));
 
       let caseRows: CaseRow[] = [];
       if (caseIds.length > 0) {
         const { data: caseData, error: caseError } = await supabase
           .from('cases')
-          .select('id, client_name')
+          .select('id, title, client_first_name, client_last_name')
           .in('id', caseIds);
 
         if (caseError) {
@@ -114,12 +149,79 @@ export default function DocumentsPage() {
     }
   };
 
+  const startEdit = (doc: DocumentRow) => {
+    setEditingId(doc.id);
+    setEditName(doc.display_name || doc.filename);
+    setEditType(doc.doc_type || 'other');
+    setEditTags(doc.tags.join(', '));
+    setActionStatus(null);
+    setActionError(null);
+  };
+
+  const handleSaveEdit = async (docId: string) => {
+    setActionStatus(null);
+    setActionError(null);
+    const tags = editTags
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0);
+
+    const { error: updateError } = await supabase
+      .from('case_documents')
+      .update({ display_name: editName.trim() || null, doc_type: editType, tags })
+      .eq('id', docId);
+
+    if (updateError) {
+      setActionError(updateError.message);
+      return;
+    }
+
+    setDocuments((prev) =>
+      prev.map((doc) =>
+        doc.id === docId
+          ? { ...doc, display_name: editName.trim() || null, doc_type: editType, tags }
+          : doc,
+      ),
+    );
+    setActionStatus('Saved');
+    setEditingId(null);
+  };
+
+  const handleDelete = async (docId: string) => {
+    setActionStatus(null);
+    setActionError(null);
+    const confirmed = window.confirm('Delete this document? This cannot be undone.');
+    if (!confirmed) return;
+
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !sessionData.session?.access_token) {
+      setActionError(sessionError?.message || 'Please sign in.');
+      return;
+    }
+
+    const res = await fetch('/api/myclient/documents/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionData.session.access_token}`,
+      },
+      body: JSON.stringify({ documentId: docId }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+      setActionError(data.error || 'Unable to delete document.');
+      return;
+    }
+    setDocuments((prev) => prev.filter((doc) => doc.id !== docId));
+    setActionStatus('Deleted');
+  };
+
   return (
     <>
       <Head>
         <title>MyClient | Documents</title>
       </Head>
-      <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
+      <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/myclient/app"
@@ -141,16 +243,46 @@ export default function DocumentsPage() {
 
         {state.authed && state.firmId && (
           <div className="mt-6 space-y-4">
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search by filename"
-              className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-            />
+            <div className="grid gap-3 sm:grid-cols-3">
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search by filename"
+                className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+              />
+              <select
+                value={docTypeFilter}
+                onChange={(event) => setDocTypeFilter(event.target.value)}
+                className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+              >
+                <option value="all">Type: All</option>
+                {docTypeOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <input
+                value={tagFilter}
+                onChange={(event) => setTagFilter(event.target.value)}
+                placeholder="Filter by tag"
+                className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+              />
+            </div>
 
             {error && (
               <div className="rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">
                 {error}
+              </div>
+            )}
+            {actionError && (
+              <div className="rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">
+                {actionError}
+              </div>
+            )}
+            {actionStatus && (
+              <div className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-sm text-white">
+                {actionStatus}
               </div>
             )}
 
@@ -165,6 +297,8 @@ export default function DocumentsPage() {
                     <tr>
                       <th className="px-4 py-3 font-semibold">File</th>
                       <th className="px-4 py-3 font-semibold">Case</th>
+                      <th className="px-4 py-3 font-semibold">Type</th>
+                      <th className="px-4 py-3 font-semibold">Tags</th>
                       <th className="px-4 py-3 font-semibold">Uploaded</th>
                       <th className="px-4 py-3 font-semibold text-right">Action</th>
                     </tr>
@@ -172,26 +306,100 @@ export default function DocumentsPage() {
                   <tbody className="divide-y divide-white/5 text-[color:var(--text-1)]">
                     {filteredDocuments.map((doc) => {
                       const caseRow = caseMap.get(doc.case_id);
-                      const caseLabel = caseRow?.client_name ?? 'Unknown case';
+                      const caseLabel =
+                        caseRow?.title ||
+                        (caseRow?.client_last_name || caseRow?.client_first_name
+                          ? `${caseRow?.client_last_name ?? ''}${caseRow?.client_first_name ? `, ${caseRow?.client_first_name}` : ''}`.trim()
+                          : 'Unknown case');
+                      const displayName = doc.display_name || doc.filename;
+                      const tagLabel = doc.tags.length > 0 ? doc.tags.slice(0, 2).join(', ') : '—';
                       return (
                         <tr key={doc.id}>
-                          <td className="px-4 py-3 text-white">{doc.filename}</td>
+                          <td className="px-4 py-3 text-white">
+                            {editingId === doc.id ? (
+                              <input
+                                value={editName}
+                                onChange={(event) => setEditName(event.target.value)}
+                                className="w-full rounded-md border border-white/10 bg-[var(--surface-0)] px-2 py-1 text-sm text-white outline-none"
+                              />
+                            ) : (
+                              displayName
+                            )}
+                          </td>
                           <td className="px-4 py-3">
                             <Link href={`/myclient/cases/${doc.case_id}`} className="text-[color:var(--text-2)] hover:text-white">
                               {caseLabel}
                             </Link>
                           </td>
+                          <td className="px-4 py-3 capitalize">
+                            {editingId === doc.id ? (
+                              <input
+                                value={editType}
+                                onChange={(event) => setEditType(event.target.value)}
+                                className="w-full rounded-md border border-white/10 bg-[var(--surface-0)] px-2 py-1 text-sm text-white outline-none"
+                              />
+                            ) : (
+                              doc.doc_type
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-[color:var(--text-2)]">
+                            {editingId === doc.id ? (
+                              <input
+                                value={editTags}
+                                onChange={(event) => setEditTags(event.target.value)}
+                                className="w-full rounded-md border border-white/10 bg-[var(--surface-0)] px-2 py-1 text-sm text-white outline-none"
+                              />
+                            ) : (
+                              <>
+                                {tagLabel}
+                                {doc.tags.length > 2 && ` +${doc.tags.length - 2}`}
+                              </>
+                            )}
+                          </td>
                           <td className="px-4 py-3 text-[color:var(--text-2)]">
                             {new Date(doc.created_at).toLocaleDateString()}
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <button
-                              onClick={() => handleDownload(doc.id)}
-                              disabled={downloadId === doc.id}
-                              className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white disabled:opacity-60"
-                            >
-                              {downloadId === doc.id ? 'Preparing…' : 'Download'}
-                            </button>
+                            <div className="flex flex-wrap justify-end gap-2">
+                              {editingId === doc.id ? (
+                                <>
+                                  <button
+                                    onClick={() => handleSaveEdit(doc.id)}
+                                    className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingId(null)}
+                                    className="rounded-lg border border-white/10 px-3 py-1.5 text-xs uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => startEdit(doc)}
+                                    className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                                  >
+                                    Rename/Edit
+                                  </button>
+                                  <button
+                                    onClick={() => handleDownload(doc.id)}
+                                    disabled={downloadId === doc.id}
+                                    className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white disabled:opacity-60"
+                                  >
+                                    {downloadId === doc.id ? 'Preparing…' : 'Download'}
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(doc.id)}
+                                    className="rounded-lg border border-red-400/40 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-red-200 hover:text-white"
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );

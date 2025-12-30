@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useFirm } from '@/lib/FirmProvider';
 
@@ -9,10 +9,19 @@ type CaseRecord = {
   id: string;
   firm_id: string;
   client_name: string;
+  client_first_name: string | null;
+  client_last_name: string | null;
+  client_email: string | null;
+  client_phone: string | null;
+  title: string | null;
   matter_type: string;
   status: string;
   intake_summary: string | null;
   internal_notes: string | null;
+  state: string | null;
+  county: string | null;
+  court_name: string | null;
+  case_number: string | null;
   last_activity_at: string;
   created_at: string;
   updated_at: string;
@@ -21,27 +30,67 @@ type CaseRecord = {
 type DocumentRow = {
   id: string;
   filename: string;
+  display_name: string | null;
+  doc_type: string;
+  tags: string[];
   storage_path: string;
   created_at: string;
 };
 
-const STATUS_OPTIONS = ['open', 'pending', 'closed'] as const;
+type ActivityRow = {
+  id: string;
+  event_type: string;
+  message: string;
+  created_at: string;
+};
+
+function getCaseDisplay(record: CaseRecord) {
+  const displayName =
+    record.client_last_name || record.client_first_name
+      ? `${record.client_last_name ?? ''}${record.client_first_name ? `, ${record.client_first_name}` : ''}`.trim()
+      : record.title || record.client_name;
+  const subtitle = [
+    record.matter_type,
+    [record.county, record.state].filter(Boolean).join(', '),
+    record.case_number ? `Case #${record.case_number}` : null,
+  ]
+    .filter(Boolean)
+    .join(' • ');
+  return { displayName, subtitle };
+}
+
+const STATUS_STYLES: Record<string, string> = {
+  open: 'border-emerald-400/40 text-emerald-200',
+  paused: 'border-amber-400/40 text-amber-200',
+  closed: 'border-slate-400/40 text-slate-200',
+};
 
 export default function CaseDetailPage() {
   const router = useRouter();
   const { state } = useFirm();
   const [record, setRecord] = useState<CaseRecord | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [documents, setDocuments] = useState<DocumentRow[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [documentsError, setDocumentsError] = useState<string | null>(null);
+  const [documentAction, setDocumentAction] = useState<string | null>(null);
+  const [documentActionError, setDocumentActionError] = useState<string | null>(null);
+  const [editingDocId, setEditingDocId] = useState<string | null>(null);
+  const [editDocName, setEditDocName] = useState('');
+  const [editDocType, setEditDocType] = useState('other');
+  const [editDocTags, setEditDocTags] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [downloadId, setDownloadId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'notes' | 'documents' | 'activity'>('overview');
+  const [notesDraft, setNotesDraft] = useState('');
+  const [notesStatus, setNotesStatus] = useState<'Saving…' | 'Saved' | 'Error saving' | null>(null);
+  const notesInitialized = useRef(false);
+  const [activityRows, setActivityRows] = useState<ActivityRow[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityError, setActivityError] = useState<string | null>(null);
 
   const caseId = useMemo(() => (typeof router.query.id === 'string' ? router.query.id : null), [router.query.id]);
 
@@ -58,7 +107,7 @@ export default function CaseDetailPage() {
       const { data, error: caseError } = await supabase
         .from('cases')
         .select(
-          'id, firm_id, client_name, matter_type, status, intake_summary, internal_notes, last_activity_at, created_at, updated_at',
+          'id, firm_id, client_name, client_first_name, client_last_name, client_email, client_phone, title, matter_type, status, intake_summary, internal_notes, state, county, court_name, case_number, last_activity_at, created_at, updated_at',
         )
         .eq('id', caseId)
         .limit(1);
@@ -86,16 +135,23 @@ export default function CaseDetailPage() {
     setDocumentsError(null);
     const { data, error: docsError } = await supabase
       .from('case_documents')
-      .select('id, filename, storage_path, created_at')
+      .select('id, filename, display_name, doc_type, tags, storage_path, created_at')
       .eq('case_id', caseId)
       .eq('firm_id', state.firmId)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (docsError) {
       setDocumentsError(docsError.message);
       setDocuments([]);
     } else {
-      setDocuments(data ?? []);
+      const normalized = (data ?? []).map((doc) => ({
+        ...doc,
+        display_name: doc.display_name ?? null,
+        doc_type: doc.doc_type ?? 'other',
+        tags: doc.tags ?? [],
+      }));
+      setDocuments(normalized);
     }
     setDocumentsLoading(false);
   }, [caseId, state.authed, state.firmId]);
@@ -104,55 +160,101 @@ export default function CaseDetailPage() {
     loadDocuments();
   }, [loadDocuments]);
 
-  const handleChange = (field: keyof CaseRecord) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  useEffect(() => {
     if (!record) return;
-    setRecord({ ...record, [field]: event.target.value });
-  };
+    notesInitialized.current = false;
+    setNotesDraft(record.internal_notes ?? '');
+    setNotesStatus(null);
+    const timer = setTimeout(() => {
+      notesInitialized.current = true;
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [record?.id]);
 
-  const handleSave = async () => {
-    if (!record) return;
-    setSaving(true);
-    setMessage(null);
-    setError(null);
-    try {
-      const { error: updateError } = await supabase
-        .from('cases')
-        .update({
-          client_name: record.client_name,
-          matter_type: record.matter_type,
-          status: record.status,
-          internal_notes: record.internal_notes ?? null,
-          last_activity_at: new Date().toISOString(),
-        })
-        .eq('id', record.id);
+  useEffect(() => {
+    if (!record || !notesInitialized.current) return;
+    const handle = setTimeout(async () => {
+      if (notesDraft === (record.internal_notes ?? '')) return;
+      setNotesStatus('Saving…');
+      try {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          setNotesStatus('Error saving');
+          return;
+        }
+        const accessToken = sessionData.session?.access_token;
+        if (!accessToken) {
+          setNotesStatus('Error saving');
+          return;
+        }
 
-      if (updateError) {
-        const message = updateError.message.toLowerCase().includes('jwt') ? 'Session expired — sign in again.' : updateError.message;
-        setError(message);
-        return;
+        const res = await fetch('/api/myclient/cases/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            id: record.id,
+            client_name: record.client_name,
+            matter_type: record.matter_type,
+            status: record.status,
+            internal_notes: notesDraft,
+          }),
+        });
+
+        if (!res.ok) {
+          setNotesStatus('Error saving');
+          return;
+        }
+
+        setRecord((prev) => (prev ? { ...prev, internal_notes: notesDraft } : prev));
+        setNotesStatus('Saved');
+
+        try {
+          await supabase.from('case_activity').insert({
+            firm_id: record.firm_id,
+            case_id: record.id,
+            actor_user_id: accessToken ? sessionData.session?.user?.id ?? null : null,
+            event_type: 'case_updated',
+            message: 'Notes updated',
+            metadata: { field: 'internal_notes' },
+          });
+        } catch {
+          // best-effort logging
+        }
+      } catch (err) {
+        setNotesStatus('Error saving');
       }
+    }, 800);
 
-      const { data: refreshed, error: refreshError } = await supabase
-        .from('cases')
-        .select(
-          'id, firm_id, client_name, matter_type, status, intake_summary, internal_notes, last_activity_at, created_at, updated_at',
-        )
-        .eq('id', record.id)
-        .limit(1);
+    return () => clearTimeout(handle);
+  }, [notesDraft, record]);
 
-      if (refreshError) {
-        setError(refreshError.message);
-        return;
-      }
-      const row = Array.isArray(refreshed) && refreshed.length > 0 ? (refreshed[0] as CaseRecord) : null;
-      setRecord(row);
-      setMessage('Saved');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to save changes.');
-    } finally {
-      setSaving(false);
+  const loadActivity = useCallback(async () => {
+    if (!state.authed || !state.firmId || !caseId) return;
+    setActivityLoading(true);
+    setActivityError(null);
+    const { data, error: activityError } = await supabase
+      .from('case_activity')
+      .select('id, event_type, message, created_at')
+      .eq('case_id', caseId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (activityError) {
+      setActivityError(activityError.message);
+      setActivityRows([]);
+    } else {
+      setActivityRows(data ?? []);
     }
-  };
+    setActivityLoading(false);
+  }, [caseId, state.authed, state.firmId]);
+
+  useEffect(() => {
+    if (activeTab !== 'activity') return;
+    loadActivity();
+  }, [activeTab, loadActivity]);
 
   const handleUpload = async () => {
     if (!caseId || !selectedFile) {
@@ -225,19 +327,95 @@ export default function CaseDetailPage() {
     }
   };
 
+  const startDocEdit = (doc: DocumentRow) => {
+    setEditingDocId(doc.id);
+    setEditDocName(doc.display_name || doc.filename);
+    setEditDocType(doc.doc_type || 'other');
+    setEditDocTags(doc.tags.join(', '));
+    setDocumentAction(null);
+    setDocumentActionError(null);
+  };
+
+  const handleDocSave = async (docId: string) => {
+    setDocumentAction(null);
+    setDocumentActionError(null);
+    const tags = editDocTags
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0);
+
+    const { error: updateError } = await supabase
+      .from('case_documents')
+      .update({ display_name: editDocName.trim() || null, doc_type: editDocType, tags })
+      .eq('id', docId);
+
+    if (updateError) {
+      setDocumentActionError(updateError.message);
+      return;
+    }
+
+    setDocuments((prev) =>
+      prev.map((doc) =>
+        doc.id === docId
+          ? { ...doc, display_name: editDocName.trim() || null, doc_type: editDocType, tags }
+          : doc,
+      ),
+    );
+    setDocumentAction('Saved');
+    setEditingDocId(null);
+  };
+
+  const handleDocDelete = async (docId: string) => {
+    setDocumentAction(null);
+    setDocumentActionError(null);
+    const confirmed = window.confirm('Delete this document? This cannot be undone.');
+    if (!confirmed) return;
+
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !sessionData.session?.access_token) {
+      setDocumentActionError(sessionError?.message || 'Please sign in.');
+      return;
+    }
+
+    const res = await fetch('/api/myclient/documents/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionData.session.access_token}`,
+      },
+      body: JSON.stringify({ documentId: docId }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+      setDocumentActionError(data.error || 'Unable to delete document.');
+      return;
+    }
+    setDocuments((prev) => prev.filter((doc) => doc.id !== docId));
+    setDocumentAction('Deleted');
+  };
+
   return (
     <>
       <Head>
         <title>MyClient | Case Detail</title>
       </Head>
       <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4">
           <Link href="/myclient/cases" className="text-sm text-[color:var(--text-2)] hover:text-white transition">
-            ← Back
+            ← Back to Active Cases
           </Link>
-          <h1 className="text-2xl font-semibold text-white">
-            {record?.client_name ? 'Case Detail' : 'Case Detail'}
-          </h1>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="text-2xl font-semibold text-white">Case Detail</h1>
+            {record && (
+              <span
+                className={`rounded-full border px-3 py-1 text-xs uppercase tracking-wide ${
+                  STATUS_STYLES[record.status.toLowerCase()] ?? 'border-white/15 text-[color:var(--text-2)]'
+                }`}
+              >
+                {record.status}
+              </span>
+            )}
+          </div>
         </div>
 
         {state.loading && <p className="mt-6 text-[color:var(--text-2)]">Loading...</p>}
@@ -252,146 +430,249 @@ export default function CaseDetailPage() {
 
         {record && (
           <>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-3xl font-semibold text-white">{record.client_name}</h2>
-                <p className="mt-2 text-sm text-[color:var(--text-2)]">Matter type: {record.matter_type}</p>
-              </div>
-              <span className="rounded-full border border-white/15 bg-[var(--surface-0)] px-3 py-1 text-xs uppercase tracking-wide text-[color:var(--text-2)]">
-                {record.status}
-              </span>
-            </div>
-
-            <div className="mt-8 grid gap-6 md:grid-cols-2">
-              <div className="space-y-4">
-                <label className="block text-sm text-[color:var(--text-2)]">
-                  Client name
-                  <input
-                    className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-                    value={record.client_name}
-                    onChange={handleChange('client_name')}
-                  />
-                </label>
-                <label className="block text-sm text-[color:var(--text-2)]">
-                  Matter type
-                  <input
-                    className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-                    value={record.matter_type}
-                    onChange={handleChange('matter_type')}
-                  />
-                </label>
-                <label className="block text-sm text-[color:var(--text-2)]">
-                  Status
-                  <select
-                    className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-                    value={record.status}
-                    onChange={handleChange('status')}
-                  >
-                    {STATUS_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <div>
-                <label className="block text-sm text-[color:var(--text-2)]">
-                  Internal notes
-                  <textarea
-                    className="mt-2 h-40 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-                    value={record.internal_notes ?? ''}
-                    onChange={handleChange('internal_notes')}
-                  />
-                </label>
-              </div>
-            </div>
-
-            <div className="mt-8 grid gap-4 rounded-2xl border border-white/10 bg-[var(--surface-0)] p-4 text-sm text-[color:var(--text-2)] md:grid-cols-3">
-              <div>
-                <p className="text-white">Created</p>
-                <p>{new Date(record.created_at).toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="text-white">Last activity</p>
-                <p>{new Date(record.last_activity_at).toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="text-white">Updated</p>
-                <p>{new Date(record.updated_at).toLocaleString()}</p>
-              </div>
-            </div>
-
-            <div className="mt-6 flex items-center gap-4">
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="rounded-lg bg-[color:var(--accent-light)] px-4 py-2 font-semibold text-white hover:bg-[color:var(--accent)] disabled:opacity-60"
-              >
-                {saving ? 'Saving…' : 'Save'}
-              </button>
-              {message && <span className="text-sm text-green-300">{message}</span>}
-            </div>
-
-            <div className="mt-10 rounded-2xl border border-white/10 bg-[var(--surface-0)] p-6">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-6 rounded-2xl border border-white/10 bg-[var(--surface-0)] p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-white">Documents</h2>
-                  <p className="text-sm text-[color:var(--text-2)]">Case files uploaded to this matter.</p>
+                  {(() => {
+                    const { displayName, subtitle } = getCaseDisplay(record);
+                    return (
+                      <>
+                        <h2 className="text-3xl font-semibold text-white">{displayName}</h2>
+                        <p className="mt-2 text-sm text-[color:var(--text-2)]">{subtitle || 'Case details'}</p>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
+            </div>
 
-              {documentsError && (
-                <div className="mt-4 rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">
-                  {documentsError}
+            <div className="mt-6 border-b border-white/10 text-sm text-[color:var(--text-2)]">
+              {[
+                { key: 'overview', label: 'Overview' },
+                { key: 'notes', label: 'Notes' },
+                { key: 'documents', label: 'Documents' },
+                { key: 'activity', label: 'Activity' },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                  className={`mr-6 border-b-2 pb-3 transition ${
+                    activeTab === tab.key ? 'border-[color:var(--accent-light)] text-white' : 'border-transparent hover:text-white'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {activeTab === 'overview' && (
+              <div className="mt-6 grid gap-6 md:grid-cols-2">
+                <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-5">
+                  <h3 className="text-sm font-semibold text-white">Client</h3>
+                  <div className="mt-3 space-y-2 text-sm text-[color:var(--text-2)]">
+                    <p>First name: <span className="text-white">{record.client_first_name ?? '—'}</span></p>
+                    <p>Last name: <span className="text-white">{record.client_last_name ?? '—'}</span></p>
+                    <p>Email: <span className="text-white">{record.client_email ?? '—'}</span></p>
+                    <p>Phone: <span className="text-white">{record.client_phone ?? '—'}</span></p>
+                  </div>
                 </div>
-              )}
+                <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-5">
+                  <h3 className="text-sm font-semibold text-white">Matter</h3>
+                  <div className="mt-3 space-y-2 text-sm text-[color:var(--text-2)]">
+                    <p>Matter type: <span className="text-white">{record.matter_type}</span></p>
+                    <p>Status: <span className="text-white">{record.status}</span></p>
+                    <p>Created: <span className="text-white">{new Date(record.created_at).toLocaleString()}</span></p>
+                    <p>Last updated: <span className="text-white">{new Date(record.updated_at).toLocaleString()}</span></p>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-5">
+                  <h3 className="text-sm font-semibold text-white">Jurisdiction</h3>
+                  <div className="mt-3 space-y-2 text-sm text-[color:var(--text-2)]">
+                    <p>State: <span className="text-white">{record.state ?? '—'}</span></p>
+                    <p>County: <span className="text-white">{record.county ?? '—'}</span></p>
+                    <p>Court: <span className="text-white">{record.court_name ?? '—'}</span></p>
+                    <p>Case number: <span className="text-white">{record.case_number ?? '—'}</span></p>
+                  </div>
+                </div>
+              </div>
+            )}
 
-              <div className="mt-4 grid gap-4">
-                {documentsLoading ? (
-                  <p className="text-sm text-[color:var(--text-2)]">Loading documents...</p>
-                ) : documents.length === 0 ? (
-                  <p className="text-sm text-[color:var(--text-2)]">No documents uploaded yet.</p>
+            {activeTab === 'notes' && (
+              <div className="mt-6 rounded-2xl border border-white/10 bg-[var(--surface-0)] p-5">
+                <textarea
+                  value={notesDraft}
+                  onChange={(event) => setNotesDraft(event.target.value)}
+                  rows={8}
+                  className="w-full rounded-lg border border-white/10 bg-[var(--surface-1)] px-4 py-3 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                />
+                <p className="mt-3 text-xs text-[color:var(--text-2)]">{notesStatus ?? 'Autosave enabled.'}</p>
+              </div>
+            )}
+
+            {activeTab === 'documents' && (
+              <div className="mt-6 rounded-2xl border border-white/10 bg-[var(--surface-0)] p-6">
+                {documentsError && (
+                  <div className="mb-4 rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">
+                    {documentsError}
+                  </div>
+                )}
+                {documentActionError && (
+                  <div className="mb-4 rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">
+                    {documentActionError}
+                  </div>
+                )}
+                {documentAction && (
+                  <div className="mb-4 rounded-lg border border-white/10 bg-[var(--surface-1)] px-4 py-2 text-sm text-white">
+                    {documentAction}
+                  </div>
+                )}
+
+                <div className="grid gap-4">
+                  {documentsLoading ? (
+                    <p className="text-sm text-[color:var(--text-2)]">Loading documents...</p>
+                  ) : documents.length === 0 ? (
+                    <p className="text-sm text-[color:var(--text-2)]">No documents uploaded yet.</p>
+                  ) : (
+                    <ul className="divide-y divide-white/10">
+                      {documents.map((doc) => (
+                        <li key={doc.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="text-sm text-white">{doc.display_name || doc.filename}</p>
+                            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[color:var(--text-2)]">
+                              <span className="rounded-full border border-white/15 px-2 py-0.5 uppercase tracking-wide">{doc.doc_type}</span>
+                              {doc.tags.length > 0 && (
+                                <span>
+                                  {doc.tags.slice(0, 2).join(', ')}
+                                  {doc.tags.length > 2 ? ` +${doc.tags.length - 2}` : ''}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-[color:var(--text-2)]">{new Date(doc.created_at).toLocaleString()}</p>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {editingDocId === doc.id ? (
+                              <>
+                                <input
+                                  value={editDocName}
+                                  onChange={(event) => setEditDocName(event.target.value)}
+                                  className="w-full rounded-md border border-white/10 bg-[var(--surface-1)] px-2 py-1 text-xs text-white outline-none"
+                                  placeholder="Display name"
+                                />
+                                <input
+                                  value={editDocType}
+                                  onChange={(event) => setEditDocType(event.target.value)}
+                                  className="w-full rounded-md border border-white/10 bg-[var(--surface-1)] px-2 py-1 text-xs text-white outline-none"
+                                  placeholder="Type"
+                                />
+                                <input
+                                  value={editDocTags}
+                                  onChange={(event) => setEditDocTags(event.target.value)}
+                                  className="w-full rounded-md border border-white/10 bg-[var(--surface-1)] px-2 py-1 text-xs text-white outline-none"
+                                  placeholder="Tags (comma separated)"
+                                />
+                                <button
+                                  onClick={() => handleDocSave(doc.id)}
+                                  className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => setEditingDocId(null)}
+                                  className="rounded-lg border border-white/10 px-3 py-2 text-xs uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                                >
+                                  Cancel
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => startDocEdit(doc)}
+                                  className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                                >
+                                  Rename/Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDownload(doc.id)}
+                                  disabled={downloadId === doc.id}
+                                  className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white disabled:opacity-60"
+                                >
+                                  {downloadId === doc.id ? 'Preparing…' : 'Download'}
+                                </button>
+                                <button
+                                  onClick={() => handleDocDelete(doc.id)}
+                                  className="rounded-lg border border-red-400/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-red-200 hover:text-white"
+                                >
+                                  Delete
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="mt-6 rounded-xl border border-white/10 bg-[var(--surface-1)] p-4">
+                  <p className="text-sm text-[color:var(--text-2)]">Upload a document (PDF, image, or doc).</p>
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <input
+                      type="file"
+                      onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+                      className="w-full text-sm text-[color:var(--text-2)] file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--surface-0)] file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white"
+                    />
+                    <button
+                      onClick={handleUpload}
+                      disabled={uploading || !selectedFile}
+                      className="rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--accent)] disabled:opacity-60"
+                    >
+                      {uploading ? 'Uploading…' : 'Upload'}
+                    </button>
+                  </div>
+                  {uploadError && <p className="mt-3 text-sm text-red-200">{uploadError}</p>}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'activity' && (
+              <div className="mt-6 rounded-2xl border border-white/10 bg-[var(--surface-0)] p-6">
+                {activityError && (
+                  <div className="mb-4 rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">
+                    {activityError}
+                  </div>
+                )}
+                {activityLoading ? (
+                  <p className="text-sm text-[color:var(--text-2)]">Loading activity…</p>
+                ) : activityRows.length === 0 ? (
+                  <p className="text-sm text-[color:var(--text-2)]">No activity yet.</p>
                 ) : (
-                  <ul className="divide-y divide-white/10">
-                    {documents.map((doc) => (
-                      <li key={doc.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <p className="text-sm text-white">{doc.filename}</p>
-                          <p className="text-xs text-[color:var(--text-2)]">{new Date(doc.created_at).toLocaleString()}</p>
-                        </div>
-                        <button
-                          onClick={() => handleDownload(doc.id)}
-                          disabled={downloadId === doc.id}
-                          className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white disabled:opacity-60"
-                        >
-                          {downloadId === doc.id ? 'Preparing…' : 'Download'}
-                        </button>
-                      </li>
-                    ))}
+                  <ul className="space-y-4">
+                    {activityRows.map((item) => {
+                      const typeLabel =
+                        item.event_type === 'case_created'
+                          ? 'Created'
+                          : item.event_type === 'case_updated'
+                            ? 'Updated'
+                            : 'Document';
+                      return (
+                        <li key={item.id} className="rounded-xl border border-white/10 bg-[var(--surface-1)] p-4">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                              <p className="text-sm text-white">{item.message}</p>
+                              <p className="text-xs text-[color:var(--text-2)]">{new Date(item.created_at).toLocaleString()}</p>
+                            </div>
+                            <span className="rounded-full border border-white/15 px-2 py-1 text-xs uppercase tracking-wide text-[color:var(--text-2)]">
+                              {typeLabel}
+                            </span>
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>
-
-              <div className="mt-6 rounded-xl border border-white/10 bg-[var(--surface-1)] p-4">
-                <p className="text-sm text-[color:var(--text-2)]">Upload a document (PDF, image, or doc).</p>
-                <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <input
-                    type="file"
-                    onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
-                    className="w-full text-sm text-[color:var(--text-2)] file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--surface-0)] file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white"
-                  />
-                  <button
-                    onClick={handleUpload}
-                    disabled={uploading || !selectedFile}
-                    className="rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--accent)] disabled:opacity-60"
-                  >
-                    {uploading ? 'Uploading…' : 'Upload'}
-                  </button>
-                </div>
-                {uploadError && <p className="mt-3 text-sm text-red-200">{uploadError}</p>}
-              </div>
-            </div>
+            )}
           </>
         )}
 
