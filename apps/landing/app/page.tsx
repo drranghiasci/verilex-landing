@@ -136,7 +136,7 @@ export default function Home() {
             <Link href="/" className="relative flex items-center focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] rounded-lg">
               {/* Light Mode logo */}
               <Image
-                src="/verilex-logo-name.png"
+                src="/verilex-logo-name-lightmode.png"
                 alt="VeriLex AI"
                 width={150}
                 height={46}
@@ -236,7 +236,7 @@ export default function Home() {
                   </div>
 
                   <div className="bg-[var(--surface-1)] p-6 rounded-lg border-l-4 border-green-400">
-                    <p className="text-lg font-medium text-green-200 mb-2">Our Mission</p>
+                    <p className="text-lg font-medium text-emerald-700 dark:text-green-200 mb-2">Our Mission</p>
                     <p className="text-[color:var(--text-1)]">
                       We believe solo attorneys and small firms deserve the same technological advantages as large firms. VeriLex AI levels the playing field by automating routine work so lawyers can focus on what matters most—their clients.
                     </p>
@@ -252,7 +252,7 @@ export default function Home() {
                   </div>
 
                   <div className="bg-[var(--surface-1)] p-6 rounded-lg border-l-4 border-amber-400">
-                    <p className="text-lg font-medium text-amber-200 mb-2">Security & Trust First</p>
+                    <p className="text-lg font-medium text-amber-700 dark:text-amber-200 mb-2">Security & Trust First</p>
                     <p className="text-[color:var(--text-1)]">
                       Every feature is built with attorney-client privilege in mind. We use bank-level encryption, undergo regular security audits, and never train our AI on client data.
                     </p>

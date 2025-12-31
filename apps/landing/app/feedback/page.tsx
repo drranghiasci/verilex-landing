@@ -18,7 +18,7 @@ export default function FeedbackPage() {
           <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6" aria-label="Main Navigation">
             <Link href="/" className="relative flex items-center focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] rounded-lg">
               <Image
-                src="/verilex-logo-name.png"
+                src="/verilex-logo-name-lightmode.png"
                 alt="VeriLex AI"
                 width={150}
                 height={46}
@@ -55,7 +55,7 @@ export default function FeedbackPage() {
         <main className="mx-auto max-w-5xl px-4 pb-16 pt-32 sm:px-6">
           <div className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-10 text-center shadow-2xl">
             <p className="text-sm uppercase tracking-[0.2em] text-[color:var(--accent-soft)]">Feedback</p>
-            <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">We&apos;re listening.</h1>
+            <h1 className="mt-3 text-4xl font-bold tracking-tight text-[color:var(--text-0)]">We&apos;re listening.</h1>
             <p className="mt-4 text-lg text-[color:var(--text-2)]">
               We&apos;re building VeriLex AI with early firm input. Share feedback below.
             </p>

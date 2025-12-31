@@ -8,7 +8,7 @@ export default function NotFound() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-white to-slate-100 flex flex-col items-center justify-center px-4 text-center">
       <Image
-        src="/verilex-logo-name.png"
+        src="/verilex-logo-name-lightmode.png"
         alt="VeriLex AI"
         width={200}
         height={70}

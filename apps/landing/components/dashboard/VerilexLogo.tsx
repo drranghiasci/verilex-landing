@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 export default function VerilexLogo({ className = '', ...props }) {
-  const [src, setSrc] = useState('/verilex-logo-name.png'); // light mode default
+  const [src, setSrc] = useState('/verilex-logo-name-lightmode.png'); // light mode default
 
   useEffect(() => {
     const updateLogo = () => {
       const isDark = document.documentElement.classList.contains('dark');
-      setSrc(isDark ? '/verilex-logo-name-darkmode.png' : '/verilex-logo-name.png');
+      setSrc(isDark ? '/verilex-logo-name-darkmode.png' : '/verilex-logo-name-lightmode.png');
     };
 
     updateLogo();
