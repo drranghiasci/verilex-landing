@@ -2,19 +2,12 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
+import VerilexLogo from '@/components/dashboard/VerilexLogo';
 
 export default function NotFound() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-white to-slate-100 flex flex-col items-center justify-center px-4 text-center">
-      <Image
-        src="/verilex-logo-name-lightmode.png"
-        alt="VeriLex AI"
-        width={200}
-        height={70}
-        priority
-        className="mb-6"
-      />
+      <VerilexLogo className="mb-6 w-[200px] h-auto" />
 
       <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
         404&nbsp;— Page Not Found
