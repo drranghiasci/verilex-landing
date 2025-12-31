@@ -94,7 +94,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { data, error } = await supabase.from('firm_intakes').insert(insertRow).select('id').single();
 
     if (error) {
-      // eslint-disable-next-line no-console
       console.error('Supabase firm intake insert failed', {
         message: error.message,
         code: error.code,
@@ -106,7 +105,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({ ok: true, intakeId: data.id });
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('Unexpected firm intake handler error', error);
     return res.status(500).json({ error: 'An unexpected error occurred.' });
   }
