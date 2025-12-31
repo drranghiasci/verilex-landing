@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           'bg-gradient-to-br from-[var(--g1)] via-[var(--g2)] to-[var(--g3)]',
         ].join(' ')}
       >
-        <ThemeProvider attribute="class" enableSystem defaultTheme="system">
+        <ThemeProvider attribute="class" enableSystem={false} defaultTheme="light">
           {children}
         </ThemeProvider>
       </body>
