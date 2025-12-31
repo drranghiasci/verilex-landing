@@ -12,18 +12,17 @@
       hsl(265 100% 71% / 0.10),
       hsl(236 100% 63% / 0.10)
     );
-    /* richer on dark surfaces */
-    @media (prefers-color-scheme: dark) {
-      background: linear-gradient(
-        120deg,
-        hsl(248 100% 67% / 0.15),
-        hsl(265 100% 71% / 0.15),
-        hsl(236 100% 63% / 0.15)
-      );
-    }
-  
     background-size: 300% 300%;
     animation: gradientShift 15s ease-in-out infinite;
+  }
+
+  .dark .bg-landing {
+    background: linear-gradient(
+      120deg,
+      hsl(248 100% 67% / 0.15),
+      hsl(265 100% 71% / 0.15),
+      hsl(236 100% 63% / 0.15)
+    );
   }
   
   /* Respect motion preferences */

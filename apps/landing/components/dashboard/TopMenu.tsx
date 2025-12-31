@@ -8,29 +8,15 @@ import { Menu, Transition } from '@headlessui/react';
 import md5 from 'md5';
 import ThemeSelector from '@/components/dashboard/ThemeSelector';
 import VerilexLogo from '@/components/dashboard/VerilexLogo';
-
-type Theme = 'light' | 'dark' | 'system';
+import { useTheme } from '@/lib/theme-context';
 
 export default function TopMenu() {
   const [searchInput, setSearchInput] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('/placeholder-avatar.png');
-  const [theme, setTheme] = useState<Theme>('system');
+  const { theme, setTheme } = useTheme();
 
   const router = useRouter();
-
-  // Set stored theme on mount
-  useEffect(() => {
-    const stored = (localStorage.getItem('theme') as Theme) || 'system';
-    setTheme(stored);
-  }, []);
-
-  // Apply theme: explicit dark wins over OS light
-  useEffect(() => {
-    const systemPref = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    const shouldUseDark = theme === 'dark' || (theme === 'system' && systemPref === 'dark');
-    document.documentElement.classList.toggle('dark', shouldUseDark);
-  }, [theme]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -43,11 +29,6 @@ export default function TopMenu() {
       }
     });
   }, []);
-
-  const setAndApplyTheme = (newTheme: Theme) => {
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,7 +101,7 @@ export default function TopMenu() {
                 )}
               </Menu.Item>
 
-              <ThemeSelector theme={theme} setTheme={setAndApplyTheme} />
+              <ThemeSelector theme={theme} setTheme={setTheme} />
 
               <Menu.Item>
                 {({ active }) => (

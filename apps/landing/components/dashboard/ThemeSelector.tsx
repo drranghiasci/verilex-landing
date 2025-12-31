@@ -1,9 +1,9 @@
 'use client';
 
 import React, { JSX } from 'react';
-import { SunIcon, MoonIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
+import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
 
-type Theme = 'light' | 'dark' | 'system';
+type Theme = 'light' | 'dark';
 
 interface ThemeSelectorProps {
   theme: Theme;
@@ -14,7 +14,6 @@ export default function ThemeSelector({ theme, setTheme }: ThemeSelectorProps) {
   const options: { label: string; icon: React.ReactElement; value: Theme }[] = [
     { label: 'Light Mode', icon: <SunIcon className="w-4 h-4" />, value: 'light' },
     { label: 'Dark Mode', icon: <MoonIcon className="w-4 h-4" />, value: 'dark' },
-    { label: 'System Default', icon: <ComputerDesktopIcon className="w-4 h-4" />, value: 'system' },
   ];
 
   return (

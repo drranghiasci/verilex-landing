@@ -3,7 +3,7 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useRef, Suspense, useEffect, useState } from 'react';
 import { Mesh, Vector3, Color } from 'three';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/lib/theme-context';
 
 type WaveBackgroundProps = {
   className?: string;
@@ -63,12 +63,9 @@ function Waves({ theme }: { theme: 'light' | 'dark' }) {
 
 export default function WaveBackground({ className = '' }: WaveBackgroundProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
-  const { resolvedTheme } = useTheme();
+  const { theme } = useTheme();
 
   if (typeof window !== 'undefined' && prefersReducedMotion) return null;
-
-  // fallback to 'dark' if theme is still resolving
-  const theme = resolvedTheme === 'light' ? 'light' : 'dark';
 
   return (
     <div className={`fixed inset-0 -z-10 ${className}`}>

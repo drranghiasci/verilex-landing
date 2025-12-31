@@ -1,7 +1,7 @@
 // app/layout.tsx
 import '@styles/globals.css';
 import type { Metadata } from 'next';
-import { ThemeProvider } from 'next-themes';
+import { ThemeProvider } from '@/lib/theme-context';
 
 export const metadata: Metadata = {
   title: 'VeriLex AI',
@@ -18,9 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           'bg-gradient-to-br from-[var(--g1)] via-[var(--g2)] to-[var(--g3)]',
         ].join(' ')}
       >
-        <ThemeProvider attribute="class" enableSystem={false} defaultTheme="light">
-          {children}
-        </ThemeProvider>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

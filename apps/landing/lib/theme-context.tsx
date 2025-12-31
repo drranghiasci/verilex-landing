@@ -1,39 +1,46 @@
 'use client';
 
-import { createContext, useEffect, useState, useContext } from 'react';
+import { createContext, useEffect, useMemo, useState, useContext } from 'react';
 
-type Theme = 'light' | 'dark' | 'system';
-const ThemeContext = createContext<any>(null);
+type Theme = 'light' | 'dark';
+type ThemeContextValue = {
+  theme: Theme;
+  setTheme: (value: Theme) => void;
+};
+
+const ThemeContext = createContext<ThemeContextValue | null>(null);
+const STORAGE_KEY = 'verilex-theme';
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [theme, setTheme] = useState<Theme>('system');
+  const [theme, setThemeState] = useState<Theme>('dark');
 
   useEffect(() => {
-    const stored = localStorage.getItem('theme') as Theme;
-    const preferred = stored || 'system';
-    setTheme(preferred);
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const preferred = stored === 'light' || stored === 'dark' ? stored : 'dark';
+    setThemeState(preferred);
     updateDocumentTheme(preferred);
   }, []);
 
   const updateDocumentTheme = (value: Theme) => {
     const root = window.document.documentElement;
-    const isDark = value === 'dark' || (value === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-    root.classList.remove('light', 'dark');
-    root.classList.add(isDark ? 'dark' : 'light');
+    root.classList.toggle('dark', value === 'dark');
   };
 
-  const toggleTheme = (newTheme: Theme) => {
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    updateDocumentTheme(newTheme);
+  const setTheme = (value: Theme) => {
+    setThemeState(value);
+    localStorage.setItem(STORAGE_KEY, value);
+    updateDocumentTheme(value);
   };
 
-  return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  const contextValue = useMemo(() => ({ theme, setTheme }), [theme]);
+
+  return <ThemeContext.Provider value={contextValue}>{children}</ThemeContext.Provider>;
 };
 
-export const useTheme = () => useContext(ThemeContext);
+export const useTheme = () => {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) {
+    throw new Error('useTheme must be used within ThemeProvider');
+  }
+  return ctx;
+};
