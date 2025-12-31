@@ -1,7 +1,7 @@
 import Head from 'next/head';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useState, FormEvent, ChangeEvent } from 'react';
+import VerilexLogo from '@/components/dashboard/VerilexLogo';
 
 const PRACTICE_OPTIONS = ['Divorce', 'Custody', 'Support', 'Protective Orders', 'Mediation'] as const;
 const MONTHLY_MATTER_OPTIONS = ['< 10', '10 - 24', '25 - 49', '50 - 99', '100+'] as const;
@@ -193,24 +193,7 @@ export default function FirmIntakePage() {
         <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[var(--surface-0)] backdrop-blur-sm">
           <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6" aria-label="Main Navigation">
             <Link href="/" className="relative flex items-center focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] rounded-lg">
-              <Image
-                src="/verilex-logo-name-lightmode.png"
-                alt="VeriLex AI"
-                width={150}
-                height={46}
-                priority
-                unoptimized
-                className="object-contain transition-opacity duration-500 ease-in-out dark:opacity-0"
-              />
-              <Image
-                src="/verilex-logo-name-darkmode.png"
-                alt="VeriLex AI (dark)"
-                width={150}
-                height={46}
-                priority
-                unoptimized
-                className="absolute inset-0 object-contain opacity-0 transition-opacity duration-500 ease-in-out dark:opacity-100"
-              />
+              <VerilexLogo className="w-[150px] h-auto object-contain" />
             </Link>
             <div className="flex items-center gap-3 text-sm font-medium sm:gap-6">
               <Link href="/" className="hover:text-[color:var(--accent-soft)] transition-colors">

@@ -1,7 +1,6 @@
 'use client';
 
 import Head from 'next/head';
-import Image from 'next/image';
 import Link from 'next/link';
 import { ShieldCheck, ChevronRight, Clock, Users, Zap, Shield, CheckCircle } from 'lucide-react';
 import { useEffect, useState, useCallback, useRef } from 'react';
@@ -9,6 +8,7 @@ import dynamic from 'next/dynamic';
 import CookieBanner from '@/components/CookieBanner';
 import { Analytics } from '@vercel/analytics/react';
 import ThemeToggle from '@/components/ThemeToggle';
+import VerilexLogo from '@/components/dashboard/VerilexLogo';
 
 /* optional background */
 const WaveBackground = dynamic(() => import('@/components/WaveBackground'), { ssr: false });
@@ -134,27 +134,7 @@ export default function Home() {
         <header className="fixed inset-x-0 top-0 z-50 bg-[var(--surface-0)] backdrop-blur-sm border-b border-white/10">
           <nav className="flex h-16 w-full items-center justify-between px-4 sm:px-6 max-w-7xl mx-auto" aria-label="Main Navigation">
             <Link href="/" className="relative flex items-center focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] rounded-lg">
-              {/* Light Mode logo */}
-              <Image
-                src="/verilex-logo-name-lightmode.png"
-                alt="VeriLex AI"
-                width={150}
-                height={46}
-                priority
-                unoptimized
-                className="object-contain transition-opacity duration-500 ease-in-out dark:opacity-0"
-              />
-
-              {/* Dark Mode logo */}
-              <Image
-                src="/verilex-logo-name-darkmode.png"
-                alt="VeriLex AI (dark)"
-                width={150}
-                height={46}
-                priority
-                unoptimized
-                className="absolute inset-0 object-contain opacity-0 transition-opacity duration-500 ease-in-out dark:opacity-100"
-              />
+              <VerilexLogo className="w-[150px] h-auto object-contain" />
             </Link>
 
             <div className="flex items-center gap-3 sm:gap-6 text-sm font-medium">
