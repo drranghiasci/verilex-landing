@@ -5,7 +5,9 @@ import { ThemeProvider } from '@/lib/theme-context';
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <ThemeProvider>
-      <Component {...pageProps} />
+      <div className="min-h-screen bg-black text-[color:var(--text-0)]">
+        <Component {...pageProps} />
+      </div>
     </ThemeProvider>
   );
 }
