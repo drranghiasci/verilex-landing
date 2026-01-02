@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import VerilexLogo from '@/components/dashboard/VerilexLogo';
+import VerilexLogo from '@/components/VerilexLogo';
 
 export default function NotFound() {
   return (

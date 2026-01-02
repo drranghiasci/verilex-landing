@@ -6,6 +6,9 @@ import { ThemeProvider } from '@/lib/theme-context';
 export const metadata: Metadata = {
   title: 'VeriLex AI',
   description: 'AI-powered legal software for solo and small firms',
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

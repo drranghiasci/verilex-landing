@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useState, FormEvent, ChangeEvent } from 'react';
-import VerilexLogo from '@/components/dashboard/VerilexLogo';
+import VerilexLogo from '@/components/VerilexLogo';
 
 const PRACTICE_OPTIONS = ['Divorce', 'Custody', 'Support', 'Protective Orders', 'Mediation'] as const;
 const MONTHLY_MATTER_OPTIONS = ['< 10', '10 - 24', '25 - 49', '50 - 99', '100+'] as const;

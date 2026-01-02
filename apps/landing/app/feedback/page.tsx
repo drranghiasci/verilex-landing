@@ -3,7 +3,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
-import VerilexLogo from '@/components/dashboard/VerilexLogo';
+import VerilexLogo from '@/components/VerilexLogo';
 
 export default function FeedbackPage() {
   return (

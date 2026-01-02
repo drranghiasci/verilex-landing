@@ -4,10 +4,10 @@ import { useTheme } from '@/lib/theme-context';
 
 export default function VerilexLogo({ className = '', ...props }: { className?: string }) {
   const { theme } = useTheme();
-  const [src, setSrc] = useState('/verilex-logo-name-lightmode.png');
+  const [src, setSrc] = useState('/verilex-logo-name-lightmode.svg');
 
   useEffect(() => {
-    setSrc(theme === 'dark' ? '/verilex-logo-name-darkmode.png' : '/verilex-logo-name-lightmode.png');
+    setSrc(theme === 'dark' ? '/verilex-logo-name-darkmode.svg' : '/verilex-logo-name-lightmode.svg');
   }, [theme]);
 
   return (

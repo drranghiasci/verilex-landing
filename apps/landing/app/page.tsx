@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import CookieBanner from '@/components/CookieBanner';
 import { Analytics } from '@vercel/analytics/react';
 import ThemeToggle from '@/components/ThemeToggle';
-import VerilexLogo from '@/components/dashboard/VerilexLogo';
+import VerilexLogo from '@/components/VerilexLogo';
 
 /* Gradient headline with safe fallback + size/center props */
 function GradientHeadline({
