@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useState, FormEvent, ChangeEvent } from 'react';
 import VerilexLogo from '@/components/VerilexLogo';
+import ThemeToggle from '@/components/ThemeToggle';
 
 const PRACTICE_OPTIONS = ['Divorce', 'Custody', 'Support', 'Protective Orders', 'Mediation'] as const;
 const MONTHLY_MATTER_OPTIONS = ['< 10', '10 - 24', '25 - 49', '50 - 99', '100+'] as const;
@@ -196,15 +197,20 @@ export default function FirmIntakePage() {
               <VerilexLogo className="w-[150px] h-auto object-contain" />
             </Link>
             <div className="flex items-center gap-3 text-sm font-medium sm:gap-6">
-              <Link href="/" className="hover:text-[color:var(--accent-soft)] transition-colors">
-                Home
-              </Link>
-              <Link href="https://myclient.verilex.us/" className="hover:text-[color:var(--accent-soft)] transition-colors">
+              <ThemeToggle />
+              <Link href="/capabilities" className="hover:text-[color:var(--accent-soft)] transition-colors">Capabilities</Link>
+              <Link href="/security" className="hover:text-[color:var(--accent-soft)] transition-colors">Security</Link>
+              <Link href="/comparisons" className="hover:text-[color:var(--accent-soft)] transition-colors">Comparisons</Link>
+              <Link href="/feedback" className="hover:text-[color:var(--accent-soft)] transition-colors">Feedback</Link>
+              <span className="rounded-lg border border-[color:var(--accent-light)] px-4 py-1.5 text-[color:var(--accent-soft)]">
+                New Firm Intake
+              </span>
+              <Link
+                href="https://myclient.verilex.us/myclient/app"
+                className="rounded-lg border border-[color:var(--accent-light)] px-4 py-1.5 text-[color:var(--accent-soft)] hover:bg-[color:var(--accent-light)] hover:text-white transition-all"
+              >
                 MyClient Portal
               </Link>
-              <span className="rounded-lg border border-[color:var(--accent-light)] px-4 py-1.5 text-[color:var(--accent-soft)]">
-                Firm Intake
-              </span>
             </div>
           </nav>
         </header>

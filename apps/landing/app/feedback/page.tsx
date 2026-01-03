@@ -21,6 +21,9 @@ export default function FeedbackPage() {
             </Link>
             <div className="flex items-center gap-3 text-sm font-medium sm:gap-6">
               <ThemeToggle />
+              <Link href="/capabilities" className="hover:text-[color:var(--accent-soft)] transition-colors">Capabilities</Link>
+              <Link href="/security" className="hover:text-[color:var(--accent-soft)] transition-colors">Security</Link>
+              <Link href="/comparisons" className="hover:text-[color:var(--accent-soft)] transition-colors">Comparisons</Link>
               <span className="text-[color:var(--accent-soft)]">Feedback</span>
               <Link href="/firm-intake" className="hover:text-[color:var(--accent-soft)] transition-colors">
                 New Firm Intake

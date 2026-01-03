@@ -135,6 +135,9 @@ export default function Home() {
 
             <div className="flex items-center gap-3 sm:gap-6 text-sm font-medium">
               <ThemeToggle />
+              <Link href="/capabilities" className="hover:text-[color:var(--accent-soft)] transition-colors">Capabilities</Link>
+              <Link href="/security" className="hover:text-[color:var(--accent-soft)] transition-colors">Security</Link>
+              <Link href="/comparisons" className="hover:text-[color:var(--accent-soft)] transition-colors">Comparisons</Link>
               <Link href="/feedback" className="hover:text-[color:var(--accent-soft)] transition-colors">Feedback</Link>
               <Link href="/firm-intake" className="hover:text-[color:var(--accent-soft)] transition-colors">New Firm Intake</Link>
               <Link
