@@ -305,7 +305,9 @@ export default function DocumentsPage() {
                 placeholder="Search by filename"
                 className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
               />
+              <label htmlFor="docTypeFilter" className="sr-only">Filter by document type</label>
               <select
+                id="docTypeFilter"
                 value={docTypeFilter}
                 onChange={(event) => setDocTypeFilter(event.target.value)}
                 className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
@@ -390,6 +392,7 @@ export default function DocumentsPage() {
                                   onChange={(event) => setEditName(event.target.value)}
                                   disabled={!canEdit}
                                   className="w-full rounded-md border border-white/10 bg-[var(--surface-0)] px-2 py-1 text-sm text-white outline-none"
+                                  placeholder="Enter document name"
                                 />
                               ) : (
                                 displayName
@@ -407,6 +410,7 @@ export default function DocumentsPage() {
                                 onChange={(event) => setEditType(event.target.value)}
                                 disabled={!canEdit}
                                 className="w-full rounded-md border border-white/10 bg-[var(--surface-0)] px-2 py-1 text-sm text-white outline-none"
+                                placeholder="Enter document type"
                               />
                             ) : (
                               doc.doc_type
@@ -419,6 +423,7 @@ export default function DocumentsPage() {
                                 onChange={(event) => setEditTags(event.target.value)}
                                 disabled={!canEdit}
                                 className="w-full rounded-md border border-white/10 bg-[var(--surface-0)] px-2 py-1 text-sm text-white outline-none"
+                                placeholder="Enter tags (comma-separated)"
                               />
                             ) : (
                               <>

@@ -188,6 +188,7 @@ export default function CasesPage() {
               />
               <div className="grid gap-3 sm:grid-cols-2">
                 <select
+                  aria-label="Filter by status"
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value)}
                   className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
@@ -199,6 +200,7 @@ export default function CasesPage() {
                   ))}
                 </select>
                 <select
+                  aria-label="Sort cases by"
                   value={sortBy}
                   onChange={(event) => setSortBy(event.target.value)}
                   className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
@@ -212,6 +214,7 @@ export default function CasesPage() {
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <select
+                  aria-label="Filter by state"
                   value={stateFilter}
                   onChange={(event) => {
                     setStateFilter(event.target.value);
@@ -227,6 +230,7 @@ export default function CasesPage() {
                   ))}
                 </select>
                 <select
+                  title="Filter by county"
                   value={countyFilter}
                   onChange={(event) => setCountyFilter(event.target.value)}
                   className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"

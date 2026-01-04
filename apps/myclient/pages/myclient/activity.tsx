@@ -128,7 +128,11 @@ export default function ActivityPage() {
         {state.authed && state.firmId && canExport && (
           <div className="mt-6 space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <label htmlFor="rangeDays" className="sr-only">
+                Select date range
+              </label>
               <select
+                id="rangeDays"
                 value={rangeDays}
                 onChange={(event) => setRangeDays(Number(event.target.value))}
                 className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
