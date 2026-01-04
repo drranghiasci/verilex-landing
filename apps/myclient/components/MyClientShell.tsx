@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { History } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useFirm } from '@/lib/FirmProvider';
 import ProfileMenu from '@/components/ProfileMenu';
 import Sidebar from '@/components/Sidebar';
+import ActivityPanel from '@/components/ActivityPanel';
 
 export default function MyClientShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -15,6 +17,7 @@ export default function MyClientShell({ children }: { children: React.ReactNode 
     firm: { name: string | null } | null;
   } | null>(null);
   const [meError, setMeError] = useState<string | null>(null);
+  const [activityOpen, setActivityOpen] = useState(false);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -74,16 +77,29 @@ export default function MyClientShell({ children }: { children: React.ReactNode 
               MyClient
             </Link>
             {state.authed && (
-              <ProfileMenu
-                user={meData?.user ?? null}
-                role={meData?.membership?.role ?? state.role ?? null}
-                firmName={meData?.firm?.name ?? null}
-                firmId={meData?.membership?.firm_id ?? state.firmId ?? null}
-                onSignOut={handleSignOut}
-              />
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  aria-label="Open activity"
+                  onClick={() => setActivityOpen(true)}
+                  className="rounded-full border border-white/15 bg-[var(--surface-0)] p-2 text-[color:var(--text-2)] hover:text-white hover:bg-white/10"
+                >
+                  <History className="h-4 w-4" />
+                </button>
+                <ProfileMenu
+                  user={meData?.user ?? null}
+                  role={meData?.membership?.role ?? state.role ?? null}
+                  firmName={meData?.firm?.name ?? null}
+                  firmId={meData?.membership?.firm_id ?? state.firmId ?? null}
+                  onSignOut={handleSignOut}
+                />
+              </div>
             )}
           </div>
         </header>
+        {state.authed && (
+          <ActivityPanel open={activityOpen} onClose={() => setActivityOpen(false)} />
+        )}
         {state.authed ? (
           <main className="px-6 py-12 pl-56 md:pl-20">
             {meError && (

@@ -7,39 +7,12 @@ import { useFirm } from '@/lib/FirmProvider';
 export default function MyClientApp() {
   const { state, refresh } = useFirm();
   const [claimStatus, setClaimStatus] = useState<string | null>(null);
-  const [activity, setActivity] = useState<
-    { id: string; case_id: string | null; message: string; created_at: string }[]
-  >([]);
-  const [activityError, setActivityError] = useState<string | null>(null);
   const [openTasks, setOpenTasks] = useState<
     { id: string; title: string; due_date: string | null; case_id: string }[]
   >([]);
   const [tasksError, setTasksError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!state.authed || !state.firmId) return;
-    let mounted = true;
-    const loadActivity = async () => {
-      setActivityError(null);
-      const { data, error } = await supabase
-        .from('case_activity')
-        .select('id, case_id, message, created_at')
-        .eq('firm_id', state.firmId)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      if (!mounted) return;
-      if (error) {
-        setActivityError(error.message);
-        setActivity([]);
-      } else {
-        setActivity(data ?? []);
-      }
-    };
-    loadActivity();
-    return () => {
-      mounted = false;
-    };
-  }, [state.authed, state.firmId]);
+  // Activity feed moved to global panel and /myclient/activity page.
 
   useEffect(() => {
     if (!state.authed || !state.firmId) return;
@@ -185,35 +158,6 @@ export default function MyClientApp() {
                 )}
               </div>
 
-              <div className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-6 shadow-2xl">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
-                  <Link href="/myclient/activity" className="text-xs text-[color:var(--text-2)] hover:text-white transition">
-                    View all
-                  </Link>
-                </div>
-                {activityError && <p className="mt-3 text-xs text-red-300">{activityError}</p>}
-                {activity.length === 0 ? (
-                  <p className="mt-4 text-sm text-[color:var(--text-2)]">No recent activity.</p>
-                ) : (
-                  <ul className="mt-4 space-y-3 text-sm text-[color:var(--text-2)]">
-                    {activity.map((item) => (
-                      <li key={item.id} className="rounded-xl border border-white/10 bg-[var(--surface-0)] px-3 py-2">
-                        <div className="flex flex-col gap-1">
-                          {item.case_id ? (
-                            <Link href={`/myclient/cases/${item.case_id}`} className="text-white hover:text-[color:var(--accent-soft)]">
-                              {item.message}
-                            </Link>
-                          ) : (
-                            <p className="text-white">{item.message}</p>
-                          )}
-                          <span className="text-xs text-[color:var(--text-2)]">{new Date(item.created_at).toLocaleString()}</span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
             </div>
           </div>
         ) : (
