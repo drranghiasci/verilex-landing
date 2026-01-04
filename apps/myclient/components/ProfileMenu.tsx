@@ -51,8 +51,10 @@ export default function ProfileMenu({ user, role, firmName, firmId, onSignOut }:
     };
   }, []);
 
-  const displayName = user?.full_name?.trim() || (user?.email ? user.email.split('@')[0] : 'User');
-  const firmLabel = firmName?.trim() || 'Firm';
+  const displayName = user?.full_name?.trim() || (user?.email ? user.email.split('@')[0] : '');
+  const firstName = user?.full_name?.trim().split(/\s+/)[0];
+  const greeting = firstName ? `Hello, ${firstName}` : 'Hello';
+  const firmLabel = firmName?.trim() || '—';
   const firmShort = firmId ? firmId.slice(0, 8) : '—';
 
   return (
@@ -83,8 +85,9 @@ export default function ProfileMenu({ user, role, firmName, firmId, onSignOut }:
           role="menu"
         >
           <div className="space-y-1">
-            <div className="text-base font-semibold text-white">{displayName}</div>
-            <div className="text-xs text-[color:var(--text-2)]">{user?.email ?? 'No email'}</div>
+            <div className="text-base font-semibold text-white">{greeting}</div>
+            <div className="text-xs text-[color:var(--text-2)]">{displayName || 'User'}</div>
+            {user?.email && <div className="text-xs text-[color:var(--text-2)]">{user.email}</div>}
             {role && (
               <span className="inline-flex rounded-full border border-white/15 px-2 py-0.5 text-[10px] uppercase tracking-wide text-[color:var(--text-2)]">
                 {role}

@@ -47,9 +47,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   const userId = authData.user.id;
 
+  const { data: avatarColumn, error: avatarColumnError } = await adminClient
+    .from('information_schema.columns')
+    .select('column_name')
+    .eq('table_schema', 'public')
+    .eq('table_name', 'profiles')
+    .eq('column_name', 'avatar_url')
+    .maybeSingle();
+
+  if (avatarColumnError) {
+    return res.status(500).json({ ok: false, error: avatarColumnError.message });
+  }
+
+  const profileSelect = avatarColumn ? 'full_name, avatar_url' : 'full_name';
   const { data: profile, error: profileError } = await adminClient
     .from('profiles')
-    .select('full_name, avatar_url, email')
+    .select(profileSelect)
     .eq('id', userId)
     .single();
 
@@ -87,9 +100,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     ok: true,
     user: {
       id: userId,
-      email: profile?.email ?? authData.user.email ?? null,
+      email: authData.user.email ?? null,
       full_name: profile?.full_name ?? null,
-      avatar_url: profile?.avatar_url ?? null,
+      avatar_url: avatarColumn ? profile?.avatar_url ?? null : null,
     },
     membership: membership ? { firm_id: membership.firm_id, role: membership.role } : null,
     firm,
