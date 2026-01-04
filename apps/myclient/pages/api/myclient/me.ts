@@ -47,28 +47,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   const userId = authData.user.id;
 
-  const { data: avatarColumn, error: avatarColumnError } = await adminClient
-    .from('information_schema.columns')
-    .select('column_name')
-    .eq('table_schema', 'public')
-    .eq('table_name', 'profiles')
-    .eq('column_name', 'avatar_url')
-    .maybeSingle();
-
-  if (avatarColumnError) {
-    return res.status(500).json({ ok: false, error: avatarColumnError.message });
-  }
-
-  const profileSelect = avatarColumn ? 'full_name, avatar_url' : 'full_name';
-  const { data: profile, error: profileError } = await adminClient
+  type ProfileRow = { full_name?: unknown; avatar_url?: unknown } | null;
+  const { data: profileRow, error: profileError } = await adminClient
     .from('profiles')
-    .select(profileSelect)
+    .select('*')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (profileError) {
     return res.status(500).json({ ok: false, error: profileError.message });
   }
+
+  const profile = profileRow as ProfileRow;
+  const fullName = typeof profile?.full_name === 'string' ? profile.full_name : null;
+  const avatarUrl = typeof profile?.avatar_url === 'string' ? profile.avatar_url : null;
 
   const { data: membershipRows, error: membershipError } = await adminClient
     .from('firm_members')
@@ -101,8 +93,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     user: {
       id: userId,
       email: authData.user.email ?? null,
-      full_name: profile?.full_name ?? null,
-      avatar_url: avatarColumn ? profile?.avatar_url ?? null : null,
+      full_name: fullName,
+      avatar_url: avatarUrl,
     },
     membership: membership ? { firm_id: membership.firm_id, role: membership.role } : null,
     firm,
