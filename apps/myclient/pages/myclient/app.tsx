@@ -102,40 +102,12 @@ export default function MyClientApp() {
     }
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-  };
-
   return (
     <>
       <Head>
         <title>MyClient</title>
       </Head>
       <div className="mx-auto max-w-5xl space-y-8">
-        <div className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-[0.35em] text-[color:var(--accent-soft)]">MyClient</p>
-              <h1 className="mt-3 text-3xl font-semibold text-white">Dashboard</h1>
-              <p className="mt-2 text-[color:var(--text-2)]">Welcome back{state.email ? `, ${state.email}` : ''}.</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 text-sm">
-              <span className="rounded-full border border-white/15 bg-[var(--surface-0)] px-3 py-1 text-[color:var(--text-1)]">
-                Firm {state.firmId ? state.firmId.slice(0, 8) : 'No firm'}
-              </span>
-              <span className="rounded-full border border-white/15 bg-[var(--surface-0)] px-3 py-1 text-[color:var(--text-1)]">
-                Role {state.role ?? 'member'}
-              </span>
-              <button
-                onClick={handleSignOut}
-                className="rounded-full border border-white/15 px-3 py-1 text-white hover:bg-white/10 transition"
-              >
-                Sign out
-              </button>
-            </div>
-          </div>
-        </div>
-
         {state.firmId ? (
           <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
             <div className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
