@@ -70,8 +70,8 @@ export default function MyClientShell({ children }: { children: React.ReactNode 
 
   return (
     <div className="min-h-screen bg-[var(--surface-0)] text-[color:var(--text-1)]">
-      <header className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-white/10 bg-[rgba(10,10,12,0.92)] px-4 backdrop-blur">
-        <div className="mx-auto flex h-full max-w-6xl items-center justify-between gap-4">
+      <header className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-white/10 bg-[rgba(10,10,12,0.88)] backdrop-blur">
+        <div className="flex h-full items-center justify-between px-3">
           <Link href="/myclient/app" className="relative flex items-center">
             <Image
               src="/verilex-logo-name-lightmode.svg"
