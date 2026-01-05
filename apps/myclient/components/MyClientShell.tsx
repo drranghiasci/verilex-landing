@@ -70,8 +70,8 @@ export default function MyClientShell({ children }: { children: React.ReactNode 
 
   return (
     <div className="min-h-screen bg-[var(--surface-0)] text-[color:var(--text-1)]">
-      <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-[var(--surface-1)] px-6 py-4">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-6">
+      <header className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-white/10 bg-[rgba(10,10,12,0.92)] px-4 backdrop-blur">
+        <div className="mx-auto flex h-full max-w-6xl items-center justify-between gap-4">
           <Link href="/myclient/app" className="relative flex items-center">
             <Image
               src="/verilex-logo-name-lightmode.svg"
@@ -91,7 +91,7 @@ export default function MyClientShell({ children }: { children: React.ReactNode 
             />
           </Link>
           {state.authed && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 aria-label="Open activity"
@@ -118,7 +118,7 @@ export default function MyClientShell({ children }: { children: React.ReactNode 
             <ActivityPanel open={activityOpen} onClose={() => setActivityOpen(false)} />
           )}
           {state.authed ? (
-            <main className="px-6 py-12 pl-56 md:pl-20">
+            <main className="px-4 py-10 pl-16">
               {meError && (
                 <div className="mx-auto mb-6 max-w-6xl rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
                   {meError}

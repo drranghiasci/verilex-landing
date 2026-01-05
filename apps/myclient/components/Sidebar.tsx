@@ -44,7 +44,7 @@ export default function Sidebar({ currentPath }: SidebarProps) {
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
       className={[
-        'fixed left-0 top-16 z-40 h-[calc(100vh-64px)] border-r border-white/10 bg-[var(--surface-1)]/90 backdrop-blur',
+        'fixed left-0 top-16 z-40 h-[calc(100vh-64px)] border-r border-white/10 bg-[rgba(10,10,12,0.92)] backdrop-blur',
         'transition-all duration-300 ease-out',
         showLabels ? 'w-56' : 'w-16',
       ].join(' ')}
