@@ -44,15 +44,12 @@ export default function Sidebar({ currentPath }: SidebarProps) {
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
       className={[
-        'fixed left-0 top-0 z-40 h-screen border-r border-white/10 bg-[var(--surface-1)]/90 backdrop-blur',
+        'fixed left-0 top-16 z-40 h-[calc(100vh-64px)] border-r border-white/10 bg-[var(--surface-1)]/90 backdrop-blur',
         'transition-all duration-300 ease-out',
         showLabels ? 'w-56' : 'w-16',
       ].join(' ')}
     >
-      <div className="flex h-full flex-col gap-6 px-3 py-6">
-        <div className="flex items-center justify-center">
-          <div className="h-10 w-10 rounded-2xl border border-white/10 bg-[var(--surface-0)]" />
-        </div>
+      <div className="flex h-full flex-col gap-3 px-3 py-4">
         <nav className="flex flex-1 flex-col gap-1">
           {NAV_ITEMS.map((item) => {
             const isActive = currentPath === item.href;
