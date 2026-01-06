@@ -125,7 +125,6 @@ export default async function handler(
       status: typeof row.status === 'string' ? row.status : null,
       created_at: typeof row.created_at === 'string' ? row.created_at : null,
       updated_at: typeof row.updated_at === 'string' ? row.updated_at : null,
-      last_activity_at: typeof row.last_activity_at === 'string' ? row.last_activity_at : null,
       internal_notes: typeof row.internal_notes === 'string' ? row.internal_notes : null,
       last_activity_message: activityMessage,
       last_activity_at: activityAt,
