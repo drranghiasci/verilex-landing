@@ -119,7 +119,7 @@ export default function CasesPage() {
     const term = debouncedSearch.trim().toLowerCase();
 
     const filtered = cases.filter((row) => {
-      if (statusFilter !== 'all' && row.status.toLowerCase() !== statusFilter) return false;
+      if (statusFilter !== 'all' && (row.status ?? '').toLowerCase() !== statusFilter) return false;
       if (stateFilter !== 'all' && row.state !== stateFilter) return false;
       if (countyFilter !== 'all' && row.county !== countyFilter) return false;
       if (term) {
