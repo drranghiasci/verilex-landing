@@ -80,20 +80,32 @@ export default function CasesPage() {
     const loadCases = async () => {
       setLoading(true);
       setQueryError(null);
-      const { data, error } = await supabase
-        .from('cases')
-        .select('id, title, client_first_name, client_last_name, client_email, client_phone, status, matter_type, county, state, case_number, last_activity_at, created_at, internal_notes')
-        .eq('firm_id', state.firmId)
-        .order('last_activity_at', { ascending: false })
-        .limit(200);
-
-      if (!isMounted) return;
-      if (error) {
-        setQueryError(error.message);
-        setCases([]);
-      } else {
-        setCases(data ?? []);
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session?.access_token) {
+        if (isMounted) {
+          setQueryError(sessionError?.message || 'Please sign in.');
+          setCases([]);
+          setLoading(false);
+        }
+        return;
       }
+
+      const params = new URLSearchParams({ firmId: state.firmId });
+      const res = await fetch(`/api/myclient/cases/list?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!isMounted) return;
+      if (!res.ok || !payload.ok) {
+        setQueryError(payload.error || 'Unable to load cases.');
+        setCases([]);
+        setLoading(false);
+        return;
+      }
+      setCases(Array.isArray(payload.cases) ? payload.cases : []);
       setLoading(false);
     };
 
@@ -315,6 +327,9 @@ export default function CasesPage() {
                         <div>
                           <p className="text-base font-semibold text-white">{displayName}</p>
                           <p className="mt-1 text-xs text-[color:var(--muted-2)]">{subtitle || 'No details yet'}</p>
+                          <p className="mt-2 text-xs text-[color:var(--muted-2)]">
+                            Last activity: {row.last_activity_message ?? 'No recent activity'}
+                          </p>
                         </div>
                       </Link>
                       <div className="flex items-center gap-3">

@@ -20,6 +20,7 @@ export type CaseRow = {
   created_at: string | null;
   updated_at?: string | null;
   last_activity_at: string | null;
+  last_activity_message?: string | null;
 
   internal_notes?: string | null;
 };

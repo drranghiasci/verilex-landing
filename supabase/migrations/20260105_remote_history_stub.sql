@@ -1,3 +1,0 @@
--- Stub migration to satisfy remote migration history.
--- This version exists on remote (20260105) but was missing locally.
--- No-op.
