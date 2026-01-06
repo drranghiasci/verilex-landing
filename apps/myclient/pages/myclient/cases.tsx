@@ -80,6 +80,11 @@ export default function CasesPage() {
     const loadCases = async () => {
       setLoading(true);
       setQueryError(null);
+      if (!state.firmId) {
+        setCases([]);
+        setLoading(false);
+        return;
+      }
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !sessionData.session?.access_token) {
         if (isMounted) {
@@ -90,7 +95,8 @@ export default function CasesPage() {
         return;
       }
 
-      const params = new URLSearchParams({ firmId: state.firmId });
+      const params = new URLSearchParams();
+      if (state.firmId) params.set('firmId', state.firmId);
       const res = await fetch(`/api/myclient/cases/list?${params.toString()}`, {
         method: 'GET',
         headers: {
