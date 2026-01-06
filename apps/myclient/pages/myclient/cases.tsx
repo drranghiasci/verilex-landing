@@ -302,8 +302,9 @@ export default function CasesPage() {
             ) : (
               filteredCases.map((row) => {
                 const { displayName, subtitle } = getCaseDisplay(row);
-                const statusKey = row.status.toLowerCase();
-                const statusClass = STATUS_STYLES[statusKey] ?? 'border-white/15 text-[color:var(--text-2)]';
+                const statusKey = (row.status ?? '').toLowerCase();
+                const statusClass = STATUS_STYLES[statusKey] ?? 'border-white/15 text-[color:var(--muted)]';
+                const statusLabel = row.status ?? 'Unknown';
                 return (
                   <div
                     key={row.id}
@@ -317,7 +318,7 @@ export default function CasesPage() {
                         </div>
                       </Link>
                       <div className="flex items-center gap-3">
-                        <span className={`rounded-full border px-2 py-1 text-xs uppercase tracking-wide ${statusClass}`}>{row.status}</span>
+                        <span className={`rounded-full border px-2 py-1 text-xs uppercase tracking-wide ${statusClass}`}>{statusLabel}</span>
                         <span className="text-xs text-[color:var(--muted-2)]">{getRelativeTime(row.last_activity_at || row.created_at)}</span>
                         {canEdit ? (
                           <button
