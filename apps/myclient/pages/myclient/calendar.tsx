@@ -44,7 +44,7 @@ export default function CalendarPage() {
       }
 
       const params = new URLSearchParams({
-        firmId: state.firmId,
+        ...(state.firmId ? { firmId: state.firmId } : {}),
         from: formatDateKey(monthStart),
         to: formatDateKey(monthEnd),
       });
