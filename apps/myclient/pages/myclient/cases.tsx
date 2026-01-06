@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useFirm } from '@/lib/FirmProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { useDebounce } from '@/lib/useDebounce';
-import { canEditCases } from '@/lib/permissions';
+import { canEditCases, FirmRole } from '@/lib/permissions';
 import EditCaseDrawer from '@/components/EditCaseDrawer';
 
 type CaseRow = {
@@ -84,6 +84,7 @@ export default function CasesPage() {
 
   const debouncedSearch = useDebounce(searchInput);
   const canEdit = canEditCases(state.role);
+  const role = (state.role as FirmRole | null) ?? null;
 
   const firmLabel = useMemo(() => (state.firmId ? state.firmId.slice(0, 8) : 'No firm'), [state.firmId]);
 
@@ -352,7 +353,7 @@ export default function CasesPage() {
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
           caseRow={selectedCase}
-          role={state.role ?? null}
+          role={role}
           onSaved={handleSaved}
         />
       </div>
