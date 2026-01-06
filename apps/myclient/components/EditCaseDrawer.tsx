@@ -2,19 +2,7 @@ import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { canEditCases, FirmRole } from '@/lib/permissions';
-
-type CaseRow = {
-  id: string;
-  title: string | null;
-  client_first_name: string | null;
-  client_last_name: string | null;
-  client_email: string | null;
-  client_phone: string | null;
-  state: string | null;
-  county: string | null;
-  status: string;
-  internal_notes?: string | null;
-};
+import type { CaseRow } from '@/types/cases';
 
 type EditCaseDrawerProps = {
   open: boolean;

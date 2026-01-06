@@ -6,23 +6,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useDebounce } from '@/lib/useDebounce';
 import { canEditCases, FirmRole } from '@/lib/permissions';
 import EditCaseDrawer from '@/components/EditCaseDrawer';
-
-type CaseRow = {
-  id: string;
-  title: string | null;
-  client_first_name: string | null;
-  client_last_name: string | null;
-  client_email: string | null;
-  client_phone: string | null;
-  matter_type: string | null;
-  status: string;
-  last_activity_at: string;
-  created_at: string;
-  county: string | null;
-  state: string | null;
-  case_number: string | null;
-  internal_notes?: string | null;
-};
+import type { CaseRow } from '@/types/cases';
 
 function getCaseDisplay(row: CaseRow) {
   const displayName =
