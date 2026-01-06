@@ -3,7 +3,12 @@ import { createClient } from '@supabase/supabase-js';
 import type { CaseRow } from '@/types/cases';
 
 type ErrorResponse = { ok: false; error: string };
-type SuccessResponse = { ok: true; cases: CaseRow[] };
+type CaseListRow = CaseRow & {
+  last_activity_message: string | null;
+  last_activity_at: string | null;
+};
+
+type SuccessResponse = { ok: true; cases: CaseListRow[] };
 
 export default async function handler(
   req: NextApiRequest,
@@ -96,20 +101,36 @@ export default async function handler(
     return res.status(500).json({ ok: false, error: error.message });
   }
 
-  const rows = (data ?? []) as Array<
-    CaseRow & { case_activity?: Array<{ message: string | null; created_at: string | null }> }
-  >;
+  const raw = (data ?? []) as unknown as Array<Record<string, any>>;
 
-  const cases = rows.map((row) => {
+  const cases: CaseListRow[] = raw.map((row) => {
     const activity = Array.isArray(row.case_activity) ? row.case_activity[0] : null;
-    const activityMessage = activity?.message ?? null;
-    const activityAt = activity?.created_at ?? row.last_activity_at ?? row.created_at ?? null;
+    const activityMessage = typeof activity?.message === 'string' ? activity.message : null;
+    const activityAt = (typeof activity?.created_at === 'string' ? activity.created_at : null)
+      ?? (typeof row.last_activity_at === 'string' ? row.last_activity_at : null)
+      ?? (typeof row.created_at === 'string' ? row.created_at : null);
+
     return {
-      ...row,
+      id: typeof row.id === 'string' ? row.id : '',
+      firm_id: typeof row.firm_id === 'string' ? row.firm_id : null,
+      title: typeof row.title === 'string' ? row.title : null,
+      case_number: typeof row.case_number === 'string' ? row.case_number : null,
+      matter_type: typeof row.matter_type === 'string' ? row.matter_type : null,
+      client_first_name: typeof row.client_first_name === 'string' ? row.client_first_name : null,
+      client_last_name: typeof row.client_last_name === 'string' ? row.client_last_name : null,
+      client_email: typeof row.client_email === 'string' ? row.client_email : null,
+      client_phone: typeof row.client_phone === 'string' ? row.client_phone : null,
+      state: typeof row.state === 'string' ? row.state : null,
+      county: typeof row.county === 'string' ? row.county : null,
+      status: typeof row.status === 'string' ? row.status : null,
+      created_at: typeof row.created_at === 'string' ? row.created_at : null,
+      updated_at: typeof row.updated_at === 'string' ? row.updated_at : null,
+      last_activity_at: typeof row.last_activity_at === 'string' ? row.last_activity_at : null,
+      internal_notes: typeof row.internal_notes === 'string' ? row.internal_notes : null,
       last_activity_message: activityMessage,
       last_activity_at: activityAt,
     };
-  });
+  }).filter((row) => row.id);
 
   return res.status(200).json({ ok: true, cases });
 }
