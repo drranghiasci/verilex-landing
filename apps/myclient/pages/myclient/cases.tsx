@@ -39,7 +39,8 @@ const STATUS_STYLES: Record<string, string> = {
   closed: 'border-slate-400/40 text-slate-200',
 };
 
-function getRelativeTime(dateString: string) {
+function getRelativeTime(dateString: string | null) {
+  if (!dateString) return '—';
   const now = new Date();
   const date = new Date(dateString);
   const diffMs = now.getTime() - date.getTime();
@@ -140,16 +141,20 @@ export default function CasesPage() {
     const sorted = [...filtered];
     sorted.sort((a, b) => {
       if (sortBy === 'newest') {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return bTime - aTime;
       }
       if (sortBy === 'client_last') {
         const aKey = a.client_last_name || a.title || '';
         const bKey = b.client_last_name || b.title || '';
         return aKey.localeCompare(bKey);
       }
-      const aDate = new Date(a.last_activity_at || a.created_at).getTime();
-      const bDate = new Date(b.last_activity_at || b.created_at).getTime();
-      return bDate - aDate;
+      const aDate = a.last_activity_at || a.created_at;
+      const bDate = b.last_activity_at || b.created_at;
+      const aTime = aDate ? new Date(aDate).getTime() : 0;
+      const bTime = bDate ? new Date(bDate).getTime() : 0;
+      return bTime - aTime;
     });
     return sorted;
   }, [cases, countyFilter, debouncedSearch, sortBy, stateFilter, statusFilter]);
