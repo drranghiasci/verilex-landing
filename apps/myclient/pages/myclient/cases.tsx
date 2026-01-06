@@ -4,12 +4,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { useFirm } from '@/lib/FirmProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { useDebounce } from '@/lib/useDebounce';
+import { canEditCases } from '@/lib/permissions';
+import EditCaseDrawer from '@/components/EditCaseDrawer';
 
 type CaseRow = {
   id: string;
   title: string | null;
   client_first_name: string | null;
   client_last_name: string | null;
+  client_email: string | null;
+  client_phone: string | null;
   matter_type: string | null;
   status: string;
   last_activity_at: string;
@@ -17,6 +21,7 @@ type CaseRow = {
   county: string | null;
   state: string | null;
   case_number: string | null;
+  internal_notes?: string | null;
 };
 
 function getCaseDisplay(row: CaseRow) {
@@ -74,8 +79,11 @@ export default function CasesPage() {
   const [stateFilter, setStateFilter] = useState('all');
   const [countyFilter, setCountyFilter] = useState('all');
   const [sortBy, setSortBy] = useState('last_activity');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedCase, setSelectedCase] = useState<CaseRow | null>(null);
 
   const debouncedSearch = useDebounce(searchInput);
+  const canEdit = canEditCases(state.role);
 
   const firmLabel = useMemo(() => (state.firmId ? state.firmId.slice(0, 8) : 'No firm'), [state.firmId]);
 
@@ -88,7 +96,7 @@ export default function CasesPage() {
       setQueryError(null);
       const { data, error } = await supabase
         .from('cases')
-        .select('id, title, client_first_name, client_last_name, status, matter_type, county, state, case_number, last_activity_at, created_at')
+        .select('id, title, client_first_name, client_last_name, client_email, client_phone, status, matter_type, county, state, case_number, last_activity_at, created_at, internal_notes')
         .eq('firm_id', state.firmId)
         .order('last_activity_at', { ascending: false })
         .limit(200);
@@ -160,6 +168,15 @@ export default function CasesPage() {
     });
     return sorted;
   }, [cases, countyFilter, debouncedSearch, sortBy, stateFilter, statusFilter]);
+
+  const handleOpenEdit = (row: CaseRow) => {
+    setSelectedCase(row);
+    setDrawerOpen(true);
+  };
+
+  const handleSaved = (updated: CaseRow) => {
+    setCases((prev) => prev.map((row) => (row.id === updated.id ? { ...row, ...updated } : row)));
+  };
 
   return (
     <>
@@ -298,27 +315,46 @@ export default function CasesPage() {
                 const statusKey = row.status.toLowerCase();
                 const statusClass = STATUS_STYLES[statusKey] ?? 'border-white/15 text-[color:var(--text-2)]';
                 return (
-                  <Link
+                  <div
                     key={row.id}
-                    href={`/myclient/cases/${row.id}`}
-                    className="block rounded-2xl border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-4 transition hover:bg-white/5"
+                    className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-4 transition hover:bg-white/5"
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-base font-semibold text-white">{displayName}</p>
-                        <p className="mt-1 text-xs text-[color:var(--muted-2)]">{subtitle || 'No details yet'}</p>
-                      </div>
+                      <Link href={`/myclient/cases/${row.id}`} className="flex-1">
+                        <div>
+                          <p className="text-base font-semibold text-white">{displayName}</p>
+                          <p className="mt-1 text-xs text-[color:var(--muted-2)]">{subtitle || 'No details yet'}</p>
+                        </div>
+                      </Link>
                       <div className="flex items-center gap-3">
                         <span className={`rounded-full border px-2 py-1 text-xs uppercase tracking-wide ${statusClass}`}>{row.status}</span>
                         <span className="text-xs text-[color:var(--muted-2)]">{getRelativeTime(row.last_activity_at || row.created_at)}</span>
+                        {canEdit ? (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(row)}
+                            className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)] hover:text-white"
+                          >
+                            Edit
+                          </button>
+                        ) : (
+                          <span className="text-xs text-[color:var(--muted-2)]">View only</span>
+                        )}
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 );
               })
             )}
           </div>
         )}
+        <EditCaseDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          caseRow={selectedCase}
+          role={state.role ?? null}
+          onSaved={handleSaved}
+        />
       </div>
     </>
   );
