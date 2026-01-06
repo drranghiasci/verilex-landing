@@ -8,6 +8,7 @@ import { canEditCases, canEditDocuments, canDeleteDocuments } from '@/lib/permis
 import { logActivity } from '@/lib/activity';
 import { useFirmPlan } from '@/lib/useFirmPlan';
 import { canUploadDocument } from '@/lib/plans';
+import type { CaseTaskRow } from '@/types/tasks';
 
 type CaseRecord = {
   id: string;
@@ -45,15 +46,6 @@ type ActivityRow = {
   id: string;
   event_type: string;
   message: string;
-  created_at: string;
-};
-
-type TaskRow = {
-  id: string;
-  title: string;
-  status: string;
-  due_date: string | null;
-  completed_at: string | null;
   created_at: string;
 };
 
@@ -100,7 +92,7 @@ export default function CaseDetailPage() {
   const [editDocName, setEditDocName] = useState('');
   const [editDocType, setEditDocType] = useState('other');
   const [editDocTags, setEditDocTags] = useState('');
-  const [tasks, setTasks] = useState<TaskRow[]>([]);
+  const [tasks, setTasks] = useState<CaseTaskRow[]>([]);
   const [tasksLoading, setTasksLoading] = useState(false);
   const [tasksError, setTasksError] = useState<string | null>(null);
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -319,21 +311,29 @@ export default function CaseDetailPage() {
     if (!state.authed || !state.firmId || !caseId) return;
     setTasksLoading(true);
     setTasksError(null);
-    const { data, error: taskError } = await supabase
-      .from('case_tasks')
-      .select('id, title, status, due_date, completed_at, created_at')
-      .eq('case_id', caseId)
-      .eq('firm_id', state.firmId)
-      .order('status', { ascending: true })
-      .order('due_date', { ascending: true, nullsFirst: false })
-      .order('created_at', { ascending: false });
-
-    if (taskError) {
-      setTasksError(taskError.message);
-      setTasks([]);
-    } else {
-      setTasks(data ?? []);
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !sessionData.session?.access_token) {
+      setTasksError(sessionError?.message || 'Please sign in.');
+      setTasksLoading(false);
+      return;
     }
+
+    const params = new URLSearchParams({ firmId: state.firmId, caseId });
+    const res = await fetch(`/api/myclient/tasks/list?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${sessionData.session.access_token}`,
+      },
+    });
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok || !payload.ok) {
+      setTasksError(payload.error || 'Unable to load tasks.');
+      setTasks([]);
+      setTasksLoading(false);
+      return;
+    }
+
+    setTasks(Array.isArray(payload.tasks) ? payload.tasks : []);
     setTasksLoading(false);
   }, [caseId, state.authed, state.firmId]);
 
@@ -348,50 +348,63 @@ export default function CaseDetailPage() {
       setTaskActionError('Task title is required.');
       return;
     }
+    if (!newTaskDue) {
+      setTaskActionError('Due date is required.');
+      return;
+    }
     if (!record || !state.firmId) return;
     if (!canEdit) {
       setTaskActionError('You don’t have permission to perform this action. Please contact your firm admin.');
       return;
     }
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const actorId = sessionData.session?.user?.id ?? null;
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !sessionData.session?.access_token) {
+      setTaskActionError(sessionError?.message || 'Please sign in.');
+      return;
+    }
 
-    const { data, error: insertError } = await supabase
-      .from('case_tasks')
-      .insert({
-        firm_id: state.firmId,
-        case_id: record.id,
+    const res = await fetch('/api/myclient/tasks/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionData.session.access_token}`,
+      },
+      body: JSON.stringify({
+        firmId: state.firmId,
+        caseId: record.id,
         title: newTaskTitle.trim(),
-        due_date: newTaskDue || null,
-        created_by: actorId,
-      })
-      .select('id, title, status, due_date, completed_at, created_at')
-      .single();
+        description: null,
+        due_date: newTaskDue,
+      }),
+    });
 
-    if (insertError || !data) {
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok || !payload.ok) {
+      const msg = payload.error || 'Unable to add task.';
       setTaskActionError(
-        isPermissionError(insertError?.message)
+        isPermissionError(msg)
           ? 'You don’t have permission to perform this action. Please contact your firm admin.'
-          : insertError?.message || 'Unable to add task.',
+          : msg,
       );
       return;
     }
 
+    const data = payload.task as CaseTaskRow;
     setTasks((prev) => [data, ...prev]);
     setNewTaskTitle('');
     setNewTaskDue('');
     await logActivity(supabase, {
       firm_id: state.firmId,
       case_id: record.id,
-      actor_user_id: actorId,
+      actor_user_id: sessionData.session?.user?.id ?? null,
       event_type: 'task_created',
       message: `Task created: ${data.title}`,
       metadata: { due_date: data.due_date },
     });
   };
 
-  const handleToggleTask = async (task: TaskRow, nextStatus: 'open' | 'done') => {
+  const handleToggleTask = async (task: CaseTaskRow, nextStatus: 'open' | 'done') => {
     setTaskActionError(null);
     if (!record || !state.firmId) return;
     if (!canEdit) {
@@ -399,22 +412,37 @@ export default function CaseDetailPage() {
       return;
     }
 
-    const updates =
-      nextStatus === 'done'
-        ? { status: 'done', completed_at: new Date().toISOString() }
-        : { status: 'open', completed_at: null };
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !sessionData.session?.access_token) {
+      setTaskActionError(sessionError?.message || 'Please sign in.');
+      return;
+    }
 
-    const { error: updateError } = await supabase.from('case_tasks').update(updates).eq('id', task.id);
-    if (updateError) {
+    const res = await fetch('/api/myclient/tasks/update', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionData.session.access_token}`,
+      },
+      body: JSON.stringify({
+        firmId: state.firmId,
+        taskId: task.id,
+        updates: { status: nextStatus },
+      }),
+    });
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok || !payload.ok) {
+      const msg = payload.error || 'Unable to update task.';
       setTaskActionError(
-        isPermissionError(updateError.message)
+        isPermissionError(msg)
           ? 'You don’t have permission to perform this action. Please contact your firm admin.'
-          : updateError.message,
+          : msg,
       );
       return;
     }
 
-    setTasks((prev) => prev.map((row) => (row.id === task.id ? { ...row, ...updates } : row)));
+    const updated = payload.task as CaseTaskRow;
+    setTasks((prev) => prev.map((row) => (row.id === task.id ? { ...row, ...updated } : row)));
 
     await logActivity(supabase, {
       firm_id: state.firmId,

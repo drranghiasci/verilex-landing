@@ -17,9 +17,26 @@ type SidebarProps = {
   onClose?: () => void;
 };
 
+const CalendarIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+  >
+    <rect x="3" y="5" width="18" height="16" rx="2" />
+    <path d="M16 3v4M8 3v4M3 11h18" />
+  </svg>
+);
+
 const NAV_ITEMS = [
   { href: '/myclient/app', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/myclient/cases', label: 'Active Cases', icon: Briefcase },
+  { href: '/myclient/calendar', label: 'Calendar', icon: CalendarIcon },
   { href: '/myclient/intake', label: 'New Intake', icon: FilePlus2 },
   { href: '/myclient/documents', label: 'Documents', icon: FolderOpen },
   { href: '/myclient/members', label: 'My Team', icon: Users },
