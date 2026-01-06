@@ -663,9 +663,9 @@ export default function CaseDetailPage() {
       <Head>
         <title>MyClient | Case Detail</title>
       </Head>
-      <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
+      <div className="mx-auto max-w-6xl rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-8 shadow-sm">
         <div className="flex flex-col gap-4">
-          <Link href="/myclient/cases" className="text-sm text-[color:var(--text-2)] hover:text-white transition">
+          <Link href="/myclient/cases" className="text-sm text-[color:var(--muted)] hover:text-white transition">
             ← Back to Active Cases
           </Link>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -673,7 +673,7 @@ export default function CaseDetailPage() {
             {record && (
               <span
                 className={`rounded-full border px-3 py-1 text-xs uppercase tracking-wide ${
-                  STATUS_STYLES[record.status.toLowerCase()] ?? 'border-white/15 text-[color:var(--text-2)]'
+                  STATUS_STYLES[record.status.toLowerCase()] ?? 'border-white/15 text-[color:var(--muted)]'
                 }`}
               >
                 {record.status}
@@ -682,19 +682,19 @@ export default function CaseDetailPage() {
           </div>
         </div>
 
-        {state.loading && <p className="mt-6 text-[color:var(--text-2)]">Loading...</p>}
-        {!state.loading && !state.authed && <p className="mt-6 text-[color:var(--text-2)]">Please sign in.</p>}
-        {!state.loading && state.authed && !state.firmId && <p className="mt-6 text-[color:var(--text-2)]">No firm linked yet.</p>}
+        {state.loading && <p className="mt-6 text-[color:var(--muted)]">Loading...</p>}
+        {!state.loading && !state.authed && <p className="mt-6 text-[color:var(--muted)]">Please sign in.</p>}
+        {!state.loading && state.authed && !state.firmId && <p className="mt-6 text-[color:var(--muted)]">No firm linked yet.</p>}
 
-        {loading && <p className="mt-6 text-[color:var(--text-2)]">Loading...</p>}
+        {loading && <p className="mt-6 text-[color:var(--muted)]">Loading...</p>}
 
         {!loading && state.authed && state.firmId && !record && !error && (
-          <p className="mt-6 text-[color:var(--text-2)]">Case not found.</p>
+          <p className="mt-6 text-[color:var(--muted)]">Case not found.</p>
         )}
 
         {record && (
           <>
-            <div className="mt-6 rounded-2xl border border-white/10 bg-[var(--surface-0)] p-6">
+            <div className="mt-6 rounded-2xl border border-[color:var(--border)] bg-[var(--surface-0)] p-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   {(() => {
@@ -702,7 +702,7 @@ export default function CaseDetailPage() {
                     return (
                       <>
                         <h2 className="text-3xl font-semibold text-white">{displayName}</h2>
-                        <p className="mt-2 text-sm text-[color:var(--text-2)]">{subtitle || 'Case details'}</p>
+                        <p className="mt-2 text-sm text-[color:var(--muted)]">{subtitle || 'Case details'}</p>
                       </>
                     );
                   })()}
@@ -710,7 +710,7 @@ export default function CaseDetailPage() {
               </div>
             </div>
 
-            <div className="mt-6 border-b border-white/10 text-sm text-[color:var(--text-2)]">
+            <div className="mt-6 border-b border-[color:var(--border)] text-sm text-[color:var(--muted)]">
               {[
                 { key: 'overview', label: 'Overview' },
                 { key: 'notes', label: 'Notes' },

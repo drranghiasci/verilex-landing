@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { History } from 'lucide-react';
+import { History, Menu } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useFirm } from '@/lib/FirmProvider';
 import ProfileMenu from '@/components/ProfileMenu';
@@ -19,6 +19,8 @@ export default function MyClientShell({ children }: { children: React.ReactNode 
   } | null>(null);
   const [meError, setMeError] = useState<string | null>(null);
   const [activityOpen, setActivityOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -66,13 +68,37 @@ export default function MyClientShell({ children }: { children: React.ReactNode 
     };
   }, [state.authed]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(max-width: 768px)');
+    const update = () => setIsMobile(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [router.pathname]);
+
   const profileIncomplete = state.authed && (!meData?.user?.full_name || !meData.user.full_name.trim());
 
   return (
     <div className="min-h-screen bg-[var(--surface-0)] text-[color:var(--text-1)]">
-      <header className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-white/10 bg-[rgba(10,10,12,0.88)] backdrop-blur">
+      <header className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-[color:var(--border)] bg-[rgba(10,10,12,0.88)] backdrop-blur">
         <div className="flex h-full items-center justify-between px-3">
-          <Link href="/myclient/app" className="relative flex items-center">
+          <div className="flex items-center gap-2">
+            {state.authed && (
+              <button
+                type="button"
+                aria-label="Open navigation"
+                onClick={() => setMobileNavOpen(true)}
+                className="rounded-full border border-[color:var(--border)] bg-white/5 p-2 text-[color:var(--muted)] hover:text-white md:hidden"
+              >
+                <Menu className="h-4 w-4" />
+              </button>
+            )}
+            <Link href="/myclient/app" className="relative flex items-center">
             <Image
               src="/verilex-logo-name-lightmode.svg"
               alt="VeriLex"
@@ -89,14 +115,15 @@ export default function MyClientShell({ children }: { children: React.ReactNode 
               priority
               className="absolute inset-0 object-contain opacity-0 transition-opacity duration-300 dark:opacity-100"
             />
-          </Link>
+            </Link>
+          </div>
           {state.authed && (
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 aria-label="Open activity"
                 onClick={() => setActivityOpen(true)}
-                className="rounded-full border border-white/15 bg-[var(--surface-0)] p-2 text-[color:var(--text-2)] hover:text-white hover:bg-white/10"
+                className="rounded-full border border-[color:var(--border)] bg-[var(--surface-0)] p-2 text-[color:var(--muted)] hover:text-white hover:bg-white/10"
               >
                 <History className="h-4 w-4" />
               </button>
@@ -112,29 +139,36 @@ export default function MyClientShell({ children }: { children: React.ReactNode 
         </div>
       </header>
       <div className="flex min-h-screen pt-16">
-        {state.authed && <Sidebar currentPath={router.pathname} />}
+        {state.authed && (
+          <Sidebar
+            currentPath={router.pathname}
+            mode={isMobile ? 'mobile' : 'desktop'}
+            open={mobileNavOpen}
+            onClose={() => setMobileNavOpen(false)}
+          />
+        )}
         <div className="flex min-h-screen flex-1 flex-col">
           {state.authed && (
             <ActivityPanel open={activityOpen} onClose={() => setActivityOpen(false)} />
           )}
           {state.authed ? (
-            <main className="px-4 py-10 pl-16">
+            <main className="py-10 pr-4 pl-4 md:pr-6 md:pl-16">
               {meError && (
                 <div className="mx-auto mb-6 max-w-6xl rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
                   {meError}
                 </div>
               )}
               {profileIncomplete && (
-              <div className="mx-auto mb-6 flex max-w-6xl flex-col items-start justify-between gap-4 rounded-2xl border border-white/10 bg-[var(--surface-1)] px-6 py-4 text-sm text-[color:var(--text-2)] sm:flex-row sm:items-center">
-                <span>Finish setting up your profile to personalize VeriLex.</span>
-                <Link
-                  href="/myclient/profile"
-                  className="inline-flex items-center justify-center rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-xs font-semibold text-white hover:bg-[color:var(--accent)] transition"
-                >
-                  Complete Profile
-                </Link>
-              </div>
-            )}
+                <div className="mx-auto mb-6 flex max-w-6xl flex-col items-start justify-between gap-4 rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] px-6 py-4 text-sm text-[color:var(--muted)] sm:flex-row sm:items-center">
+                  <span>Finish setting up your profile to personalize VeriLex.</span>
+                  <Link
+                    href="/myclient/profile"
+                    className="inline-flex items-center justify-center rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-xs font-semibold text-white hover:bg-[color:var(--accent)] transition"
+                  >
+                    Complete Profile
+                  </Link>
+                </div>
+              )}
               {children}
             </main>
           ) : (

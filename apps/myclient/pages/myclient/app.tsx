@@ -80,29 +80,33 @@ export default function MyClientApp() {
       <Head>
         <title>MyClient</title>
       </Head>
-      <div className="mx-auto max-w-5xl space-y-8">
+      <div className="mx-auto max-w-6xl space-y-8">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold text-[color:var(--text)]">Dashboard</h1>
+          <p className="text-sm text-[color:var(--muted)]">Overview of your firm workspace.</p>
+        </div>
         {state.firmId ? (
           <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-            <div className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
+            <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-8 shadow-sm">
               <h2 className="text-lg font-semibold text-white">Today&apos;s Snapshot</h2>
-              <p className="mt-3 text-[color:var(--text-2)]">
+              <p className="mt-3 text-[color:var(--muted)]">
                 Your firm&apos;s latest activity and workload trends will appear here soon.
               </p>
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 {['Active Cases', 'Upcoming Deadlines', 'Client Messages', 'Documents Reviewed'].map((label) => (
                   <div
                     key={label}
-                    className="rounded-2xl border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-sm text-[color:var(--text-2)]"
+                    className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-sm text-[color:var(--muted)]"
                   >
                     <p className="text-white">{label}</p>
-                    <p className="mt-2 text-[color:var(--text-2)]">Coming soon</p>
+                    <p className="mt-2 text-[color:var(--muted-2)]">Coming soon</p>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="space-y-6">
-              <div className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
+              <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-8 shadow-sm">
                 <h2 className="text-lg font-semibold text-white">Quick Actions</h2>
                 <div className="mt-6 grid gap-4">
                   {[
@@ -116,7 +120,7 @@ export default function MyClientApp() {
                     <Link
                       key={item.label}
                       href={item.href}
-                      className="rounded-2xl border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-sm text-[color:var(--text-1)] hover:bg-white/10 transition"
+                      className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-sm text-[color:var(--text)] hover:bg-white/10 transition"
                     >
                       <div className="font-medium text-white">{item.label}</div>
                     </Link>
@@ -124,23 +128,23 @@ export default function MyClientApp() {
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-6 shadow-2xl">
+              <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-white">Open Tasks</h2>
-                  <Link href="/myclient/cases" className="text-xs text-[color:var(--text-2)] hover:text-white transition">
+                  <Link href="/myclient/cases" className="text-xs text-[color:var(--muted)] hover:text-white transition">
                     View cases
                   </Link>
                 </div>
                 {tasksError && <p className="mt-3 text-xs text-red-300">{tasksError}</p>}
                 {openTasks.length === 0 ? (
-                  <p className="mt-4 text-sm text-[color:var(--text-2)]">No open tasks.</p>
+                  <p className="mt-4 text-sm text-[color:var(--muted)]">No open tasks.</p>
                 ) : (
-                  <ul className="mt-4 space-y-3 text-sm text-[color:var(--text-2)]">
+                  <ul className="mt-4 space-y-3 text-sm text-[color:var(--muted)]">
                     {openTasks.map((task) => (
-                      <li key={task.id} className="rounded-xl border border-white/10 bg-[var(--surface-0)] px-3 py-2">
+                      <li key={task.id} className="rounded-xl border border-[color:var(--border)] bg-[var(--surface-0)] px-3 py-2">
                         <div className="flex flex-col gap-1">
                           <p className="text-white">{task.title}</p>
-                          <div className="flex items-center gap-2 text-xs text-[color:var(--text-2)]">
+                          <div className="flex items-center gap-2 text-xs text-[color:var(--muted-2)]">
                             {task.due_date && <span>Due {new Date(task.due_date).toLocaleDateString()}</span>}
                             <Link href={`/myclient/cases/${task.case_id}`} className="hover:text-white">
                               View case
@@ -152,7 +156,7 @@ export default function MyClientApp() {
                   </ul>
                 )}
                 {state.role && (state.role === 'admin' || state.role === 'attorney') && (
-                  <p className="mt-3 text-xs text-[color:var(--text-2)]">
+                  <p className="mt-3 text-xs text-[color:var(--muted-2)]">
                     Add tasks from within a case.
                   </p>
                 )}
@@ -161,21 +165,21 @@ export default function MyClientApp() {
             </div>
           </div>
         ) : (
-          <div className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 text-center shadow-2xl">
+          <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-8 text-center shadow-sm">
             <h2 className="text-2xl font-semibold text-white">No firm linked yet</h2>
-            <p className="mt-3 text-[color:var(--text-2)]">
+            <p className="mt-3 text-[color:var(--muted)]">
               We&apos;re finalizing your access. If you&apos;re stuck, finalize firm access below.
             </p>
             <button
               onClick={handleClaimAccess}
-              className="mt-6 inline-flex items-center justify-center rounded-lg border border-white/15 px-4 py-2 font-semibold text-white hover:bg-white/10 transition"
+              className="mt-6 inline-flex items-center justify-center rounded-lg border border-[color:var(--border)] px-4 py-2 font-semibold text-white hover:bg-white/10 transition"
             >
               Finalize Firm Access
             </button>
             {claimStatus && (
               <p
                 className={`mt-4 text-sm ${
-                  claimStatus.startsWith('Error') ? 'text-red-300' : claimStatus === 'Claimed' ? 'text-green-300' : 'text-[color:var(--text-2)]'
+                  claimStatus.startsWith('Error') ? 'text-red-300' : claimStatus === 'Claimed' ? 'text-green-300' : 'text-[color:var(--muted)]'
                 }`}
               >
                 {claimStatus}

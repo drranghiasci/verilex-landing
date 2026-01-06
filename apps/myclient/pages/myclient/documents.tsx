@@ -276,24 +276,24 @@ export default function DocumentsPage() {
       <Head>
         <title>MyClient | Documents</title>
       </Head>
-      <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
+      <div className="mx-auto max-w-6xl rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-8 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/myclient/app"
-            className="text-sm text-[color:var(--text-2)] hover:text-white transition"
+            className="text-sm text-[color:var(--muted)] hover:text-white transition"
           >
             ← Back
           </Link>
           <h1 className="text-3xl font-semibold text-white">Documents</h1>
         </div>
-        <p className="mt-2 text-sm text-[color:var(--text-2)]">
+        <p className="mt-2 text-sm text-[color:var(--muted)]">
           Firm {state.firmId ? state.firmId.slice(0, 8) : 'No firm'} · Role {state.role ?? 'member'}
         </p>
 
-        {state.loading && <p className="mt-6 text-[color:var(--text-2)]">Loading...</p>}
-        {!state.loading && !state.authed && <p className="mt-6 text-[color:var(--text-2)]">Please sign in.</p>}
+        {state.loading && <p className="mt-6 text-[color:var(--muted)]">Loading...</p>}
+        {!state.loading && !state.authed && <p className="mt-6 text-[color:var(--muted)]">Please sign in.</p>}
         {!state.loading && state.authed && !state.firmId && (
-          <p className="mt-6 text-[color:var(--text-2)]">No firm linked yet.</p>
+          <p className="mt-6 text-[color:var(--muted)]">No firm linked yet.</p>
         )}
 
         {state.authed && state.firmId && (
@@ -303,14 +303,14 @@ export default function DocumentsPage() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search by filename"
-                className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-2 text-sm text-[color:var(--text)] placeholder:text-[color:var(--muted-2)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
               />
               <label htmlFor="docTypeFilter" className="sr-only">Filter by document type</label>
               <select
                 id="docTypeFilter"
                 value={docTypeFilter}
                 onChange={(event) => setDocTypeFilter(event.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
               >
                 <option value="all">Type: All</option>
                 {docTypeOptions.map((option) => (
@@ -323,7 +323,7 @@ export default function DocumentsPage() {
                 value={tagFilter}
                 onChange={(event) => setTagFilter(event.target.value)}
                 placeholder="Filter by tag"
-                className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-2 text-sm text-[color:var(--text)] placeholder:text-[color:var(--muted-2)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
               />
             </div>
 
@@ -338,12 +338,12 @@ export default function DocumentsPage() {
               </div>
             )}
             {actionStatus && (
-              <div className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-sm text-white">
+              <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-2 text-sm text-white">
                 {actionStatus}
               </div>
             )}
             {documentLimitReached && (
-              <div className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-sm text-[color:var(--text-2)]">
+              <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-2 text-sm text-[color:var(--muted)]">
                 {documentLimitCheck.reason} Upgrade to Pro to upload more documents.
                 <Link href="/myclient/upgrade" className="ml-2 text-white underline underline-offset-4">
                   Upgrade
@@ -351,19 +351,19 @@ export default function DocumentsPage() {
               </div>
             )}
             {!canEdit && (
-              <div className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-sm text-[color:var(--text-2)]">
+              <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-2 text-sm text-[color:var(--muted)]">
                 You have read-only access. Please contact your firm admin to manage documents.
               </div>
             )}
 
-            <div className="overflow-hidden rounded-2xl border border-white/10">
+            <div className="overflow-hidden rounded-2xl border border-[color:var(--border)]">
               {loading ? (
-                <p className="px-4 py-6 text-[color:var(--text-2)]">Loading...</p>
+                <p className="px-4 py-6 text-[color:var(--muted)]">Loading...</p>
               ) : filteredDocuments.length === 0 ? (
-                <p className="px-4 py-6 text-[color:var(--text-2)]">No documents uploaded yet.</p>
+                <p className="px-4 py-6 text-[color:var(--muted)]">No documents uploaded yet.</p>
               ) : (
                 <table className="min-w-full divide-y divide-white/10 text-left text-sm">
-                  <thead className="text-[color:var(--text-2)]">
+                  <thead className="text-[color:var(--muted)]">
                     <tr>
                       <th className="px-4 py-3 font-semibold">File</th>
                       <th className="px-4 py-3 font-semibold">Case</th>
@@ -391,7 +391,7 @@ export default function DocumentsPage() {
                                   value={editName}
                                   onChange={(event) => setEditName(event.target.value)}
                                   disabled={!canEdit}
-                                  className="w-full rounded-md border border-white/10 bg-[var(--surface-0)] px-2 py-1 text-sm text-white outline-none"
+                                  className="w-full rounded-md border border-[color:var(--border)] bg-[var(--surface-0)] px-2 py-1 text-sm text-white outline-none"
                                   placeholder="Enter document name"
                                 />
                               ) : (
@@ -399,7 +399,7 @@ export default function DocumentsPage() {
                               )}
                             </td>
                           <td className="px-4 py-3">
-                            <Link href={`/myclient/cases/${doc.case_id}`} className="text-[color:var(--text-2)] hover:text-white">
+                            <Link href={`/myclient/cases/${doc.case_id}`} className="text-[color:var(--muted)] hover:text-white">
                               {caseLabel}
                             </Link>
                           </td>
@@ -409,20 +409,20 @@ export default function DocumentsPage() {
                                 value={editType}
                                 onChange={(event) => setEditType(event.target.value)}
                                 disabled={!canEdit}
-                                className="w-full rounded-md border border-white/10 bg-[var(--surface-0)] px-2 py-1 text-sm text-white outline-none"
+                                className="w-full rounded-md border border-[color:var(--border)] bg-[var(--surface-0)] px-2 py-1 text-sm text-white outline-none"
                                 placeholder="Enter document type"
                               />
                             ) : (
                               doc.doc_type
                             )}
                           </td>
-                          <td className="px-4 py-3 text-[color:var(--text-2)]">
+                          <td className="px-4 py-3 text-[color:var(--muted)]">
                             {editingId === doc.id ? (
                               <input
                                 value={editTags}
                                 onChange={(event) => setEditTags(event.target.value)}
                                 disabled={!canEdit}
-                                className="w-full rounded-md border border-white/10 bg-[var(--surface-0)] px-2 py-1 text-sm text-white outline-none"
+                                className="w-full rounded-md border border-[color:var(--border)] bg-[var(--surface-0)] px-2 py-1 text-sm text-white outline-none"
                                 placeholder="Enter tags (comma-separated)"
                               />
                             ) : (
@@ -432,7 +432,7 @@ export default function DocumentsPage() {
                               </>
                             )}
                           </td>
-                          <td className="px-4 py-3 text-[color:var(--text-2)]">
+                          <td className="px-4 py-3 text-[color:var(--muted)]">
                             {new Date(doc.created_at).toLocaleDateString()}
                           </td>
                           <td className="px-4 py-3 text-right">
@@ -442,13 +442,13 @@ export default function DocumentsPage() {
                                   <button
                                     onClick={() => handleSaveEdit(doc.id)}
                                     disabled={!canEdit}
-                                    className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white disabled:opacity-50"
+                                    className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)] hover:text-white disabled:opacity-50"
                                   >
                                     Save
                                   </button>
                                   <button
                                     onClick={() => setEditingId(null)}
-                                    className="rounded-lg border border-white/10 px-3 py-1.5 text-xs uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                                    className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-xs uppercase tracking-wide text-[color:var(--muted)] hover:text-white"
                                   >
                                     Cancel
                                   </button>
@@ -458,7 +458,7 @@ export default function DocumentsPage() {
                                   {canEdit && (
                                     <button
                                       onClick={() => startEdit(doc)}
-                                      className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                                      className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)] hover:text-white"
                                     >
                                       Rename/Edit
                                     </button>
@@ -466,7 +466,7 @@ export default function DocumentsPage() {
                                   <button
                                     onClick={() => handleDownload(doc.id)}
                                     disabled={downloadId === doc.id}
-                                    className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white disabled:opacity-60"
+                                    className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)] hover:text-white disabled:opacity-60"
                                   >
                                     {downloadId === doc.id ? 'Preparing…' : 'Download'}
                                   </button>

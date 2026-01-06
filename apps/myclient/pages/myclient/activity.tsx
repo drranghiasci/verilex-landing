@@ -109,20 +109,20 @@ export default function ActivityPage() {
       <Head>
         <title>MyClient | Activity</title>
       </Head>
-      <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
+      <div className="mx-auto max-w-6xl rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-8 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Link href="/myclient/app" className="text-sm text-[color:var(--text-2)] hover:text-white transition">
+          <Link href="/myclient/app" className="text-sm text-[color:var(--muted)] hover:text-white transition">
             ← Back
           </Link>
           <h1 className="text-3xl font-semibold text-white">Activity</h1>
         </div>
-        <p className="mt-2 text-sm text-[color:var(--text-2)]">Recent firm activity and exports.</p>
+        <p className="mt-2 text-sm text-[color:var(--muted)]">Recent firm activity and exports.</p>
 
-        {!state.authed && <p className="mt-6 text-[color:var(--text-2)]">Please sign in.</p>}
-        {state.authed && !state.firmId && <p className="mt-6 text-[color:var(--text-2)]">No firm linked yet.</p>}
+        {!state.authed && <p className="mt-6 text-[color:var(--muted)]">Please sign in.</p>}
+        {state.authed && !state.firmId && <p className="mt-6 text-[color:var(--muted)]">No firm linked yet.</p>}
 
         {state.authed && state.firmId && !canExport && (
-          <p className="mt-6 text-[color:var(--text-2)]">Admin only. Contact your admin for access.</p>
+          <p className="mt-6 text-[color:var(--muted)]">Admin only. Contact your admin for access.</p>
         )}
 
         {state.authed && state.firmId && canExport && (
@@ -135,7 +135,7 @@ export default function ActivityPage() {
                 id="rangeDays"
                 value={rangeDays}
                 onChange={(event) => setRangeDays(Number(event.target.value))}
-                className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
               >
                 {RANGE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -145,7 +145,7 @@ export default function ActivityPage() {
               </select>
               <button
                 onClick={handleExport}
-                className="rounded-lg border border-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white"
+                className="rounded-lg border border-[color:var(--border)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)] hover:text-white"
               >
                 Export CSV
               </button>
@@ -157,11 +157,11 @@ export default function ActivityPage() {
               </div>
             )}
 
-            <div className="overflow-hidden rounded-2xl border border-white/10">
+            <div className="overflow-hidden rounded-2xl border border-[color:var(--border)]">
               {loading ? (
-                <p className="px-4 py-6 text-[color:var(--text-2)]">Loading...</p>
+                <p className="px-4 py-6 text-[color:var(--muted)]">Loading...</p>
               ) : rows.length === 0 ? (
-                <p className="px-4 py-6 text-[color:var(--text-2)]">No activity for this range.</p>
+                <p className="px-4 py-6 text-[color:var(--muted)]">No activity for this range.</p>
               ) : (
                 <ul className="divide-y divide-white/10">
                   {rows.map((row) => (
@@ -175,9 +175,9 @@ export default function ActivityPage() {
                           ) : (
                             <p className="text-white">{row.message}</p>
                           )}
-                          <p className="text-xs text-[color:var(--text-2)]">{new Date(row.created_at).toLocaleString()}</p>
+                          <p className="text-xs text-[color:var(--muted-2)]">{new Date(row.created_at).toLocaleString()}</p>
                         </div>
-                        <span className="rounded-full border border-white/15 px-2 py-1 text-xs uppercase tracking-wide text-[color:var(--text-2)]">
+                        <span className="rounded-full border border-[color:var(--border)] px-2 py-1 text-xs uppercase tracking-wide text-[color:var(--muted)]">
                           {row.event_type}
                         </span>
                       </div>

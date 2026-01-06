@@ -84,25 +84,25 @@ export default function ProfilePage() {
       <Head>
         <title>MyClient | Profile</title>
       </Head>
-      <div className="mx-auto max-w-3xl rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
+      <div className="mx-auto max-w-6xl rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-8 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/myclient/app"
-            className="text-sm text-[color:var(--text-2)] hover:text-white transition"
+            className="text-sm text-[color:var(--muted)] hover:text-white transition"
           >
             ← Back
           </Link>
           <h1 className="text-3xl font-semibold text-white">Profile</h1>
         </div>
-        <p className="mt-2 text-sm text-[color:var(--text-2)]">Update your display name for your firm.</p>
+        <p className="mt-2 text-sm text-[color:var(--muted)]">Update your display name for your firm.</p>
 
         {loading ? (
-          <p className="mt-6 text-[color:var(--text-2)]">Loading...</p>
+          <p className="mt-6 text-[color:var(--muted)]">Loading...</p>
         ) : (
           <div className="mt-6 space-y-4">
-            {email && <p className="text-sm text-[color:var(--text-2)]">Signed in as {email}</p>}
+            {email && <p className="text-sm text-[color:var(--muted)]">Signed in as {email}</p>}
             {userId && (
-              <p className="text-sm text-[color:var(--text-2)]">User ID: {userId.slice(0, 8)}</p>
+              <p className="text-sm text-[color:var(--muted)]">User ID: {userId.slice(0, 8)}</p>
             )}
             <label className="block text-sm font-semibold text-white">
               Full name
@@ -110,7 +110,7 @@ export default function ProfilePage() {
                 type="text"
                 value={fullName}
                 onChange={(event) => setFullName(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                className="mt-2 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                 placeholder="Your name"
               />
             </label>

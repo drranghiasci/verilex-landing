@@ -205,32 +205,32 @@ export default function MembersPage() {
       <Head>
         <title>MyClient | Members</title>
       </Head>
-      <div className="mx-auto max-w-3xl rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
+      <div className="mx-auto max-w-6xl rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-8 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/myclient/app"
-            className="text-sm text-[color:var(--text-2)] hover:text-white transition"
+            className="text-sm text-[color:var(--muted)] hover:text-white transition"
           >
             ← Back
           </Link>
           <h1 className="text-3xl font-semibold text-white">Firm Members</h1>
         </div>
-        <p className="mt-2 text-sm text-[color:var(--text-2)]">
+        <p className="mt-2 text-sm text-[color:var(--muted)]">
           Firm {firmLabel} · Role {state.role ?? 'member'}
         </p>
 
-        {state.loading && <p className="mt-6 text-[color:var(--text-2)]">Loading...</p>}
+        {state.loading && <p className="mt-6 text-[color:var(--muted)]">Loading...</p>}
 
         {!state.loading && !state.authed && (
-          <p className="mt-6 text-[color:var(--text-2)]">Please sign in.</p>
+          <p className="mt-6 text-[color:var(--muted)]">Please sign in.</p>
         )}
 
         {!state.loading && state.authed && !state.firmId && (
-          <p className="mt-6 text-[color:var(--text-2)]">No firm linked yet.</p>
+          <p className="mt-6 text-[color:var(--muted)]">No firm linked yet.</p>
         )}
 
         {!state.loading && state.authed && state.firmId && !canManage && (
-          <p className="mt-6 text-[color:var(--text-2)]">
+          <p className="mt-6 text-[color:var(--muted)]">
             Member management is admin-only. Please contact an admin for invites or changes.
           </p>
         )}
@@ -243,11 +243,11 @@ export default function MembersPage() {
 
         {state.authed && state.firmId && canManage && (
           <>
-            <div className="mt-6 rounded-2xl border border-white/10 bg-[var(--surface-1)] p-6">
+          <div className="mt-6 rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-6">
               <h2 className="text-lg font-semibold text-white">Invite team member</h2>
-              <p className="mt-1 text-sm text-[color:var(--text-2)]">Send an invite to join this firm.</p>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">Send an invite to join this firm.</p>
               {memberLimitReached && (
-                <div className="mt-3 rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-[color:var(--text-2)]">
+                <div className="mt-3 rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[color:var(--muted)]">
                   {memberLimitCheck.reason} Upgrade to Pro to invite more members.
                   <Link href="/myclient/upgrade" className="ml-2 text-white underline underline-offset-4">
                     Upgrade
@@ -261,13 +261,13 @@ export default function MembersPage() {
                   onChange={(event) => setInviteEmail(event.target.value)}
                   disabled={memberLimitReached}
                   placeholder="teammate@firm.com"
-                  className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                  className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                 />
                 <select
                   value={inviteRole}
                   onChange={(event) => setInviteRole(event.target.value as 'admin' | 'attorney' | 'staff')}
                   disabled={memberLimitReached}
-                  className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                  className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                 >
                   <option value="admin">Admin</option>
                   <option value="attorney">Attorney</option>
@@ -288,7 +288,7 @@ export default function MembersPage() {
               </p>
             </div>
 
-            <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
+            <div className="mt-6 overflow-hidden rounded-2xl border border-[color:var(--border)]">
               {loading ? (
                 <p className="px-4 py-6 text-[color:var(--text-2)]">Loading...</p>
               ) : members.length === 0 ? (
@@ -313,7 +313,7 @@ export default function MembersPage() {
                             {member.email ?? `ID: ${fallbackId}`}
                           </td>
                           <td className="px-4 py-3">
-                            <span className="rounded-full border border-white/15 bg-[var(--surface-0)] px-2 py-1 text-xs uppercase tracking-wide text-[color:var(--text-2)]">
+                            <span className="rounded-full border border-[color:var(--border)] bg-[var(--surface-0)] px-2 py-1 text-xs uppercase tracking-wide text-[color:var(--muted)]">
                               {member.role}
                             </span>
                           </td>
@@ -330,7 +330,7 @@ export default function MembersPage() {
 
             <p className="mt-4 text-sm text-[color:var(--text-2)]">Names appear once users complete their profile.</p>
 
-            <div className="mt-6 rounded-2xl border border-white/10 bg-[var(--surface-1)] p-6">
+            <div className="mt-6 rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-6">
               <h2 className="text-lg font-semibold text-white">Pending invites</h2>
               {pendingLoading ? (
                 <p className="mt-3 text-sm text-[color:var(--text-2)]">Loading invites…</p>
@@ -339,9 +339,9 @@ export default function MembersPage() {
               ) : (
                 <ul className="mt-3 space-y-2 text-sm text-[color:var(--text-2)]">
                   {pendingInvites.map((invite) => (
-                    <li key={invite.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2">
+                    <li key={invite.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-3 py-2">
                       <span>{invite.email}</span>
-                      <span className="rounded-full border border-white/15 px-2 py-1 text-xs uppercase tracking-wide text-[color:var(--text-2)]">
+                      <span className="rounded-full border border-[color:var(--border)] px-2 py-1 text-xs uppercase tracking-wide text-[color:var(--muted)]">
                         {invite.role}
                       </span>
                       <div className="flex items-center gap-3">
@@ -352,7 +352,7 @@ export default function MembersPage() {
                           type="button"
                           onClick={() => handleResendInvite(invite)}
                           disabled={memberLimitReached}
-                          className="rounded-lg border border-white/15 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white disabled:opacity-60"
+                          className="rounded-lg border border-[color:var(--border)] px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)] hover:text-white disabled:opacity-60"
                         >
                           Resend
                         </button>

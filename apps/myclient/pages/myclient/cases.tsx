@@ -166,32 +166,32 @@ export default function CasesPage() {
       <Head>
         <title>MyClient | Cases</title>
       </Head>
-      <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
-        <div className="sticky top-6 z-10 -mx-8 mb-6 border-b border-white/10 bg-[var(--surface-1)] px-8 pb-6 pt-2">
+      <div className="mx-auto max-w-6xl rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-8 shadow-sm">
+        <div className="sticky top-6 z-10 -mx-8 mb-6 border-b border-[color:var(--border)] bg-[var(--surface-1)] px-8 pb-6 pt-2">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <Link
                 href="/myclient/app"
-                className="text-sm text-[color:var(--text-2)] hover:text-white transition"
+                className="text-sm text-[color:var(--muted)] hover:text-white transition"
               >
                 ← Back
               </Link>
               <h1 className="mt-3 text-3xl font-semibold text-white">Active Cases</h1>
-              <p className="mt-2 text-sm text-[color:var(--text-2)]">Firm {firmLabel}</p>
+              <p className="mt-2 text-sm text-[color:var(--muted)]">Firm {firmLabel}</p>
             </div>
             <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[360px]">
               <input
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
                 placeholder="Search by client, title, or case number"
-                className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-2 text-sm text-[color:var(--text)] placeholder:text-[color:var(--muted-2)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
               />
               <div className="grid gap-3 sm:grid-cols-2">
                 <select
                   aria-label="Filter by status"
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                  className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                 >
                   {STATUS_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -203,7 +203,7 @@ export default function CasesPage() {
                   aria-label="Sort cases by"
                   value={sortBy}
                   onChange={(event) => setSortBy(event.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                  className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                 >
                   {SORT_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -220,7 +220,7 @@ export default function CasesPage() {
                     setStateFilter(event.target.value);
                     setCountyFilter('all');
                   }}
-                  className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                  className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                 >
                   <option value="all">State: All</option>
                   {stateOptions.map((option) => (
@@ -233,7 +233,7 @@ export default function CasesPage() {
                   title="Filter by county"
                   value={countyFilter}
                   onChange={(event) => setCountyFilter(event.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                  className="w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                 >
                   <option value="all">County: All</option>
                   {countyOptions.map((option) => (
@@ -259,7 +259,7 @@ export default function CasesPage() {
                   countyFilter === 'all' &&
                   sortBy === 'last_activity'
                 }
-                className="w-full rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--text-2)] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-lg border border-[color:var(--border)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Clear filters
               </button>
@@ -267,9 +267,9 @@ export default function CasesPage() {
           </div>
         </div>
 
-        {state.loading && <p className="mt-6 text-[color:var(--text-2)]">Loading...</p>}
-        {!state.loading && !state.authed && <p className="mt-6 text-[color:var(--text-2)]">Please sign in.</p>}
-        {!state.loading && state.authed && !state.firmId && <p className="mt-6 text-[color:var(--text-2)]">No firm linked yet.</p>}
+        {state.loading && <p className="mt-6 text-[color:var(--muted)]">Loading...</p>}
+        {!state.loading && !state.authed && <p className="mt-6 text-[color:var(--muted)]">Please sign in.</p>}
+        {!state.loading && state.authed && !state.firmId && <p className="mt-6 text-[color:var(--muted)]">No firm linked yet.</p>}
 
         {queryError && (
           <div className="mt-6 rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">
@@ -280,11 +280,11 @@ export default function CasesPage() {
         {state.authed && state.firmId && (
           <div className="space-y-4">
             {loading ? (
-              <p className="text-[color:var(--text-2)]">Loading...</p>
+              <p className="text-[color:var(--muted)]">Loading...</p>
             ) : filteredCases.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-8 text-center">
+              <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-0)] p-8 text-center">
                 <h2 className="text-xl font-semibold text-white">No cases match your filters.</h2>
-                <p className="mt-2 text-sm text-[color:var(--text-2)]">Start a new case intake to populate your dashboard.</p>
+                <p className="mt-2 text-sm text-[color:var(--muted)]">Start a new case intake to populate your dashboard.</p>
                 <Link
                   href="/myclient/intake"
                   className="mt-4 inline-flex items-center justify-center rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--accent)]"
@@ -301,16 +301,16 @@ export default function CasesPage() {
                   <Link
                     key={row.id}
                     href={`/myclient/cases/${row.id}`}
-                    className="block rounded-2xl border border-white/10 bg-[var(--surface-0)] px-4 py-4 transition hover:bg-white/5"
+                    className="block rounded-2xl border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-4 transition hover:bg-white/5"
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="text-base font-semibold text-white">{displayName}</p>
-                        <p className="mt-1 text-xs text-[color:var(--text-2)]">{subtitle || 'No details yet'}</p>
+                        <p className="mt-1 text-xs text-[color:var(--muted-2)]">{subtitle || 'No details yet'}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className={`rounded-full border px-2 py-1 text-xs uppercase tracking-wide ${statusClass}`}>{row.status}</span>
-                        <span className="text-xs text-[color:var(--text-2)]">{getRelativeTime(row.last_activity_at || row.created_at)}</span>
+                        <span className="text-xs text-[color:var(--muted-2)]">{getRelativeTime(row.last_activity_at || row.created_at)}</span>
                       </div>
                     </div>
                   </Link>

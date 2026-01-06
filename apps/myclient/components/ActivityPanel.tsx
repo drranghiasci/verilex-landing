@@ -18,25 +18,32 @@ export default function ActivityPanel({ open, onClose }: ActivityPanelProps) {
     return () => document.removeEventListener('keydown', handleKey);
   }, [open, onClose]);
 
-  if (!open) return null;
-
   return (
     <>
       <button
         type="button"
         aria-label="Close activity"
-        className="fixed inset-0 z-40 bg-black/40"
+        className={[
+          'fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] transition-opacity',
+          open ? 'opacity-100' : 'pointer-events-none opacity-0',
+        ].join(' ')}
         onClick={onClose}
       />
-      <aside className="fixed right-0 top-0 z-50 h-screen w-full max-w-[420px] border-l border-white/10 bg-[var(--surface-1)] shadow-2xl">
+      <aside
+        aria-label="Activity panel"
+        className={[
+          'fixed right-0 top-16 z-50 h-[calc(100vh-64px)] w-full max-w-[420px] border-l border-[color:var(--border)] bg-[var(--surface-0)] shadow-2xl transition-transform duration-300',
+          open ? 'translate-x-0' : 'translate-x-full pointer-events-none',
+        ].join(' ')}
+      >
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+          <div className="flex items-center justify-between border-b border-[color:var(--border)] px-5 py-4">
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-semibold text-white">Activity</h2>
               <Link
                 href="/myclient/activity"
                 onClick={onClose}
-                className="rounded-lg border border-white/15 px-2.5 py-1 text-xs text-[color:var(--text-2)] hover:text-white"
+                className="rounded-lg border border-white/15 px-2.5 py-1 text-xs text-[color:var(--muted)] hover:text-white"
               >
                 View all
               </Link>
@@ -45,7 +52,7 @@ export default function ActivityPanel({ open, onClose }: ActivityPanelProps) {
               type="button"
               aria-label="Close activity"
               onClick={onClose}
-              className="rounded-lg border border-white/10 p-1.5 text-[color:var(--text-2)] hover:text-white"
+              className="rounded-lg border border-white/10 p-1.5 text-[color:var(--muted)] hover:text-white"
             >
               <X className="h-4 w-4" />
             </button>

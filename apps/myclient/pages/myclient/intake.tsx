@@ -198,35 +198,35 @@ export default function IntakePage() {
       <Head>
         <title>MyClient | New Case Intake</title>
       </Head>
-      <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
+      <div className="mx-auto max-w-6xl rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-8 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/myclient/app"
-            className="text-sm text-[color:var(--text-2)] hover:text-white transition"
+            className="text-sm text-[color:var(--muted)] hover:text-white transition"
           >
             ← Back
           </Link>
           <h1 className="text-3xl font-semibold text-white">New Case Intake</h1>
         </div>
-        <p className="mt-2 text-sm text-[color:var(--text-2)]">
+        <p className="mt-2 text-sm text-[color:var(--muted)]">
           Firm {state.firmId ? state.firmId.slice(0, 8) : 'No firm'} · Role {state.role ?? 'member'}
         </p>
 
-        {state.loading && <p className="mt-6 text-[color:var(--text-2)]">Loading...</p>}
-        {!state.loading && !state.authed && <p className="mt-6 text-[color:var(--text-2)]">Please sign in.</p>}
+        {state.loading && <p className="mt-6 text-[color:var(--muted)]">Loading...</p>}
+        {!state.loading && !state.authed && <p className="mt-6 text-[color:var(--muted)]">Please sign in.</p>}
         {!state.loading && state.authed && !state.firmId && (
-          <p className="mt-6 text-[color:var(--text-2)]">No firm linked yet.</p>
+          <p className="mt-6 text-[color:var(--muted)]">No firm linked yet.</p>
         )}
 
         {state.authed && state.firmId && (
           <form onSubmit={handleSubmit} className="mt-8 space-y-8">
             {isReadOnly && (
-              <div className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-sm text-[color:var(--text-2)]">
+              <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-sm text-[color:var(--muted)]">
                 You have read-only access. Please contact your firm admin to create a case.
               </div>
             )}
             {limitReached && (
-              <div className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-sm text-[color:var(--text-2)]">
+              <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-sm text-[color:var(--muted)]">
                 {limitCheck.reason} Upgrade to Pro to add more cases.
                 <Link href="/myclient/upgrade" className="ml-2 text-white underline underline-offset-4">
                   Upgrade
@@ -243,27 +243,27 @@ export default function IntakePage() {
               <section className="space-y-6">
                 <div>
                   <h2 className="text-lg font-semibold text-white">Client Information</h2>
-                  <p className="mt-1 text-sm text-[color:var(--text-2)]">Who is this case for?</p>
+                  <p className="mt-1 text-sm text-[color:var(--muted)]">Who is this case for?</p>
                 </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="block text-sm text-[color:var(--text-2)]">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block text-sm text-[color:var(--muted)]">
                     First name *
                     <input
                       value={firstName}
                       onChange={(event) => setFirstName(event.target.value)}
                       disabled={isReadOnly}
-                      className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                      className="mt-2 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       required
                     />
                     {fieldErrors.firstName && <span className="mt-1 block text-xs text-red-300">{fieldErrors.firstName}</span>}
                   </label>
-                  <label className="block text-sm text-[color:var(--text-2)]">
+                  <label className="block text-sm text-[color:var(--muted)]">
                     Last name *
                     <input
                       value={lastName}
                       onChange={(event) => setLastName(event.target.value)}
                       disabled={isReadOnly}
-                      className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                      className="mt-2 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       required
                     />
                     {fieldErrors.lastName && <span className="mt-1 block text-xs text-red-300">{fieldErrors.lastName}</span>}
@@ -273,24 +273,24 @@ export default function IntakePage() {
                 <div>
                   <h3 className="text-sm font-semibold text-white">Contact</h3>
                   <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                    <label className="block text-sm text-[color:var(--text-2)]">
+                    <label className="block text-sm text-[color:var(--muted)]">
                       Email (optional)
                       <input
                         type="email"
                         value={email}
                         onChange={(event) => setEmail(event.target.value)}
                         disabled={isReadOnly}
-                        className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                        className="mt-2 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       />
                     </label>
-                    <label className="block text-sm text-[color:var(--text-2)]">
+                    <label className="block text-sm text-[color:var(--muted)]">
                       Phone (optional)
                       <input
                         type="tel"
                         value={phone}
                         onChange={(event) => setPhone(event.target.value)}
                         disabled={isReadOnly}
-                        className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                        className="mt-2 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       />
                     </label>
                   </div>
@@ -300,24 +300,24 @@ export default function IntakePage() {
               <section className="space-y-6">
                 <div>
                   <h2 className="text-lg font-semibold text-white">Matter Details</h2>
-                  <p className="mt-1 text-sm text-[color:var(--text-2)]">Define the case type and tracking basics.</p>
+                  <p className="mt-1 text-sm text-[color:var(--muted)]">Define the case type and tracking basics.</p>
                 </div>
-                <label className="block text-sm text-[color:var(--text-2)]">
+                <label className="block text-sm text-[color:var(--muted)]">
                   Matter type
                   <input
                     value={matterType}
                     onChange={(event) => setMatterType(event.target.value)}
                     disabled={isReadOnly}
-                    className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                    className="mt-2 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                   />
                 </label>
-                <label className="block text-sm text-[color:var(--text-2)]">
+                <label className="block text-sm text-[color:var(--muted)]">
                   Status
                   <select
                     value={status}
                     onChange={(event) => setStatus(event.target.value)}
                     disabled={isReadOnly}
-                    className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                    className="mt-2 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                   >
                     {STATUS_OPTIONS.map((option) => (
                       <option key={option} value={option}>
@@ -326,15 +326,15 @@ export default function IntakePage() {
                     ))}
                   </select>
                 </label>
-                <label className="block text-sm text-[color:var(--text-2)]">
+                <label className="block text-sm text-[color:var(--muted)]">
                   Matter title (optional)
                   <input
                     value={title}
                     onChange={(event) => handleTitleChange(event.target.value)}
                     disabled={isReadOnly}
-                    className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                    className="mt-2 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                   />
-                  <span className="mt-2 block text-xs text-[color:var(--text-2)]">
+                  <span className="mt-2 block text-xs text-[color:var(--muted-2)]">
                     Default title is generated from client + matter type.
                   </span>
                 </label>
@@ -342,40 +342,40 @@ export default function IntakePage() {
                 <div>
                   <h3 className="text-sm font-semibold text-white">Jurisdiction</h3>
                   <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                    <label className="block text-sm text-[color:var(--text-2)]">
+                    <label className="block text-sm text-[color:var(--muted)]">
                       State (optional)
                       <input
                         value={stateField}
                         onChange={(event) => setStateField(event.target.value)}
                         disabled={isReadOnly}
-                        className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                        className="mt-2 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       />
                     </label>
-                    <label className="block text-sm text-[color:var(--text-2)]">
+                    <label className="block text-sm text-[color:var(--muted)]">
                       County (optional)
                       <input
                         value={county}
                         onChange={(event) => setCounty(event.target.value)}
                         disabled={isReadOnly}
-                        className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                        className="mt-2 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       />
                     </label>
-                    <label className="block text-sm text-[color:var(--text-2)]">
+                    <label className="block text-sm text-[color:var(--muted)]">
                       Court name (optional)
                       <input
                         value={courtName}
                         onChange={(event) => setCourtName(event.target.value)}
                         disabled={isReadOnly}
-                        className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                        className="mt-2 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       />
                     </label>
-                    <label className="block text-sm text-[color:var(--text-2)]">
+                    <label className="block text-sm text-[color:var(--muted)]">
                       Case number (optional)
                       <input
                         value={caseNumber}
                         onChange={(event) => setCaseNumber(event.target.value)}
                         disabled={isReadOnly}
-                        className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                        className="mt-2 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       />
                     </label>
                   </div>
@@ -385,13 +385,13 @@ export default function IntakePage() {
 
             <section>
               <h2 className="text-lg font-semibold text-white">Intake Summary</h2>
-              <p className="mt-1 text-sm text-[color:var(--text-2)]">Capture key details for your team.</p>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">Capture key details for your team.</p>
               <textarea
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
                 disabled={isReadOnly}
                 rows={5}
-                className="mt-3 w-full rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                className="mt-3 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
               />
             </section>
 
@@ -403,7 +403,7 @@ export default function IntakePage() {
               >
                 {submitting ? 'Creating…' : 'Create Case'}
               </button>
-              <p className="text-xs text-[color:var(--text-2)]">Your data is secured and isolated to your firm.</p>
+              <p className="text-xs text-[color:var(--muted-2)]">Your data is secured and isolated to your firm.</p>
             </div>
           </form>
         )}
