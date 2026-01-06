@@ -8,6 +8,7 @@ export type CaseTaskRow = {
   description: string | null;
   due_date: string;
   status: string;
+  ribbon_color?: string | null;
   created_at: string | null;
   updated_at: string | null;
   completed_at: string | null;

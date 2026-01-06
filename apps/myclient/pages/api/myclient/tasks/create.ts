@@ -49,6 +49,7 @@ export default async function handler(
     title?: string;
     description?: string | null;
     due_date?: string;
+    ribbon_color?: string | null;
   };
 
   const firmId = typeof body.firmId === 'string' ? body.firmId.trim() : '';
@@ -56,9 +57,15 @@ export default async function handler(
   const title = typeof body.title === 'string' ? body.title.trim() : '';
   const description = typeof body.description === 'string' ? body.description.trim() : null;
   const dueDate = typeof body.due_date === 'string' ? body.due_date.trim() : '';
+  const ribbonColor = typeof body.ribbon_color === 'string' ? body.ribbon_color.trim().toLowerCase() : '';
 
   if (!firmId || !caseId || !title || !dueDate) {
     return res.status(400).json({ ok: false, error: 'Missing required fields' });
+  }
+
+  const allowedColors = ['red', 'orange', 'yellow', 'green', 'blue', 'pink', 'purple'];
+  if (ribbonColor && !allowedColors.includes(ribbonColor)) {
+    return res.status(400).json({ ok: false, error: 'Invalid ribbon color' });
   }
 
   const { data: membershipRows, error: membershipError } = await adminClient
@@ -89,9 +96,10 @@ export default async function handler(
       title,
       description,
       due_date: dueDate,
+      ribbon_color: ribbonColor || null,
       created_by: authData.user.id,
     })
-    .select('id, firm_id, case_id, title, description, due_date, status, created_at, updated_at, completed_at')
+    .select('id, firm_id, case_id, title, description, due_date, status, ribbon_color, created_at, updated_at, completed_at')
     .single();
 
   if (error) {

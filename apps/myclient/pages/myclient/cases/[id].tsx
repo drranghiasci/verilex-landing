@@ -70,6 +70,21 @@ const STATUS_STYLES: Record<string, string> = {
   closed: 'border-slate-400/40 text-slate-200',
 };
 
+const RIBBON_STYLES: Record<string, string> = {
+  red: 'border-l-red-500',
+  orange: 'border-l-orange-500',
+  yellow: 'border-l-yellow-400',
+  green: 'border-l-emerald-500',
+  blue: 'border-l-blue-500',
+  pink: 'border-l-pink-500',
+  purple: 'border-l-purple-500',
+};
+
+function getRibbonClass(color: string | null | undefined) {
+  if (!color) return '';
+  return RIBBON_STYLES[color] ?? '';
+}
+
 function sanitizeFilename(name: string) {
   const trimmed = name.replace(/[/\\]/g, '').trim();
   const safe = trimmed.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -97,6 +112,8 @@ export default function CaseDetailPage() {
   const [tasksError, setTasksError] = useState<string | null>(null);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDue, setNewTaskDue] = useState('');
+  const [newTaskDescription, setNewTaskDescription] = useState('');
+  const [newTaskRibbon, setNewTaskRibbon] = useState('');
   const [taskActionError, setTaskActionError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -374,8 +391,9 @@ export default function CaseDetailPage() {
         firmId: state.firmId,
         caseId: record.id,
         title: newTaskTitle.trim(),
-        description: null,
+        description: newTaskDescription.trim() || null,
         due_date: newTaskDue,
+        ribbon_color: newTaskRibbon || null,
       }),
     });
 
@@ -394,6 +412,8 @@ export default function CaseDetailPage() {
     setTasks((prev) => [data, ...prev]);
     setNewTaskTitle('');
     setNewTaskDue('');
+    setNewTaskDescription('');
+    setNewTaskRibbon('');
     await logActivity(supabase, {
       firm_id: state.firmId,
       case_id: record.id,
@@ -986,6 +1006,30 @@ export default function CaseDetailPage() {
                         Add
                       </button>
                     </div>
+                    <textarea
+                      value={newTaskDescription}
+                      onChange={(event) => setNewTaskDescription(event.target.value)}
+                      placeholder="Description (optional)"
+                      rows={3}
+                      className="mt-3 w-full rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                    />
+                    <label className="mt-3 block text-sm text-[color:var(--text-2)]">
+                      Ribbon color (optional)
+                      <select
+                        value={newTaskRibbon}
+                        onChange={(event) => setNewTaskRibbon(event.target.value)}
+                        className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                      >
+                        <option value="">None</option>
+                        <option value="red">Red</option>
+                        <option value="orange">Orange</option>
+                        <option value="yellow">Yellow</option>
+                        <option value="green">Green</option>
+                        <option value="blue">Blue</option>
+                        <option value="pink">Pink</option>
+                        <option value="purple">Purple</option>
+                      </select>
+                    </label>
                   </div>
                 )}
 
@@ -1000,7 +1044,12 @@ export default function CaseDetailPage() {
                       {tasks
                         .filter((task) => task.status === 'open')
                         .map((task) => (
-                          <li key={task.id} className="flex flex-col gap-2 rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+                          <li
+                            key={task.id}
+                            className={`flex flex-col gap-2 rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2 sm:flex-row sm:items-center sm:justify-between ${
+                              task.ribbon_color ? `border-l-4 ${getRibbonClass(task.ribbon_color)} pl-2` : ''
+                            }`}
+                          >
                             <div>
                               <p className="text-white">{task.title}</p>
                               {task.due_date && <p className="text-xs">Due {new Date(task.due_date).toLocaleDateString()}</p>}
@@ -1028,7 +1077,12 @@ export default function CaseDetailPage() {
                       {tasks
                         .filter((task) => task.status === 'done')
                         .map((task) => (
-                          <li key={task.id} className="flex flex-col gap-2 rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+                          <li
+                            key={task.id}
+                            className={`flex flex-col gap-2 rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2 sm:flex-row sm:items-center sm:justify-between ${
+                              task.ribbon_color ? `border-l-4 ${getRibbonClass(task.ribbon_color)} pl-2` : ''
+                            }`}
+                          >
                             <div>
                               <p className="text-white">{task.title}</p>
                               {task.completed_at && <p className="text-xs">Completed {new Date(task.completed_at).toLocaleDateString()}</p>}

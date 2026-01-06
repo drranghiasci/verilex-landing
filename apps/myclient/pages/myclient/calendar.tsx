@@ -17,6 +17,21 @@ function formatDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
+const RIBBON_STYLES: Record<string, string> = {
+  red: 'border-l-red-500',
+  orange: 'border-l-orange-500',
+  yellow: 'border-l-yellow-400',
+  green: 'border-l-emerald-500',
+  blue: 'border-l-blue-500',
+  pink: 'border-l-pink-500',
+  purple: 'border-l-purple-500',
+};
+
+function getRibbonClass(color: string | null | undefined) {
+  if (!color) return '';
+  return RIBBON_STYLES[color] ?? '';
+}
+
 export default function CalendarPage() {
   const { state } = useFirm();
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
@@ -176,25 +191,38 @@ export default function CalendarPage() {
                   }
                   const key = formatDateKey(date);
                   const dayTasks = tasksByDate.get(key) ?? [];
+                  const visibleTasks = dayTasks.slice(0, 2);
+                  const remainingTasks = dayTasks.length - visibleTasks.length;
                   return (
                     <button
                       key={key}
                       type="button"
                       onClick={() => setSelectedDate(key)}
                       className={[
-                        'h-20 rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] p-2 text-left text-xs transition hover:border-[color:var(--accent-light)]',
+                        'relative h-20 overflow-hidden rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] p-2 text-left text-xs transition hover:border-[color:var(--accent-light)]',
                         selectedDate === key ? 'border-[color:var(--accent-light)]' : '',
                       ].join(' ')}
                     >
-                      <div className="text-[color:var(--muted)]">{date.getDate()}</div>
-                      {dayTasks.slice(0, 2).map((task) => (
-                        <div key={task.id} className="mt-1 truncate text-[color:var(--text)]">
-                          {task.title}
-                        </div>
-                      ))}
-                      {dayTasks.length > 2 && (
-                        <div className="mt-1 text-[color:var(--muted-2)]">+{dayTasks.length - 2} more</div>
-                      )}
+                      <div className="absolute right-2 top-2 text-xs text-[color:var(--muted-2)]">
+                        {date.getDate()}
+                      </div>
+                      <div className="pt-6 space-y-1">
+                        {visibleTasks.map((task) => (
+                          <div
+                            key={task.id}
+                            className={`h-5 truncate rounded-md border border-white/10 bg-[var(--surface-1)] px-2 py-0.5 text-[11px] text-[color:var(--text)] ${
+                              task.ribbon_color ? `border-l-4 ${getRibbonClass(task.ribbon_color)} pl-1.5` : ''
+                            }`}
+                          >
+                            {task.title}
+                          </div>
+                        ))}
+                        {remainingTasks > 0 && (
+                          <div className="h-5 truncate rounded-md border border-white/5 bg-transparent px-2 py-0.5 text-[11px] text-[color:var(--muted-2)]">
+                            +{remainingTasks} more
+                          </div>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
@@ -209,9 +237,14 @@ export default function CalendarPage() {
                   <p className="mt-3 text-sm text-[color:var(--muted)]">No upcoming tasks.</p>
                 ) : (
                   <ul className="mt-3 space-y-3 text-sm text-[color:var(--muted)]">
-                    {upcomingTasks.map((task) => (
-                      <li key={task.id} className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-3 py-2">
-                        <p className="text-white">{task.title}</p>
+                {upcomingTasks.map((task) => (
+                      <li
+                        key={task.id}
+                        className={`rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-3 py-2 ${
+                          task.ribbon_color ? `border-l-4 ${getRibbonClass(task.ribbon_color)} pl-2` : ''
+                        }`}
+                      >
+                        <p className="truncate text-white">{task.title}</p>
                         <p className="text-xs text-[color:var(--muted-2)]">
                           Due {new Date(task.due_date).toLocaleDateString()}
                         </p>
@@ -231,7 +264,12 @@ export default function CalendarPage() {
                 {selectedDate && selectedTasks && selectedTasks.length > 0 && (
                   <ul className="mt-3 space-y-3 text-sm text-[color:var(--muted)]">
                     {selectedTasks.map((task) => (
-                      <li key={task.id} className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-3 py-2">
+                      <li
+                        key={task.id}
+                        className={`rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-3 py-2 ${
+                          task.ribbon_color ? `border-l-4 ${getRibbonClass(task.ribbon_color)} pl-2` : ''
+                        }`}
+                      >
                         <p className="text-white">{task.title}</p>
                         <p className="text-xs text-[color:var(--muted-2)]">
                           Status {task.status}
