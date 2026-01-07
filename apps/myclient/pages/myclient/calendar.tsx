@@ -70,6 +70,31 @@ function toUtcFromTimezone(dateKey: string, timeStr: string, timezone: string) {
   return new Date(utcGuess.getTime() + offset);
 }
 
+function computeRange(
+  view: CalendarView,
+  anchor: Date,
+  monthStart: Date,
+  monthEnd: Date,
+): { start: Date; end: Date } {
+  if (view === 'month') return { start: monthStart, end: monthEnd };
+
+  if (view === 'week') {
+    const d = new Date(anchor);
+    d.setHours(0, 0, 0, 0);
+    const diff = d.getDay();
+    const start = new Date(d);
+    start.setDate(d.getDate() - diff);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return { start, end };
+  }
+
+  const start = new Date(anchor);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  return { start, end };
+}
+
 export default function CalendarPage() {
   const { state } = useFirm();
   const [anchorDate, setAnchorDate] = useState(() => new Date());
@@ -95,20 +120,6 @@ export default function CalendarPage() {
     start.setDate(base.getDate() - base.getDay());
     return start;
   }, [safeAnchor]);
-
-  const rangeStart = useMemo(() => {
-    if (view === 'month') return monthStart;
-    if (view === 'week') return weekStart;
-    return safeAnchor;
-  }, [monthStart, safeAnchor, view, weekStart]);
-
-  const rangeEnd = useMemo(() => {
-    if (view === 'month') return monthEnd;
-    if (view === 'week') {
-      return new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6);
-    }
-    return safeAnchor;
-  }, [monthEnd, safeAnchor, view, weekStart]);
 
   const loadTimezone = async () => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -148,8 +159,14 @@ export default function CalendarPage() {
         return;
       }
 
-      const rangeStartKey = formatDateKeyInTz(rangeStart, timezone);
-      const rangeEndKey = formatDateKeyInTz(rangeEnd, timezone);
+      const { start: rangeStartDate, end: rangeEndDate } = computeRange(
+        view,
+        safeAnchor,
+        monthStart,
+        monthEnd,
+      );
+      const rangeStartKey = formatDateKeyInTz(rangeStartDate, timezone);
+      const rangeEndKey = formatDateKeyInTz(rangeEndDate, timezone);
       const rangeStart = toUtcFromTimezone(rangeStartKey, '00:00', timezone);
       const rangeEnd = toUtcFromTimezone(rangeEndKey, '23:59', timezone);
 
@@ -196,7 +213,7 @@ export default function CalendarPage() {
     return () => {
       mounted = false;
     };
-  }, [state.authed, state.firmId, rangeStart, rangeEnd, timezone]);
+  }, [state.authed, state.firmId, monthStart, monthEnd, view, safeAnchor, timezone]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
