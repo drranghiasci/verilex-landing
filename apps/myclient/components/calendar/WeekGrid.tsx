@@ -6,13 +6,17 @@ type WeekGridProps = {
   onSelectDate: (dateKey: string) => void;
   selectedDate: string | null;
   todayKey: string;
+  getDateKey: (date: Date) => string;
 };
 
-function formatDateKey(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
-
-export default function WeekGrid({ weekStart, tasksByDate, onSelectDate, selectedDate, todayKey }: WeekGridProps) {
+export default function WeekGrid({
+  weekStart,
+  tasksByDate,
+  onSelectDate,
+  selectedDate,
+  todayKey,
+  getDateKey,
+}: WeekGridProps) {
   const days = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(weekStart);
     date.setDate(weekStart.getDate() + index);
@@ -22,7 +26,7 @@ export default function WeekGrid({ weekStart, tasksByDate, onSelectDate, selecte
   return (
     <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-7">
       {days.map((date) => {
-        const key = formatDateKey(date);
+        const key = getDateKey(date);
         const dayTasks = tasksByDate.get(key) ?? [];
         return (
           <button
@@ -43,7 +47,9 @@ export default function WeekGrid({ weekStart, tasksByDate, onSelectDate, selecte
               {dayTasks.length === 0 ? (
                 <p className="text-xs text-[color:var(--muted-2)]">No tasks</p>
               ) : (
-                dayTasks.map((task) => <TaskPill key={task.id} task={task} />)
+                dayTasks.map((task) => (
+                  <TaskPill key={task.id} task={task} timeLabel={task.time_label ?? null} />
+                ))
               )}
             </div>
           </button>

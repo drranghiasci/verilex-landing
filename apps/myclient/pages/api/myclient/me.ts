@@ -3,7 +3,13 @@ import { createClient } from '@supabase/supabase-js';
 
 type MeResponse = {
   ok: boolean;
-  user?: { id: string; email: string | null; full_name: string | null; avatar_url: string | null };
+  user?: {
+    id: string;
+    email: string | null;
+    full_name: string | null;
+    avatar_url: string | null;
+    timezone: string | null;
+  };
   membership?: { firm_id: string; role: string } | null;
   firm?: { name: string | null } | null;
   error?: string;
@@ -47,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   const userId = authData.user.id;
 
-  type ProfileRow = { full_name?: unknown; avatar_url?: unknown } | null;
+  type ProfileRow = { full_name?: unknown; avatar_url?: unknown; timezone?: unknown } | null;
   const { data: profileRow, error: profileError } = await adminClient
     .from('profiles')
     .select('*')
@@ -61,6 +67,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const profile = profileRow as ProfileRow;
   const fullName = typeof profile?.full_name === 'string' ? profile.full_name : null;
   const avatarUrl = typeof profile?.avatar_url === 'string' ? profile.avatar_url : null;
+  const timezone = typeof profile?.timezone === 'string' ? profile.timezone : null;
 
   const { data: membershipRows, error: membershipError } = await adminClient
     .from('firm_members')
@@ -95,6 +102,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       email: authData.user.email ?? null,
       full_name: fullName,
       avatar_url: avatarUrl,
+      timezone,
     },
     membership: membership ? { firm_id: membership.firm_id, role: membership.role } : null,
     firm,

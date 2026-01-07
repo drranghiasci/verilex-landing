@@ -6,6 +6,7 @@ export type CaseTaskRow = {
   case_id: string;
   title: string;
   description: string | null;
+  due_at?: string | null;
   due_date: string;
   due_time?: string | null;
   status: string;

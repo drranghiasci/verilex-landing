@@ -4,6 +4,19 @@ import { createClient } from '@supabase/supabase-js';
 type ErrorResponse = { ok: false; error: string };
 type SuccessResponse = { ok: true; task: unknown };
 
+function toUtcFromTimezone(dateStr: string, timeStr: string, timezone: string) {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  if (!year || !month || !day) return null;
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+  const utcGuess = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0, 0));
+  const tzDate = new Date(
+    utcGuess.toLocaleString('en-US', { timeZone: timezone }),
+  );
+  const offset = utcGuess.getTime() - tzDate.getTime();
+  return new Date(utcGuess.getTime() + offset);
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ErrorResponse | SuccessResponse>,
@@ -48,6 +61,7 @@ export default async function handler(
     caseId?: string;
     title?: string;
     description?: string | null;
+    due_at?: string | null;
     due_date?: string;
     due_time?: string | null;
     ribbon_color?: string | null;
@@ -57,11 +71,12 @@ export default async function handler(
   const caseId = typeof body.caseId === 'string' ? body.caseId.trim() : '';
   const title = typeof body.title === 'string' ? body.title.trim() : '';
   const description = typeof body.description === 'string' ? body.description.trim() : null;
-  const dueDate = typeof body.due_date === 'string' ? body.due_date.trim() : '';
+  const dueAtInput = typeof body.due_at === 'string' ? body.due_at.trim() : '';
+  let dueDate = typeof body.due_date === 'string' ? body.due_date.trim() : '';
   const dueTime = typeof body.due_time === 'string' ? body.due_time.trim() : '';
   const ribbonColor = typeof body.ribbon_color === 'string' ? body.ribbon_color.trim().toLowerCase() : '';
 
-  if (!firmId || !caseId || !title || !dueDate) {
+  if (!firmId || !caseId || !title || (!dueDate && !dueAtInput)) {
     return res.status(400).json({ ok: false, error: 'Missing required fields' });
   }
 
@@ -100,6 +115,38 @@ export default async function handler(
     return res.status(403).json({ ok: false, error: 'Insufficient permissions' });
   }
 
+  const { data: profileRow, error: profileError } = await adminClient
+    .from('profiles')
+    .select('timezone')
+    .eq('id', authData.user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    return res.status(500).json({ ok: false, error: profileError.message });
+  }
+
+  const timezone =
+    typeof profileRow?.timezone === 'string' && profileRow.timezone
+      ? profileRow.timezone
+      : 'America/New_York';
+
+  let dueAtValue: string | null = null;
+  if (dueDate) {
+    const timeValue = dueTime || '12:00';
+    const computed = toUtcFromTimezone(dueDate, timeValue, timezone);
+    if (!computed) {
+      return res.status(400).json({ ok: false, error: 'Invalid due date or time' });
+    }
+    dueAtValue = computed.toISOString();
+  } else if (dueAtInput) {
+    const parsed = new Date(dueAtInput);
+    if (Number.isNaN(parsed.getTime())) {
+      return res.status(400).json({ ok: false, error: 'Invalid due_at value' });
+    }
+    dueAtValue = parsed.toISOString();
+    dueDate = parsed.toISOString().slice(0, 10);
+  }
+
   const { data, error } = await adminClient
     .from('case_tasks')
     .insert({
@@ -107,12 +154,13 @@ export default async function handler(
       case_id: caseId,
       title,
       description,
+      due_at: dueAtValue,
       due_date: dueDate,
       due_time: dueTime || null,
       ribbon_color: ribbonColor || null,
       created_by: authData.user.id,
     })
-    .select('id, firm_id, case_id, title, description, due_date, due_time, status, ribbon_color, created_at, updated_at, completed_at')
+    .select('id, firm_id, case_id, title, description, due_at, due_date, due_time, status, ribbon_color, created_at, updated_at, completed_at')
     .single();
 
   if (error) {

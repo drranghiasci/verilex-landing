@@ -4,6 +4,8 @@ import TaskPill, { CalendarTask } from './TaskPill';
 type AgendaViewProps = {
   dateKey: string;
   tasks: CalendarTask[];
+  todayKey: string;
+  timezone: string;
 };
 
 const START_HOUR = 6;
@@ -17,9 +19,23 @@ function parseMinutes(time: string | null | undefined) {
   return hours * 60 + minutes;
 }
 
-export default function AgendaView({ dateKey, tasks }: AgendaViewProps) {
+function getMinutesInTimezone(date: Date, timezone: string) {
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(date);
+  const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? '0');
+  const minute = Number(parts.find((part) => part.type === 'minute')?.value ?? '0');
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+  return hour * 60 + minute;
+}
+
+export default function AgendaView({ dateKey, tasks, todayKey, timezone }: AgendaViewProps) {
   const [nowOffset, setNowOffset] = useState<number | null>(null);
-  const isToday = dateKey === new Date().toISOString().slice(0, 10);
+  const isToday = dateKey === todayKey;
 
   useEffect(() => {
     if (!isToday) {
@@ -28,10 +44,10 @@ export default function AgendaView({ dateKey, tasks }: AgendaViewProps) {
     }
     const update = () => {
       const now = new Date();
-      const minutes = now.getHours() * 60 + now.getMinutes();
+      const minutes = getMinutesInTimezone(now, timezone);
       const start = START_HOUR * 60;
       const end = END_HOUR * 60;
-      if (minutes < start || minutes > end) {
+      if (minutes === null || minutes < start || minutes > end) {
         setNowOffset(null);
         return;
       }
@@ -45,12 +61,16 @@ export default function AgendaView({ dateKey, tasks }: AgendaViewProps) {
 
   const tasksWithTime = useMemo(() => {
     return tasks
-      .filter((task) => task.due_time)
-      .sort((a, b) => (a.due_time ?? '').localeCompare(b.due_time ?? ''));
+      .filter((task) => task.due_at || task.due_time)
+      .sort((a, b) => {
+        const aTime = a.due_time ?? (a.due_at ? a.due_at : '') ?? '';
+        const bTime = b.due_time ?? (b.due_at ? b.due_at : '') ?? '';
+        return aTime.localeCompare(bTime);
+      });
   }, [tasks]);
 
   const tasksNoTime = useMemo(() => {
-    return tasks.filter((task) => !task.due_time);
+    return tasks.filter((task) => !task.due_time && !task.due_at);
   }, [tasks]);
 
   if (tasks.length === 0) {
@@ -60,7 +80,12 @@ export default function AgendaView({ dateKey, tasks }: AgendaViewProps) {
   return (
     <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-6 shadow-sm">
       <h3 className="text-sm font-semibold text-white">
-        {new Date(dateKey).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+        {new Date(`${dateKey}T00:00:00`).toLocaleDateString(undefined, {
+          weekday: 'long',
+          month: 'short',
+          day: 'numeric',
+          timeZone: timezone,
+        })}
       </h3>
       <div className="mt-4 space-y-6">
         <div className="relative rounded-xl border border-[color:var(--border)] bg-[var(--surface-0)] p-4">
@@ -82,7 +107,9 @@ export default function AgendaView({ dateKey, tasks }: AgendaViewProps) {
             )}
 
             {tasksWithTime.map((task) => {
-              const minutes = parseMinutes(task.due_time);
+              const minutes = task.due_at
+                ? getMinutesInTimezone(new Date(task.due_at), timezone)
+                : parseMinutes(task.due_time);
               if (minutes === null) return null;
               const start = START_HOUR * 60;
               const end = END_HOUR * 60;
@@ -90,7 +117,7 @@ export default function AgendaView({ dateKey, tasks }: AgendaViewProps) {
               const top = ((minutes - start) / (end - start)) * (HOUR_HEIGHT * (END_HOUR - START_HOUR));
               return (
                 <div key={task.id} className="absolute left-14 right-2" style={{ top }}>
-                  <TaskPill task={task} />
+                  <TaskPill task={task} timeLabel={task.time_label ?? null} />
                 </div>
               );
             })}
@@ -102,7 +129,7 @@ export default function AgendaView({ dateKey, tasks }: AgendaViewProps) {
             <p className="text-xs uppercase tracking-wide text-[color:var(--muted-2)]">No time set</p>
             <div className="mt-2 space-y-2">
               {tasksNoTime.map((task) => (
-                <TaskPill key={task.id} task={task} />
+                <TaskPill key={task.id} task={task} timeLabel={task.time_label ?? null} />
               ))}
             </div>
           </div>

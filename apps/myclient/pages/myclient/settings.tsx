@@ -23,6 +23,21 @@ export default function FirmSettingsPage() {
   const [saved, setSaved] = useState(false);
   const [firmName, setFirmName] = useState('');
   const [copied, setCopied] = useState(false);
+  const [profileTimezone, setProfileTimezone] = useState('America/New_York');
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  const timezoneOptions = [
+    'America/New_York',
+    'America/Chicago',
+    'America/Denver',
+    'America/Los_Angeles',
+    'America/Phoenix',
+    'America/Anchorage',
+    'Pacific/Honolulu',
+  ];
 
   useEffect(() => {
     if (!state.loading && !state.authed) {
@@ -59,6 +74,43 @@ export default function FirmSettingsPage() {
       isMounted = false;
     };
   }, [state.authed, state.firmId]);
+
+  useEffect(() => {
+    if (!state.authed) return;
+    let isMounted = true;
+    const loadProfile = async () => {
+      setLoadingProfile(true);
+      setProfileError(null);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        if (isMounted) {
+          setProfileError('Please sign in again.');
+          setLoadingProfile(false);
+        }
+        return;
+      }
+      const res = await fetch('/api/myclient/me', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!isMounted) return;
+      if (!res.ok || !payload.ok) {
+        setProfileError(payload.error || 'Unable to load profile.');
+        setLoadingProfile(false);
+        return;
+      }
+      if (payload.user?.timezone) {
+        setProfileTimezone(payload.user.timezone);
+      }
+      setLoadingProfile(false);
+    };
+    loadProfile();
+    return () => {
+      isMounted = false;
+    };
+  }, [state.authed]);
 
   const handleCopy = async () => {
     if (!firm?.id || !navigator.clipboard) return;
@@ -99,30 +151,41 @@ export default function FirmSettingsPage() {
     setSaving(false);
   };
 
+  const handleSaveTimezone = async () => {
+    setSavingProfile(true);
+    setProfileSaved(false);
+    setProfileError(null);
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) {
+      setProfileError('Please sign in again.');
+      setSavingProfile(false);
+      return;
+    }
+    const res = await fetch('/api/myclient/profile/update', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ timezone: profileTimezone }),
+    });
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok || !payload.ok) {
+      setProfileError(payload.error || 'Unable to update timezone.');
+      setSavingProfile(false);
+      return;
+    }
+    setProfileSaved(true);
+    setSavingProfile(false);
+  };
+
   if (state.loading) {
     return <p className="text-[color:var(--text-2)]">Loading...</p>;
   }
 
   if (!state.authed) {
     return <p className="text-[color:var(--text-2)]">Redirecting to sign in...</p>;
-  }
-
-  if (!canManageMembers(state.role)) {
-    return (
-      <div className="mx-auto max-w-3xl rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8">
-        <Link href="/myclient/app" className="text-sm text-[color:var(--text-2)] hover:text-white transition">
-          ← Back
-        </Link>
-        <h1 className="mt-4 text-2xl font-semibold text-white">Firm Settings</h1>
-        <p className="mt-3 text-sm text-[color:var(--text-2)]">Admin only. Please contact your firm admin.</p>
-        <Link
-          href="/myclient/app"
-          className="mt-6 inline-flex items-center justify-center rounded-lg border border-white/10 px-4 py-2 text-sm text-white hover:bg-white/5"
-        >
-          Return to dashboard
-        </Link>
-      </div>
-    );
   }
 
   return (
@@ -138,65 +201,115 @@ export default function FirmSettingsPage() {
           <h1 className="mt-3 text-3xl font-semibold text-white">Firm Settings</h1>
         </div>
 
-        <section className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
-          <h2 className="text-lg font-semibold text-white">Firm Profile</h2>
-          <p className="mt-2 text-sm text-[color:var(--text-2)]">Update the details that appear across MyClient.</p>
+        {canManageMembers(state.role) ? (
+          <section className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
+            <h2 className="text-lg font-semibold text-white">Firm Profile</h2>
+            <p className="mt-2 text-sm text-[color:var(--text-2)]">Update the details that appear across MyClient.</p>
 
-          {loadingFirm ? (
-            <p className="mt-6 text-sm text-[color:var(--text-2)]">Loading firm profile...</p>
-          ) : firm ? (
-            <div className="mt-6 grid gap-6">
-              <label className="grid gap-2 text-sm text-[color:var(--text-2)]">
-                Firm name
-                <input
-                  value={firmName}
-                  onChange={(event) => setFirmName(event.target.value)}
-                  className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-base text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-                />
-              </label>
+            {loadingFirm ? (
+              <p className="mt-6 text-sm text-[color:var(--text-2)]">Loading firm profile...</p>
+            ) : firm ? (
+              <div className="mt-6 grid gap-6">
+                <label className="grid gap-2 text-sm text-[color:var(--text-2)]">
+                  Firm name
+                  <input
+                    value={firmName}
+                    onChange={(event) => setFirmName(event.target.value)}
+                    className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-base text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                  />
+                </label>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-4">
-                  <p className="text-xs uppercase tracking-wide text-[color:var(--text-2)]">Firm ID</p>
-                  <p className="mt-2 text-sm text-white">{firm.id}</p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-4">
+                    <p className="text-xs uppercase tracking-wide text-[color:var(--text-2)]">Firm ID</p>
+                    <p className="mt-2 text-sm text-white">{firm.id}</p>
+                    <button
+                      type="button"
+                      onClick={handleCopy}
+                      className="mt-3 text-xs text-[color:var(--accent-light)] hover:text-white transition"
+                    >
+                      {copied ? 'Copied' : 'Copy'}
+                    </button>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-4">
+                    <p className="text-xs uppercase tracking-wide text-[color:var(--text-2)]">Created</p>
+                    <p className="mt-2 text-sm text-white">
+                      {new Date(firm.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">
+                    {error}
+                  </div>
+                )}
+                {saved && <p className="text-sm text-emerald-300">Saved</p>}
+
+                <div>
                   <button
                     type="button"
-                    onClick={handleCopy}
-                    className="mt-3 text-xs text-[color:var(--accent-light)] hover:text-white transition"
+                    onClick={handleSave}
+                    disabled={saving || !firmName.trim()}
+                    className="rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {copied ? 'Copied' : 'Copy'}
+                    {saving ? 'Saving...' : 'Save changes'}
                   </button>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-4">
-                  <p className="text-xs uppercase tracking-wide text-[color:var(--text-2)]">Created</p>
-                  <p className="mt-2 text-sm text-white">
-                    {new Date(firm.created_at).toLocaleDateString()}
-                  </p>
-                </div>
               </div>
+            ) : (
+              <p className="mt-6 text-sm text-[color:var(--text-2)]">Firm profile not found.</p>
+            )}
+          </section>
+        ) : (
+          <section className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
+            <h2 className="text-lg font-semibold text-white">Firm Profile</h2>
+            <p className="mt-2 text-sm text-[color:var(--text-2)]">
+              Admin only. Please contact your firm admin for updates.
+            </p>
+          </section>
+        )}
 
-              {error && (
+        <section className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
+          <h2 className="text-lg font-semibold text-white">Timezone</h2>
+          <p className="mt-2 text-sm text-[color:var(--text-2)]">
+            Controls how calendar dates and times are displayed.
+          </p>
+          {loadingProfile ? (
+            <p className="mt-6 text-sm text-[color:var(--text-2)]">Loading timezone...</p>
+          ) : (
+            <div className="mt-6 grid gap-4">
+              <label className="grid gap-2 text-sm text-[color:var(--text-2)]">
+                Timezone
+                <select
+                  value={profileTimezone}
+                  onChange={(event) => setProfileTimezone(event.target.value)}
+                  className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-base text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                >
+                  {timezoneOptions.map((tz) => (
+                    <option key={tz} value={tz}>
+                      {tz}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {profileError && (
                 <div className="rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">
-                  {error}
+                  {profileError}
                 </div>
               )}
-              {saved && (
-                <p className="text-sm text-emerald-300">Saved</p>
-              )}
-
+              {profileSaved && <p className="text-sm text-emerald-300">Saved</p>}
               <div>
                 <button
                   type="button"
-                  onClick={handleSave}
-                  disabled={saving || !firmName.trim()}
+                  onClick={handleSaveTimezone}
+                  disabled={savingProfile}
                   className="rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {saving ? 'Saving...' : 'Save changes'}
+                  {savingProfile ? 'Saving...' : 'Save timezone'}
                 </button>
               </div>
             </div>
-          ) : (
-            <p className="mt-6 text-sm text-[color:var(--text-2)]">Firm profile not found.</p>
           )}
         </section>
 

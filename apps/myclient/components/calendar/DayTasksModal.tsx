@@ -6,10 +6,11 @@ type DayTasksModalProps = {
   open: boolean;
   dateLabel: string;
   tasks: CalendarTask[];
+  timezone: string;
   onClose: () => void;
 };
 
-export default function DayTasksModal({ open, dateLabel, tasks, onClose }: DayTasksModalProps) {
+export default function DayTasksModal({ open, dateLabel, tasks, timezone, onClose }: DayTasksModalProps) {
   if (!open) return null;
 
   return (
@@ -43,9 +44,14 @@ export default function DayTasksModal({ open, dateLabel, tasks, onClose }: DayTa
               <div className="space-y-3">
                 {tasks.map((task) => (
                   <div key={task.id} className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-1)] p-3">
-                    <TaskPill task={task} />
+                    <TaskPill task={task} timeLabel={task.time_label ?? null} />
                     <div className="mt-2 flex items-center justify-between text-xs text-[color:var(--muted-2)]">
-                      <span>Due {new Date(task.due_date).toLocaleDateString()}</span>
+                      <span>
+                        Due{' '}
+                        {new Date(`${task.due_date}T00:00:00`).toLocaleDateString(undefined, {
+                          timeZone: timezone,
+                        })}
+                      </span>
                       <Link href={`/myclient/cases/${task.case_id}`} className="hover:text-white">
                         View case
                       </Link>

@@ -5,22 +5,24 @@ type MonthGridProps = {
   tasksByDate: Map<string, CalendarTask[]>;
   selectedDate: string | null;
   todayKey: string;
+  getDateKey: (date: Date) => string;
   onSelectDate: (dateKey: string) => void;
   onOpenDayModal: (dateKey: string) => void;
+  onQuickAdd?: (dateKey: string) => void;
+  canQuickAdd?: boolean;
   maxVisible: number;
 };
-
-function formatDateKey(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
 
 export default function MonthGrid({
   days,
   tasksByDate,
   selectedDate,
   todayKey,
+  getDateKey,
   onSelectDate,
   onOpenDayModal,
+  onQuickAdd,
+  canQuickAdd,
   maxVisible,
 }: MonthGridProps) {
   return (
@@ -29,7 +31,7 @@ export default function MonthGrid({
         if (!date) {
           return <div key={`empty-${index}`} className="min-h-[120px] rounded-xl bg-transparent" />;
         }
-        const key = formatDateKey(date);
+        const key = getDateKey(date);
         const dayTasks = tasksByDate.get(key) ?? [];
         const visibleTasks = dayTasks.slice(0, maxVisible);
         const remainingTasks = dayTasks.length - visibleTasks.length;
@@ -39,17 +41,31 @@ export default function MonthGrid({
             type="button"
             onClick={() => onSelectDate(key)}
             className={[
-              'relative min-h-[140px] overflow-hidden rounded-xl border border-[color:var(--border)] bg-[var(--surface-0)] p-3 text-left text-xs transition hover:border-[color:var(--accent-light)]',
+              'group relative min-h-[160px] overflow-hidden rounded-xl border border-[color:var(--border)] bg-[var(--surface-0)] p-3 text-left text-xs transition hover:border-[color:var(--accent-light)]',
               selectedDate === key ? 'border-[color:var(--accent-light)]' : '',
               key === todayKey ? 'ring-1 ring-[color:var(--accent-light)]/60' : '',
             ].join(' ')}
           >
+            {onQuickAdd && (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onQuickAdd(key);
+                }}
+                disabled={!canQuickAdd}
+                className="absolute left-2 top-2 rounded-md border border-white/10 bg-[var(--surface-1)] px-2 py-0.5 text-[10px] text-[color:var(--muted)] opacity-0 transition group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-30"
+                title={canQuickAdd ? 'Add task' : 'Admin/Attorney only'}
+              >
+                + Task
+              </button>
+            )}
             <div className="absolute right-3 top-2 text-xs text-[color:var(--muted-2)]">
               {date.getDate()}
             </div>
-            <div className="pt-6 space-y-1">
+            <div className="space-y-1 pt-7">
               {visibleTasks.map((task) => (
-                <TaskPill key={task.id} task={task} dense />
+                <TaskPill key={task.id} task={task} dense timeLabel={task.time_label ?? null} />
               ))}
               {remainingTasks > 0 && (
                 <button

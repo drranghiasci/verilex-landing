@@ -6,6 +6,8 @@ export type CalendarTask = CaseTaskRow & {
   title: string;
   due_date: string;
   ribbon_color?: string | null;
+  due_at?: string | null;
+  time_label?: string | null;
 };
 
 const RIBBON_STYLES: Record<string, string> = {
@@ -27,6 +29,7 @@ type TaskPillProps = {
   task: CalendarTask;
   dense?: boolean;
   showTime?: boolean;
+  timeLabel?: string | null;
 };
 
 function formatTimeLabel(value?: string | null) {
@@ -38,17 +41,18 @@ function formatTimeLabel(value?: string | null) {
   return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
-export default function TaskPill({ task, dense, showTime = true }: TaskPillProps) {
+export default function TaskPill({ task, dense, showTime = true, timeLabel }: TaskPillProps) {
   const ribbonClass = task.ribbon_color ? `border-l-4 ${getRibbonClass(task.ribbon_color)} pl-1.5` : '';
   const heightClass = dense ? 'h-6 text-[11px]' : 'h-7 text-xs';
-  const timeLabel = showTime && !dense ? formatTimeLabel(task.due_time) : null;
+  const resolvedTimeLabel =
+    showTime ? timeLabel ?? task.time_label ?? formatTimeLabel(task.due_time) : null;
 
   return (
     <Link
       href={`/myclient/cases/${task.case_id}`}
       className={`flex items-center truncate rounded-md border border-white/10 bg-[var(--surface-1)] px-2 ${heightClass} text-[color:var(--text)] hover:text-white ${ribbonClass}`}
     >
-      {timeLabel ? `${timeLabel} · ${task.title}` : task.title}
+      {resolvedTimeLabel ? `${resolvedTimeLabel} · ${task.title}` : task.title}
     </Link>
   );
 }
