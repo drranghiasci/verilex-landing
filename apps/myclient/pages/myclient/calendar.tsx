@@ -112,7 +112,7 @@ export default function CalendarPage() {
   }, []);
 
   const tasksByDate = useMemo(() => {
-    const map = new Map<string, CaseTaskRow[]>();
+    const map = new Map<string, CalendarTask[]>();
     tasks.forEach((task) => {
       const key = task.due_date;
       const list = map.get(key) ?? [];
