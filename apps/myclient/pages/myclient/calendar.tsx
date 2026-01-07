@@ -228,17 +228,17 @@ export default function CalendarPage() {
 
   const monthDays = useMemo(() => {
     const days: Array<Date | null> = [];
-    const start = startOfMonth(anchorDate);
+    const start = startOfMonth(safeAnchor);
     const startWeekday = start.getDay();
     for (let i = 0; i < startWeekday; i += 1) {
       days.push(null);
     }
-    const totalDays = endOfMonth(anchorDate).getDate();
+    const totalDays = endOfMonth(safeAnchor).getDate();
     for (let day = 1; day <= totalDays; day += 1) {
-      days.push(new Date(anchorDate.getFullYear(), anchorDate.getMonth(), day));
+      days.push(new Date(safeAnchor.getFullYear(), safeAnchor.getMonth(), day));
     }
     return days;
-  }, [anchorDate]);
+  }, [safeAnchor]);
 
   const upcomingTasks = useMemo(() => {
     const today = new Date();
@@ -261,7 +261,7 @@ export default function CalendarPage() {
 
   const headerTitle = useMemo(() => {
     if (view === 'month') {
-      return anchorDate.toLocaleString('default', { month: 'long', year: 'numeric', timeZone: timezone });
+      return safeAnchor.toLocaleString('default', { month: 'long', year: 'numeric', timeZone: timezone });
     }
     if (view === 'week') {
       const weekDate = new Date(weekStart);
@@ -273,7 +273,7 @@ export default function CalendarPage() {
       })}`;
     }
     if (view === 'day') {
-      return anchorDate.toLocaleDateString(undefined, {
+      return safeAnchor.toLocaleDateString(undefined, {
         weekday: 'long',
         month: 'long',
         day: 'numeric',
@@ -281,16 +281,16 @@ export default function CalendarPage() {
         timeZone: timezone,
       });
     }
-    const isToday = formatDateKeyInTz(anchorDate, timezone) === todayKey;
+    const isToday = formatDateKeyInTz(safeAnchor, timezone) === todayKey;
     return isToday
       ? "Today's Agenda"
-      : `${anchorDate.toLocaleDateString(undefined, {
+      : `${safeAnchor.toLocaleDateString(undefined, {
           month: 'long',
           day: 'numeric',
           year: 'numeric',
           timeZone: timezone,
         })} Agenda`;
-  }, [anchorDate, todayKey, view, weekStart, timezone]);
+  }, [safeAnchor, todayKey, view, weekStart, timezone]);
 
   const setAnchor = (date: Date) => {
     setAnchorDate(date);
@@ -304,7 +304,7 @@ export default function CalendarPage() {
   };
 
   const handlePrev = () => {
-    const next = new Date(anchorDate);
+    const next = new Date(safeAnchor);
     if (view === 'month') {
       next.setMonth(next.getMonth() - 1);
       next.setDate(1);
@@ -317,7 +317,7 @@ export default function CalendarPage() {
   };
 
   const handleNext = () => {
-    const next = new Date(anchorDate);
+    const next = new Date(safeAnchor);
     if (view === 'month') {
       next.setMonth(next.getMonth() + 1);
       next.setDate(1);
