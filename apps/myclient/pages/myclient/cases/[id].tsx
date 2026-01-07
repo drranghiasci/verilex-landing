@@ -91,6 +91,15 @@ function sanitizeFilename(name: string) {
   return safe.length > 0 ? safe : 'document';
 }
 
+function formatTimeLabel(value: string | null | undefined) {
+  if (!value) return null;
+  const [hours, minutes] = value.split(':').map(Number);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return value;
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+  return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
 export default function CaseDetailPage() {
   const router = useRouter();
   const { state } = useFirm();
@@ -112,6 +121,7 @@ export default function CaseDetailPage() {
   const [tasksError, setTasksError] = useState<string | null>(null);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDue, setNewTaskDue] = useState('');
+  const [newTaskDueTime, setNewTaskDueTime] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskRibbon, setNewTaskRibbon] = useState('');
   const [taskActionError, setTaskActionError] = useState<string | null>(null);
@@ -359,6 +369,26 @@ export default function CaseDetailPage() {
     loadTasks();
   }, [activeTab, loadTasks]);
 
+  const openTasks = useMemo(() => {
+    return tasks
+      .filter((task) => task.status === 'open')
+      .sort((a, b) => {
+        const aTime = a.due_time ? a.due_time : '99:99';
+        const bTime = b.due_time ? b.due_time : '99:99';
+        return aTime.localeCompare(bTime);
+      });
+  }, [tasks]);
+
+  const completedTasks = useMemo(() => {
+    return tasks
+      .filter((task) => task.status === 'done')
+      .sort((a, b) => {
+        const aTime = a.due_time ? a.due_time : '99:99';
+        const bTime = b.due_time ? b.due_time : '99:99';
+        return aTime.localeCompare(bTime);
+      });
+  }, [tasks]);
+
   const handleAddTask = async () => {
     setTaskActionError(null);
     if (!newTaskTitle.trim()) {
@@ -393,6 +423,7 @@ export default function CaseDetailPage() {
         title: newTaskTitle.trim(),
         description: newTaskDescription.trim() || null,
         due_date: newTaskDue,
+        due_time: newTaskDueTime.trim() || null,
         ribbon_color: newTaskRibbon || null,
       }),
     });
@@ -412,6 +443,7 @@ export default function CaseDetailPage() {
     setTasks((prev) => [data, ...prev]);
     setNewTaskTitle('');
     setNewTaskDue('');
+    setNewTaskDueTime('');
     setNewTaskDescription('');
     setNewTaskRibbon('');
     await logActivity(supabase, {
@@ -986,7 +1018,7 @@ export default function CaseDetailPage() {
                 {canEdit && (
                   <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-4">
                     <h3 className="text-sm font-semibold text-white">Add task</h3>
-                    <div className="mt-3 grid gap-3 sm:grid-cols-[2fr_1fr_auto]">
+                    <div className="mt-3 grid gap-3 sm:grid-cols-[2fr_1fr_1fr_auto]">
                       <input
                         value={newTaskTitle}
                         onChange={(event) => setNewTaskTitle(event.target.value)}
@@ -997,6 +1029,12 @@ export default function CaseDetailPage() {
                         type="date"
                         value={newTaskDue}
                         onChange={(event) => setNewTaskDue(event.target.value)}
+                        className="w-full rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                      />
+                      <input
+                        type="time"
+                        value={newTaskDueTime}
+                        onChange={(event) => setNewTaskDueTime(event.target.value)}
                         className="w-full rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2 text-sm text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                       />
                       <button
@@ -1037,13 +1075,11 @@ export default function CaseDetailPage() {
                   <h3 className="text-sm font-semibold text-white">Open tasks</h3>
                   {tasksLoading ? (
                     <p className="mt-3 text-sm text-[color:var(--text-2)]">Loading tasks...</p>
-                  ) : tasks.filter((task) => task.status === 'open').length === 0 ? (
+                  ) : openTasks.length === 0 ? (
                     <p className="mt-3 text-sm text-[color:var(--text-2)]">No open tasks.</p>
                   ) : (
                     <ul className="mt-3 space-y-2 text-sm text-[color:var(--text-2)]">
-                      {tasks
-                        .filter((task) => task.status === 'open')
-                        .map((task) => (
+                      {openTasks.map((task) => (
                           <li
                             key={task.id}
                             className={`flex flex-col gap-2 rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2 sm:flex-row sm:items-center sm:justify-between ${
@@ -1052,7 +1088,10 @@ export default function CaseDetailPage() {
                           >
                             <div>
                               <p className="text-white">{task.title}</p>
-                              {task.due_date && <p className="text-xs">Due {new Date(task.due_date).toLocaleDateString()}</p>}
+                              <p className="text-xs">
+                                Due {new Date(task.due_date).toLocaleDateString()}
+                                {task.due_time ? ` · ${formatTimeLabel(task.due_time)}` : ''}
+                              </p>
                             </div>
                             {canEdit && (
                               <button
@@ -1063,20 +1102,18 @@ export default function CaseDetailPage() {
                               </button>
                             )}
                           </li>
-                        ))}
+                      ))}
                     </ul>
                   )}
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-4">
                   <h3 className="text-sm font-semibold text-white">Completed</h3>
-                  {tasks.filter((task) => task.status === 'done').length === 0 ? (
+                  {completedTasks.length === 0 ? (
                     <p className="mt-3 text-sm text-[color:var(--text-2)]">No completed tasks.</p>
                   ) : (
                     <ul className="mt-3 space-y-2 text-sm text-[color:var(--text-2)]">
-                      {tasks
-                        .filter((task) => task.status === 'done')
-                        .map((task) => (
+                      {completedTasks.map((task) => (
                           <li
                             key={task.id}
                             className={`flex flex-col gap-2 rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2 sm:flex-row sm:items-center sm:justify-between ${
@@ -1085,7 +1122,12 @@ export default function CaseDetailPage() {
                           >
                             <div>
                               <p className="text-white">{task.title}</p>
-                              {task.completed_at && <p className="text-xs">Completed {new Date(task.completed_at).toLocaleDateString()}</p>}
+                              {task.completed_at && (
+                                <p className="text-xs">
+                                  Completed {new Date(task.completed_at).toLocaleDateString()}
+                                  {task.due_time ? ` · ${formatTimeLabel(task.due_time)}` : ''}
+                                </p>
+                              )}
                             </div>
                             {canEdit && (
                               <button
@@ -1096,7 +1138,7 @@ export default function CaseDetailPage() {
                               </button>
                             )}
                           </li>
-                        ))}
+                      ))}
                     </ul>
                   )}
                 </div>

@@ -4,6 +4,7 @@ type MonthGridProps = {
   days: Array<Date | null>;
   tasksByDate: Map<string, CalendarTask[]>;
   selectedDate: string | null;
+  todayKey: string;
   onSelectDate: (dateKey: string) => void;
   onOpenDayModal: (dateKey: string) => void;
   maxVisible: number;
@@ -17,6 +18,7 @@ export default function MonthGrid({
   days,
   tasksByDate,
   selectedDate,
+  todayKey,
   onSelectDate,
   onOpenDayModal,
   maxVisible,
@@ -39,6 +41,7 @@ export default function MonthGrid({
             className={[
               'relative min-h-[140px] overflow-hidden rounded-xl border border-[color:var(--border)] bg-[var(--surface-0)] p-3 text-left text-xs transition hover:border-[color:var(--accent-light)]',
               selectedDate === key ? 'border-[color:var(--accent-light)]' : '',
+              key === todayKey ? 'ring-1 ring-[color:var(--accent-light)]/60' : '',
             ].join(' ')}
           >
             <div className="absolute right-3 top-2 text-xs text-[color:var(--muted-2)]">

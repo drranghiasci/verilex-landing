@@ -5,13 +5,14 @@ type WeekGridProps = {
   tasksByDate: Map<string, CalendarTask[]>;
   onSelectDate: (dateKey: string) => void;
   selectedDate: string | null;
+  todayKey: string;
 };
 
 function formatDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-export default function WeekGrid({ weekStart, tasksByDate, onSelectDate, selectedDate }: WeekGridProps) {
+export default function WeekGrid({ weekStart, tasksByDate, onSelectDate, selectedDate, todayKey }: WeekGridProps) {
   const days = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(weekStart);
     date.setDate(weekStart.getDate() + index);
@@ -31,6 +32,7 @@ export default function WeekGrid({ weekStart, tasksByDate, onSelectDate, selecte
             className={[
               'min-h-[220px] rounded-xl border border-[color:var(--border)] bg-[var(--surface-0)] p-3 text-left transition hover:border-[color:var(--accent-light)]',
               selectedDate === key ? 'border-[color:var(--accent-light)]' : '',
+              key === todayKey ? 'ring-1 ring-[color:var(--accent-light)]/60' : '',
             ].join(' ')}
           >
             <div className="flex items-center justify-between text-xs text-[color:var(--muted-2)]">

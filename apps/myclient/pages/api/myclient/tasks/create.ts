@@ -49,6 +49,7 @@ export default async function handler(
     title?: string;
     description?: string | null;
     due_date?: string;
+    due_time?: string | null;
     ribbon_color?: string | null;
   };
 
@@ -57,10 +58,21 @@ export default async function handler(
   const title = typeof body.title === 'string' ? body.title.trim() : '';
   const description = typeof body.description === 'string' ? body.description.trim() : null;
   const dueDate = typeof body.due_date === 'string' ? body.due_date.trim() : '';
+  const dueTime = typeof body.due_time === 'string' ? body.due_time.trim() : '';
   const ribbonColor = typeof body.ribbon_color === 'string' ? body.ribbon_color.trim().toLowerCase() : '';
 
   if (!firmId || !caseId || !title || !dueDate) {
     return res.status(400).json({ ok: false, error: 'Missing required fields' });
+  }
+
+  if (dueTime && !/^\d{2}:\d{2}$/.test(dueTime)) {
+    return res.status(400).json({ ok: false, error: 'Invalid due_time format' });
+  }
+  if (dueTime) {
+    const [hours, minutes] = dueTime.split(':').map(Number);
+    if (Number.isNaN(hours) || Number.isNaN(minutes) || hours > 23 || minutes > 59) {
+      return res.status(400).json({ ok: false, error: 'Invalid due_time value' });
+    }
   }
 
   const allowedColors = ['red', 'orange', 'yellow', 'green', 'blue', 'pink', 'purple'];
@@ -96,10 +108,11 @@ export default async function handler(
       title,
       description,
       due_date: dueDate,
+      due_time: dueTime || null,
       ribbon_color: ribbonColor || null,
       created_by: authData.user.id,
     })
-    .select('id, firm_id, case_id, title, description, due_date, status, ribbon_color, created_at, updated_at, completed_at')
+    .select('id, firm_id, case_id, title, description, due_date, due_time, status, ribbon_color, created_at, updated_at, completed_at')
     .single();
 
   if (error) {

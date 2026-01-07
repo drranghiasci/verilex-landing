@@ -66,7 +66,7 @@ export default async function handler(
 
   let query = adminClient
     .from('case_tasks')
-    .select('id, firm_id, case_id, title, description, due_date, status, ribbon_color, created_at, updated_at, completed_at, created_by')
+    .select('id, firm_id, case_id, title, description, due_date, due_time, status, ribbon_color, created_at, updated_at, completed_at, created_by')
     .eq('firm_id', firmId);
 
   if (typeof caseId === 'string' && caseId) {

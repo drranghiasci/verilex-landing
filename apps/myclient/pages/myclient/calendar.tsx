@@ -23,37 +23,23 @@ function formatDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-const RIBBON_STYLES: Record<string, string> = {
-  red: 'border-l-red-500',
-  orange: 'border-l-orange-500',
-  yellow: 'border-l-yellow-400',
-  green: 'border-l-emerald-500',
-  blue: 'border-l-blue-500',
-  pink: 'border-l-pink-500',
-  purple: 'border-l-purple-500',
-};
-
-function getRibbonClass(color: string | null | undefined) {
-  if (!color) return '';
-  return RIBBON_STYLES[color] ?? '';
-}
-
 type CalendarView = 'month' | 'week' | 'day' | 'agenda';
 
 const MAX_VISIBLE_TASKS = 3;
 
 export default function CalendarPage() {
   const { state } = useFirm();
-  const [currentMonth, setCurrentMonth] = useState(() => new Date());
+  const [anchorDate, setAnchorDate] = useState(() => new Date());
   const [tasks, setTasks] = useState<CalendarTask[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(formatDateKey(new Date()));
   const [view, setView] = useState<CalendarView>('month');
   const [modalDate, setModalDate] = useState<string | null>(null);
 
-  const monthStart = useMemo(() => startOfMonth(currentMonth), [currentMonth]);
-  const monthEnd = useMemo(() => endOfMonth(currentMonth), [currentMonth]);
+  const monthStart = useMemo(() => startOfMonth(anchorDate), [anchorDate]);
+  const monthEnd = useMemo(() => endOfMonth(anchorDate), [anchorDate]);
+  const todayKey = formatDateKey(new Date());
 
   useEffect(() => {
     if (!state.authed || !state.firmId) return;
@@ -119,29 +105,37 @@ export default function CalendarPage() {
       list.push(task);
       map.set(key, list);
     });
+    map.forEach((list, key) => {
+      const sorted = [...list].sort((a, b) => {
+        const aTime = a.due_time ? a.due_time : '99:99';
+        const bTime = b.due_time ? b.due_time : '99:99';
+        return aTime.localeCompare(bTime);
+      });
+      map.set(key, sorted);
+    });
     return map;
   }, [tasks]);
 
   const monthDays = useMemo(() => {
     const days: Array<Date | null> = [];
-    const start = startOfMonth(currentMonth);
+    const start = startOfMonth(anchorDate);
     const startWeekday = start.getDay();
     for (let i = 0; i < startWeekday; i += 1) {
       days.push(null);
     }
-    const totalDays = endOfMonth(currentMonth).getDate();
+    const totalDays = endOfMonth(anchorDate).getDate();
     for (let day = 1; day <= totalDays; day += 1) {
-      days.push(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day));
+      days.push(new Date(anchorDate.getFullYear(), anchorDate.getMonth(), day));
     }
     return days;
-  }, [currentMonth]);
+  }, [anchorDate]);
 
   const weekStart = useMemo(() => {
-    const base = selectedDate ? new Date(selectedDate) : new Date();
+    const base = anchorDate;
     const start = new Date(base);
     start.setDate(base.getDate() - base.getDay());
     return start;
-  }, [selectedDate]);
+  }, [anchorDate]);
 
   const upcomingTasks = useMemo(() => {
     const today = new Date();
@@ -159,6 +153,60 @@ export default function CalendarPage() {
     if (!selectedDate) return null;
     return tasksByDate.get(selectedDate) ?? [];
   }, [selectedDate, tasksByDate]);
+
+  const headerTitle = useMemo(() => {
+    if (view === 'month') {
+      return anchorDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+    }
+    if (view === 'week') {
+      const weekDate = new Date(weekStart);
+      return `The Week of ${weekDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}`;
+    }
+    if (view === 'day') {
+      return anchorDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    }
+    const isToday = formatDateKey(anchorDate) === todayKey;
+    return isToday
+      ? "Today's Agenda"
+      : `${anchorDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })} Agenda`;
+  }, [anchorDate, todayKey, view, weekStart]);
+
+  const setAnchor = (date: Date) => {
+    setAnchorDate(date);
+    setSelectedDate(formatDateKey(date));
+  };
+
+  const handleSelectDate = (dateKey: string) => {
+    const next = new Date(dateKey);
+    if (Number.isNaN(next.getTime())) return;
+    setAnchor(next);
+  };
+
+  const handlePrev = () => {
+    const next = new Date(anchorDate);
+    if (view === 'month') {
+      next.setMonth(next.getMonth() - 1);
+      next.setDate(1);
+    } else if (view === 'week') {
+      next.setDate(next.getDate() - 7);
+    } else {
+      next.setDate(next.getDate() - 1);
+    }
+    setAnchor(next);
+  };
+
+  const handleNext = () => {
+    const next = new Date(anchorDate);
+    if (view === 'month') {
+      next.setMonth(next.getMonth() + 1);
+      next.setDate(1);
+    } else if (view === 'week') {
+      next.setDate(next.getDate() + 7);
+    } else {
+      next.setDate(next.getDate() + 1);
+    }
+    setAnchor(next);
+  };
 
   return (
     <>
@@ -187,24 +235,31 @@ export default function CalendarPage() {
 
         {state.authed && state.firmId && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] px-5 py-4 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}
-                className="rounded-lg border border-[color:var(--border)] px-3 py-1 text-xs text-[color:var(--muted)] hover:text-white"
-              >
-                Prev
-              </button>
-              <h2 className="text-lg font-semibold text-white">
-                {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
-                className="rounded-lg border border-[color:var(--border)] px-3 py-1 text-xs text-[color:var(--muted)] hover:text-white"
-              >
-                Next
-              </button>
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] px-5 py-4 shadow-sm">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  className="rounded-lg border border-[color:var(--border)] px-3 py-1 text-xs text-[color:var(--muted)] hover:text-white"
+                >
+                  Prev
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAnchor(new Date())}
+                  className="rounded-lg border border-[color:var(--border)] px-3 py-1 text-xs text-[color:var(--muted)] hover:text-white"
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="rounded-lg border border-[color:var(--border)] px-3 py-1 text-xs text-[color:var(--muted)] hover:text-white"
+                >
+                  Next
+                </button>
+              </div>
+              <h2 className="text-lg font-semibold text-white">{headerTitle}</h2>
             </div>
 
             {view === 'month' && (
@@ -220,7 +275,8 @@ export default function CalendarPage() {
                   days={monthDays}
                   tasksByDate={tasksByDate}
                   selectedDate={selectedDate}
-                  onSelectDate={setSelectedDate}
+                  todayKey={todayKey}
+                  onSelectDate={handleSelectDate}
                   onOpenDayModal={setModalDate}
                   maxVisible={MAX_VISIBLE_TASKS}
                 />
@@ -234,16 +290,19 @@ export default function CalendarPage() {
                   weekStart={weekStart}
                   tasksByDate={tasksByDate}
                   selectedDate={selectedDate}
-                  onSelectDate={setSelectedDate}
+                  todayKey={todayKey}
+                  onSelectDate={handleSelectDate}
                 />
               </div>
             )}
 
             {view === 'day' && selectedDate && (
-              <DayView dateKey={selectedDate} tasks={selectedTasks ?? []} />
+              <DayView dateKey={selectedDate} tasks={selectedTasks ?? []} todayKey={todayKey} />
             )}
 
-            {view === 'agenda' && <AgendaView tasks={tasks} />}
+            {view === 'agenda' && selectedDate && (
+              <AgendaView dateKey={selectedDate} tasks={selectedTasks ?? []} />
+            )}
 
             <div className="grid gap-6 lg:grid-cols-[1fr_0.85fr]">
               <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-6 shadow-sm">

@@ -26,18 +26,29 @@ function getRibbonClass(color: string | null | undefined) {
 type TaskPillProps = {
   task: CalendarTask;
   dense?: boolean;
+  showTime?: boolean;
 };
 
-export default function TaskPill({ task, dense }: TaskPillProps) {
+function formatTimeLabel(value?: string | null) {
+  if (!value) return null;
+  const [hours, minutes] = value.split(':').map(Number);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return value;
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+  return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+export default function TaskPill({ task, dense, showTime = true }: TaskPillProps) {
   const ribbonClass = task.ribbon_color ? `border-l-4 ${getRibbonClass(task.ribbon_color)} pl-1.5` : '';
   const heightClass = dense ? 'h-6 text-[11px]' : 'h-7 text-xs';
+  const timeLabel = showTime && !dense ? formatTimeLabel(task.due_time) : null;
 
   return (
     <Link
       href={`/myclient/cases/${task.case_id}`}
       className={`flex items-center truncate rounded-md border border-white/10 bg-[var(--surface-1)] px-2 ${heightClass} text-[color:var(--text)] hover:text-white ${ribbonClass}`}
     >
-      {task.title}
+      {timeLabel ? `${timeLabel} · ${task.title}` : task.title}
     </Link>
   );
 }
