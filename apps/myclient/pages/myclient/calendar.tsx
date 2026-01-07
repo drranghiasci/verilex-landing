@@ -87,6 +87,27 @@ export default function CalendarPage() {
   const todayKey = formatDateKeyInTz(new Date(), timezone);
   const canCreateTasks = canEditCases(state.role);
 
+  const weekStart = useMemo(() => {
+    const base = anchorDate;
+    const start = new Date(base);
+    start.setDate(base.getDate() - base.getDay());
+    return start;
+  }, [anchorDate]);
+
+  const rangeStart = useMemo(() => {
+    if (view === 'month') return monthStart;
+    if (view === 'week') return weekStart;
+    return anchorDate;
+  }, [anchorDate, monthStart, view, weekStart]);
+
+  const rangeEnd = useMemo(() => {
+    if (view === 'month') return monthEnd;
+    if (view === 'week') {
+      return new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6);
+    }
+    return anchorDate;
+  }, [anchorDate, monthEnd, view, weekStart]);
+
   const loadTimezone = async () => {
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
@@ -125,21 +146,8 @@ export default function CalendarPage() {
         return;
       }
 
-      const rangeStartDate =
-        view === 'month'
-          ? monthStart
-          : view === 'week'
-            ? weekStart
-            : anchorDate;
-      const rangeEndDate =
-        view === 'month'
-          ? monthEnd
-          : view === 'week'
-            ? new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6)
-            : anchorDate;
-
-      const rangeStartKey = formatDateKeyInTz(rangeStartDate, timezone);
-      const rangeEndKey = formatDateKeyInTz(rangeEndDate, timezone);
+      const rangeStartKey = formatDateKeyInTz(rangeStart, timezone);
+      const rangeEndKey = formatDateKeyInTz(rangeEnd, timezone);
       const rangeStart = toUtcFromTimezone(rangeStartKey, '00:00', timezone);
       const rangeEnd = toUtcFromTimezone(rangeEndKey, '23:59', timezone);
 
@@ -186,7 +194,7 @@ export default function CalendarPage() {
     return () => {
       mounted = false;
     };
-  }, [state.authed, state.firmId, monthStart, monthEnd, view, anchorDate, timezone, weekStart]);
+  }, [state.authed, state.firmId, rangeStart, rangeEnd, timezone]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -228,13 +236,6 @@ export default function CalendarPage() {
       days.push(new Date(anchorDate.getFullYear(), anchorDate.getMonth(), day));
     }
     return days;
-  }, [anchorDate]);
-
-  const weekStart = useMemo(() => {
-    const base = anchorDate;
-    const start = new Date(base);
-    start.setDate(base.getDate() - base.getDay());
-    return start;
   }, [anchorDate]);
 
   const upcomingTasks = useMemo(() => {
