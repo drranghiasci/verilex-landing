@@ -82,31 +82,33 @@ export default function CalendarPage() {
   const [modalDate, setModalDate] = useState<string | null>(null);
   const [quickAddDate, setQuickAddDate] = useState<string | null>(null);
 
-  const monthStart = useMemo(() => startOfMonth(anchorDate), [anchorDate]);
-  const monthEnd = useMemo(() => endOfMonth(anchorDate), [anchorDate]);
-  const todayKey = formatDateKeyInTz(new Date(), timezone);
+  const safeAnchor = anchorDate ?? new Date();
+
+  const monthStart = useMemo(() => startOfMonth(safeAnchor), [safeAnchor]);
+  const monthEnd = useMemo(() => endOfMonth(safeAnchor), [safeAnchor]);
+  const todayKey = formatDateKeyInTz(new Date(), timezone || DEFAULT_TIMEZONE);
   const canCreateTasks = canEditCases(state.role);
 
   const weekStart = useMemo(() => {
-    const base = anchorDate;
+    const base = safeAnchor;
     const start = new Date(base);
     start.setDate(base.getDate() - base.getDay());
     return start;
-  }, [anchorDate]);
+  }, [safeAnchor]);
 
   const rangeStart = useMemo(() => {
     if (view === 'month') return monthStart;
     if (view === 'week') return weekStart;
-    return anchorDate;
-  }, [anchorDate, monthStart, view, weekStart]);
+    return safeAnchor;
+  }, [monthStart, safeAnchor, view, weekStart]);
 
   const rangeEnd = useMemo(() => {
     if (view === 'month') return monthEnd;
     if (view === 'week') {
       return new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6);
     }
-    return anchorDate;
-  }, [anchorDate, monthEnd, view, weekStart]);
+    return safeAnchor;
+  }, [monthEnd, safeAnchor, view, weekStart]);
 
   const loadTimezone = async () => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -128,8 +130,8 @@ export default function CalendarPage() {
   }, [state.authed]);
 
   useEffect(() => {
-    setSelectedDate(formatDateKeyInTz(anchorDate, timezone));
-  }, [anchorDate, timezone]);
+    setSelectedDate(formatDateKeyInTz(safeAnchor, timezone || DEFAULT_TIMEZONE));
+  }, [safeAnchor, timezone]);
 
   useEffect(() => {
     if (!state.authed || !state.firmId) return;
