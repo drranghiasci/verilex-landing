@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local artifact bundles
+verilex-workflow1-artifacts/
+verilex-workflow1-artifacts.zip
+
+# Local artifact bundles
+verilex-workflow1-artifacts/
+verilex-workflow1-artifacts.zip
