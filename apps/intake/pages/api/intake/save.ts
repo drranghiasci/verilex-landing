@@ -73,6 +73,10 @@ type DocumentInput = {
   classification?: Record<string, unknown>;
 };
 
+type NormalizeResult<T> =
+  | { rows: T[] }
+  | { error: string };
+
 type SaveBody = {
   intakeId?: string;
   patch?: Record<string, unknown>;
@@ -81,7 +85,7 @@ type SaveBody = {
   token?: string;
 };
 
-function normalizeMessages(input: unknown) {
+function normalizeMessages(input: unknown): NormalizeResult<MessageInput> {
   if (input === undefined) return { rows: [] as MessageInput[] };
   if (!Array.isArray(input)) return { error: 'messages must be an array' };
 
@@ -112,7 +116,7 @@ function normalizeMessages(input: unknown) {
   return { rows };
 }
 
-function normalizeDocuments(input: unknown) {
+function normalizeDocuments(input: unknown): NormalizeResult<DocumentInput> {
   if (input === undefined) return { rows: [] as DocumentInput[] };
   if (!Array.isArray(input)) return { error: 'documents must be an array' };
 
