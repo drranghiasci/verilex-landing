@@ -78,6 +78,7 @@ type SaveBody = {
   patch?: Record<string, unknown>;
   messages?: MessageInput[];
   documents?: DocumentInput[];
+  token?: string;
 };
 
 function normalizeMessages(input: unknown) {
