@@ -116,7 +116,7 @@ export default function IntakePage() {
     }
 
     if (limitReached) {
-      setError(`${limitCheck.reason} Upgrade to Pro to add more cases.`);
+      setError(`${'reason' in limitCheck ? limitCheck.reason : 'Limit reached.'} Upgrade to Pro to add more cases.`);
       return;
     }
 
@@ -227,7 +227,7 @@ export default function IntakePage() {
             )}
             {limitReached && (
               <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-sm text-[color:var(--muted)]">
-                {limitCheck.reason} Upgrade to Pro to add more cases.
+                {'reason' in limitCheck ? limitCheck.reason : ''} Upgrade to Pro to add more cases.
                 <Link href="/myclient/upgrade" className="ml-2 text-white underline underline-offset-4">
                   Upgrade
                 </Link>
@@ -391,6 +391,7 @@ export default function IntakePage() {
                 onChange={(event) => setNotes(event.target.value)}
                 disabled={isReadOnly}
                 rows={5}
+                placeholder="Enter intake summary here..."
                 className="mt-3 w-full rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-[color:var(--text)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
               />
             </section>

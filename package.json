@@ -7,11 +7,15 @@
   ],
   "scripts": {
     "dev:landing": "npm run dev --workspace apps/landing",
+    "dev:intake": "npm run dev --workspace apps/intake",
     "dev:myclient": "npm run dev --workspace apps/myclient",
     "build:landing": "npm run build --workspace apps/landing",
-    "build:myclient": "npm run build --workspace apps/myclient"
+    "build:intake": "npm run build --workspace apps/intake",
+    "build:myclient": "npm run build --workspace apps/myclient",
+    "test:intake": "playwright test tests/intake/intake-smoke.spec.ts"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.0",
     "supabase": "^2.20.12"
   }
 }
