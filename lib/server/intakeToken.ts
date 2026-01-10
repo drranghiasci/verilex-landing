@@ -4,11 +4,15 @@ if (typeof window !== 'undefined') {
   throw new Error('intakeToken is server-only');
 }
 
-const INTAKE_TOKEN_SECRET = process.env.INTAKE_TOKEN_SECRET;
-
-if (!INTAKE_TOKEN_SECRET) {
-  throw new Error('Missing INTAKE_TOKEN_SECRET');
+function getRequiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing ${name}`);
+  }
+  return value;
 }
+
+const INTAKE_TOKEN_SECRET = getRequiredEnv('INTAKE_TOKEN_SECRET');
 
 const TOKEN_VERSION = 1;
 const DEFAULT_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30;
