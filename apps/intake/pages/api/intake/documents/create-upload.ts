@@ -105,7 +105,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const signed = await createSignedUploadUrl({
       bucket: DOCUMENTS_BUCKET,
       path: storagePath,
-      contentType: typeof body.content_type === 'string' ? body.content_type : undefined,
     });
 
     return res.status(200).json({
