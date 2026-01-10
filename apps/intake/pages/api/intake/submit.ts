@@ -78,6 +78,7 @@ function buildClientDisplayName(payload: Record<string, unknown>): string | null
 type SubmitBody = {
   intakeId?: string;
   patch?: Record<string, unknown>;
+  token?: string;
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
