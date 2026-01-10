@@ -77,6 +77,7 @@ special_needs	boolean	no
 Field	Type	Required
 custody_type_requested	enum	yes
 parenting_plan_exists	boolean	yes
+modification_existing_order	boolean	no
 current_parenting_schedule	string	no
 school_district	string	no
 
@@ -128,6 +129,7 @@ children_exposed	boolean	no
 Field	Type	Required	Notes
 county_of_filing	enum	yes
 residency_duration_months	number	yes
+opposing_resides_in_ga	boolean	no
 venue_confirmed	boolean	no	system-only
 
 AI Flags (system-generated downstream):

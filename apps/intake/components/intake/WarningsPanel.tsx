@@ -4,8 +4,7 @@ import Alert from '../ui/Alert';
 
 export type WarningItem = {
   warning: ConsistencyWarning;
-  sectionId?: string;
-  sectionTitle?: string;
+  sections?: Array<{ id: string; title: string }>;
 };
 
 type WarningsPanelProps = {
@@ -31,14 +30,19 @@ export default function WarningsPanel({
         {items.map((item, index) => (
           <div key={`${item.warning.key}-${index}`} className="warning__item">
             <div className="warning__message">{item.warning.message}</div>
-            {onJump && item.sectionId && (
-              <Button
-                variant="unstyled"
-                className="warning__action"
-                onClick={() => onJump(item.sectionId ?? '')}
-              >
-                Review {item.sectionTitle ?? 'section'}
-              </Button>
+            {onJump && item.sections && item.sections.length > 0 && (
+              <div className="warning__actions">
+                {item.sections.map((section) => (
+                  <Button
+                    key={section.id}
+                    variant="unstyled"
+                    className="warning__action"
+                    onClick={() => onJump(section.id)}
+                  >
+                    Review {section.title}
+                  </Button>
+                ))}
+              </div>
             )}
           </div>
         ))}

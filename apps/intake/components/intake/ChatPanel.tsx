@@ -8,6 +8,7 @@ type ChatStatus = 'idle' | 'saving' | 'saved' | 'error';
 type ChatQuestion = {
   id: string;
   prompt: string;
+  fieldType?: 'text' | 'boolean';
 };
 
 type ChatPanelProps = {
@@ -49,13 +50,15 @@ export default function ChatPanel({
             {questions.map((question) => {
               const status = statuses[question.id] ?? 'idle';
               const value = answers[question.id] ?? '';
+              const placeholder =
+                question.fieldType === 'boolean' ? 'Reply yes or no...' : 'Type your response...';
               return (
                 <div key={question.id} className="chat-panel__question">
                   <div className="chat__prompt">{question.prompt}</div>
                   <Textarea
                     className="chat__input"
                     rows={3}
-                    placeholder="Type your response..."
+                    placeholder={placeholder}
                     value={value}
                     onChange={(event) => onAnswerChange(question.id, event.target.value)}
                     disabled={Boolean(disabled)}

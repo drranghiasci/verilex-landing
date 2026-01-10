@@ -18,6 +18,7 @@ export type StepProps = {
   payload: Record<string, unknown>;
   missingKeys: Set<string>;
   disabled?: boolean;
+  titleOverride?: string;
   documents?: IntakeDocument[];
   token?: string;
   intakeId?: string;
@@ -210,6 +211,7 @@ export function SectionStep({
   payload,
   missingKeys,
   disabled,
+  titleOverride,
   hiddenFields,
   readOnlyFields,
   onFieldChange,
@@ -219,7 +221,7 @@ export function SectionStep({
     return <div className="step">Unknown section.</div>;
   }
 
-  const sectionTitle = getSectionTitle(sectionId);
+  const sectionTitle = titleOverride ?? getSectionTitle(sectionId);
   const isReadOnly = Boolean(disabled);
   const repeatable = isRepeatableSection(sectionId);
 

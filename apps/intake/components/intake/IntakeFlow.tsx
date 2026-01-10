@@ -1,78 +1,30 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { intakeSteps } from './steps';
 import WarningsPanel from './WarningsPanel';
 import ReviewSubmitStep from './steps/ReviewSubmitStep';
 import LockedConfirmation from './LockedConfirmation';
 import ErrorBanner from './ErrorBanner';
-import ChatPanel from './ChatPanel';
+import GuidedChatPanel from './GuidedChatPanel';
+import SafetyBanner from './SafetyBanner';
 import { useIntakeSession } from './useIntakeSession';
 import Button from '../ui/Button';
+import Alert from '../ui/Alert';
 import Card from '../ui/Card';
 import Input from '../ui/Input';
 import { runConsistencyChecks } from '../../../../lib/intake/consistencyChecks';
 import type { ResolveFirmResponse } from '../../../../lib/intake/intakeApi';
+import { intakeSections, validate, validateIntakePayload } from '../../../../lib/intake/validation';
+import { GA_DIVORCE_CUSTODY_V1 } from '../../../../lib/intake/schema/gaDivorceCustodyV1';
 import {
-  formatLabel,
-  getSectionById,
-  getSectionTitle,
-  isRepeatableSection,
-  intakeSections,
-  shouldShowField,
-  validate,
-  validateIntakePayload,
-} from '../../../../lib/intake/validation';
-
-const narrativePrompts: Record<string, string> = {
-  matter_metadata: 'Share the core reason you are starting this intake and the urgency level.',
-  client_identity: 'Add the key identity and contact details for this case.',
-  opposing_party: 'Tell us who the opposing party is and how you typically reach them.',
-  marriage_details: 'Summarize the marriage timeline in your own words.',
-  separation_grounds: 'Describe the separation status and any grounds details.',
-  child_object: 'Tell us about each child involved in this matter.',
-  children_custody: 'Describe the custody situation and any existing plans or orders.',
-  asset_object: 'Outline each asset you want documented.',
-  income_support: 'Explain the income situation and support expectations.',
-  debt_object: 'List any debts that need to be addressed.',
-  domestic_violence_risk: 'Share any safety concerns that should be on our radar.',
-  jurisdiction_venue: 'Explain anything relevant to residency or venue concerns.',
-  prior_legal_actions: 'Summarize any prior legal actions related to this matter.',
-  desired_outcomes: 'Describe your goals and desired outcomes.',
-  evidence_documents: 'List evidence or documents you already have.',
-};
-
-type GuidedQuestion = {
-  id: string;
-  prompt: string;
-  fieldKey?: string;
-  repeatable?: boolean;
-};
-
-function buildGuidedQuestions(sectionId: string, payload: Record<string, unknown>): GuidedQuestion[] {
-  const section = getSectionById(sectionId);
-  if (!section) return [];
-
-  const prompts: GuidedQuestion[] = [];
-  const basePrompt = narrativePrompts[sectionId];
-  if (basePrompt) {
-    prompts.push({ id: `${sectionId}:narrative`, prompt: basePrompt });
-  }
-
-  const repeatable = isRepeatableSection(sectionId);
-  section.fields.forEach((field) => {
-    if (field.isSystem) return;
-    if (field.type !== 'text') return;
-    if (!shouldShowField(field.key, payload)) return;
-    prompts.push({
-      id: `${sectionId}:${field.key}`,
-      prompt: `Please provide ${formatLabel(field.key).toLowerCase()}.`,
-      fieldKey: field.key,
-      repeatable,
-    });
-  });
-
-  return prompts;
-}
+  getCountyWarnings,
+  getEnabledSectionIds,
+  getSafetyBanners,
+  getSectionContextNote,
+  getSectionTitleForMatterType,
+} from '../../../../lib/intake/gating';
+import { GUIDED_PROMPT_LIBRARY } from '../../../../lib/intake/guidedChat/promptLibrary';
+import { missingFieldsForSection } from '../../../../lib/intake/guidedChat/missingFields';
 
 const fieldToSectionId = new Map<string, string>();
 for (const section of intakeSections) {
@@ -81,11 +33,6 @@ for (const section of intakeSections) {
   }
 }
 
-const stepIndexById = new Map<string, number>();
-intakeSteps.forEach((stepItem, index) => {
-  stepIndexById.set(stepItem.id, index);
-});
-
 type IntakeFlowProps = {
   firmSlug: string;
   mode: 'new' | 'resume';
@@ -93,8 +40,6 @@ type IntakeFlowProps = {
   onStatusChange?: (status: 'draft' | 'submitted' | null) => void;
   onFirmResolved?: (firm: ResolveFirmResponse | null) => void;
 };
-
-type ChatStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export default function IntakeFlow({
   firmSlug,
@@ -106,12 +51,9 @@ export default function IntakeFlow({
   const router = useRouter();
   const [uiError, setUiError] = useState<string | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [chatInputs, setChatInputs] = useState<Record<string, string>>({});
-  const [chatStatusById, setChatStatusById] = useState<Record<string, ChatStatus>>({});
   const [hasLoaded, setHasLoaded] = useState(false);
   const [confirmFinal, setConfirmFinal] = useState(false);
-
-  const step = intakeSteps[currentStepIndex] ?? intakeSteps[0];
+  const safetyLoggedRef = useRef<Set<string>>(new Set());
 
   const {
     token,
@@ -133,47 +75,96 @@ export default function IntakeFlow({
   } = useIntakeSession({
     firmSlug,
     token: initialToken,
-    currentStepId: step.id,
+    currentStepId: String(currentStepIndex),
   });
+
+  const matterType = payload.matter_type;
+  const enabledSectionIds = useMemo(() => getEnabledSectionIds(matterType), [matterType]);
+  const visibleSteps = useMemo(
+    () => intakeSteps.filter((stepItem) => enabledSectionIds.has(stepItem.id)),
+    [enabledSectionIds],
+  );
+  const stepIndexById = useMemo(() => {
+    const map = new Map<string, number>();
+    visibleSteps.forEach((stepItem, index) => {
+      map.set(stepItem.id, index);
+    });
+    return map;
+  }, [visibleSteps]);
+
+  const step = visibleSteps[currentStepIndex] ?? visibleSteps[0];
 
   const intakeId = intake?.id ?? null;
   const status = intake?.status ?? null;
   const submittedAt = intake?.submitted_at ?? null;
   const isLocked = locked || status === 'submitted' || Boolean(submittedAt);
 
-  const guidedQuestions = useMemo(
-    () => buildGuidedQuestions(step.id, payload),
-    [step.id, payload],
+  const missingFields = useMemo(
+    () => (step ? missingFieldsForSection(payload, GA_DIVORCE_CUSTODY_V1, step.id) : []),
+    [payload, step],
   );
 
-  const validation = useMemo(() => validateIntakePayload(payload), [payload]);
+  const validation = useMemo(
+    () => validateIntakePayload(payload, enabledSectionIds),
+    [payload, enabledSectionIds],
+  );
   const missingBySection = validation.missingBySection;
-  const validationSummary = useMemo(() => validate(payload), [payload]);
+  const validationSummary = useMemo(
+    () => validate(payload, undefined, enabledSectionIds),
+    [payload, enabledSectionIds],
+  );
   const consistency = useMemo(() => runConsistencyChecks(payload), [payload]);
+  const countyWarnings = useMemo(() => getCountyWarnings(payload), [payload]);
+  const safetyBanners = useMemo(() => getSafetyBanners(payload), [payload]);
+  const [dismissedBanners, setDismissedBanners] = useState<Record<string, boolean>>({});
+  const activeBanners = safetyBanners.filter((banner) => !dismissedBanners[banner.key]);
+
+  const getSafetyMessage = (key: string) => {
+    if (key === 'immediate_safety') {
+      return 'Safety resources banner displayed (immediate_safety_concerns=true).';
+    }
+    if (key === 'dv_present') {
+      return 'Safety resources banner displayed (dv_present=true).';
+    }
+    return `Safety resources banner displayed (${key}).`;
+  };
+
+  const allWarnings = useMemo(
+    () => [...consistency.warnings, ...countyWarnings],
+    [consistency.warnings, countyWarnings],
+  );
   const warningItems = useMemo(
     () =>
-      consistency.warnings.map((warning, index) => {
-        const sectionId = warning.paths
-          .map((path) => fieldToSectionId.get(path))
-          .find((value): value is string => Boolean(value));
-        return {
-          warning,
-          sectionId,
-          sectionTitle: sectionId ? getSectionTitle(sectionId) : undefined,
-        };
-      }),
-    [consistency.warnings],
+      allWarnings
+        .map((warning) => {
+          const sectionIds = warning.paths
+            .map((path) => fieldToSectionId.get(path))
+            .filter((value): value is string => Boolean(value));
+          const uniqueSectionIds = Array.from(new Set(sectionIds));
+          return {
+            warning,
+            sections: uniqueSectionIds.map((id) => ({
+              id,
+              title: getSectionTitleForMatterType(id, matterType),
+            })),
+          };
+        })
+        .filter((item) => {
+          if (!item.sections || item.sections.length === 0) return true;
+          return item.sections.some((section) => enabledSectionIds.has(section.id));
+        }),
+    [allWarnings, enabledSectionIds, matterType],
   );
 
   const validationIssues = useMemo(() => {
     return validationSummary.missingRequiredPaths.map((path) => {
       const key = path.split('[')[0];
       const sectionId = fieldToSectionId.get(key);
-      const sectionTitle = sectionId ? getSectionTitle(sectionId) : undefined;
+      const sectionTitle = sectionId ? getSectionTitleForMatterType(sectionId, matterType) : undefined;
       const message = validationSummary.errorsByPath[path]?.[0] ?? 'Required field missing.';
       return { path, message, sectionId, sectionTitle };
     });
-  }, [validationSummary]);
+  }, [matterType, validationSummary]);
 
   useEffect(() => {
     if (!initialToken) return;
@@ -198,19 +189,45 @@ export default function IntakeFlow({
   }, [firm, onFirmResolved]);
 
   useEffect(() => {
-    if (!guidedQuestions.length) return;
-    setChatInputs((prev) => {
-      const next = { ...prev };
-      guidedQuestions.forEach((question) => {
-        if (!question.fieldKey) return;
-        const existing = payload[question.fieldKey];
-        if (typeof existing === 'string' && existing.trim().length > 0 && !next[question.id]) {
-          next[question.id] = existing;
-        }
-      });
-      return next;
-    });
-  }, [guidedQuestions, payload]);
+    if (!token || !intakeId) return;
+    if (isLocked) return;
+    if (activeBanners.length === 0) return;
+
+    const existingMessages = new Set(
+      messages
+        .filter((message) => message.source === 'system' && message.channel === 'chat')
+        .map((message) => message.content),
+    );
+    const newMessages = activeBanners
+      .map((banner) => ({
+        banner,
+        content: getSafetyMessage(banner.key),
+      }))
+      .filter(({ banner, content }) => {
+        if (existingMessages.has(content)) return false;
+        if (safetyLoggedRef.current.has(banner.key)) return false;
+        safetyLoggedRef.current.add(banner.key);
+        return true;
+      })
+      .map(({ content }) => ({ source: 'system', channel: 'chat', content }));
+
+    if (newMessages.length === 0) return;
+    queueMessages(newMessages);
+    void flushPending();
+  }, [activeBanners, flushPending, intakeId, isLocked, messages, queueMessages, token]);
+
+  useEffect(() => {
+    if (!visibleSteps.length) return;
+    const currentId = step?.id;
+    const nextIndex = currentId ? visibleSteps.findIndex((item) => item.id === currentId) : -1;
+    if (nextIndex === -1 && currentStepIndex !== 0) {
+      setCurrentStepIndex(0);
+      return;
+    }
+    if (nextIndex > -1 && nextIndex !== currentStepIndex) {
+      setCurrentStepIndex(nextIndex);
+    }
+  }, [currentStepIndex, step?.id, visibleSteps]);
 
   useEffect(() => {
     if (mode !== 'resume' || !token || hasLoaded) return;
@@ -224,8 +241,12 @@ export default function IntakeFlow({
     if (intakeId) setHasLoaded(true);
   }, [intakeId]);
 
-  const sectionMissing = new Set(missingBySection[step.id] ?? []);
-  const inlineWarnings = warningItems.filter((item) => item.sectionId === step.id);
+  const sectionMissing = new Set(missingBySection[step?.id ?? ''] ?? []);
+  const inlineWarnings = warningItems.filter((item) =>
+    item.sections?.some((section) => section.id === step?.id),
+  );
+  const sectionContextNote = step ? getSectionContextNote(step.id, matterType) : null;
+  const sectionTitleOverride = step ? getSectionTitleForMatterType(step.id, matterType) : undefined;
 
   const handleSaveStep = async () => {
     if (isLocked) return;
@@ -235,52 +256,26 @@ export default function IntakeFlow({
       setUiError('Intake is locked.');
       return;
     }
-    if (currentStepIndex < intakeSteps.length - 1) {
-      setCurrentStepIndex((prev) => Math.min(prev + 1, intakeSteps.length - 1));
+    if (currentStepIndex < visibleSteps.length - 1) {
+      setCurrentStepIndex((prev) => Math.min(prev + 1, visibleSteps.length - 1));
     }
   };
 
-  const handleGuidedSend = async (question: GuidedQuestion) => {
-    if (!token || !intakeId) return;
-    if (isLocked) return;
-    const responseText = (chatInputs[question.id] ?? '').trim();
-    if (!responseText) return;
-
-    setChatStatusById((prev) => ({ ...prev, [question.id]: 'saving' }));
-    const newMessages = [
-      { source: 'system', channel: 'chat', content: question.prompt },
-      { source: 'client', channel: 'chat', content: responseText },
-    ];
-
-    queueMessages(newMessages);
-
-    if (question.fieldKey) {
-      const existingValue = payload[question.fieldKey];
-      if (question.repeatable) {
-        const current = Array.isArray(existingValue)
-          ? existingValue
-          : existingValue
-            ? [existingValue]
-            : [];
-        updateField(question.fieldKey, [...current, responseText]);
-      } else {
-        updateField(question.fieldKey, responseText);
-      }
-    }
-
+  const handleAppendChatMessage = async (prompt: string, response: string) => {
+    if (!token || !intakeId) return { ok: false };
+    if (isLocked) return { ok: false, locked: true };
+    setUiError(null);
+    queueMessages([
+      { source: 'system', channel: 'chat', content: prompt },
+      { source: 'client', channel: 'chat', content: response },
+    ]);
     const result = await flushPending();
-    if (result.ok) {
-      setChatInputs((prev) => ({ ...prev, [question.id]: '' }));
-      setChatStatusById((prev) => ({ ...prev, [question.id]: 'saved' }));
-      setTimeout(() => {
-        setChatStatusById((prev) => ({ ...prev, [question.id]: 'idle' }));
-      }, 1200);
-    } else {
-      if (result.locked) {
-        setUiError('Intake is locked.');
-      }
-      setChatStatusById((prev) => ({ ...prev, [question.id]: 'error' }));
+    if (!result.ok && result.locked) {
+      setUiError('Intake is locked.');
+    } else if (!result.ok) {
+      setUiError('Unable to save message.');
     }
+    return result;
   };
 
   const handleSubmit = async () => {
@@ -300,10 +295,10 @@ export default function IntakeFlow({
   };
 
   useEffect(() => {
-    if (currentStepIndex !== intakeSteps.length - 1 && confirmFinal) {
+    if (currentStepIndex !== visibleSteps.length - 1 && confirmFinal) {
       setConfirmFinal(false);
     }
-  }, [confirmFinal, currentStepIndex]);
+  }, [confirmFinal, currentStepIndex, visibleSteps.length]);
 
   const renderAccessGate = () => {
     if (!token && mode === 'resume') {
@@ -386,6 +381,18 @@ export default function IntakeFlow({
     );
   }
 
+  if (!step) {
+    return (
+      <div className="flow">
+        <ErrorBanner message={displayError} requestId={requestId} />
+        <Card>
+          <h2>No intake sections available</h2>
+          <p className="muted">Please refresh or contact support.</p>
+        </Card>
+      </div>
+    );
+  }
+
   const StepComponent = step.Component;
   const handleJumpToSection = (sectionId: string) => {
     const targetIndex = stepIndexById.get(sectionId);
@@ -433,7 +440,7 @@ export default function IntakeFlow({
       <div className="flow__body">
         <aside className="steps">
           <h3>Steps</h3>
-          {intakeSteps.map((item, index) => {
+          {visibleSteps.map((item, index) => {
             const missing = (missingBySection[item.id] ?? []).length > 0;
             return (
               <Button
@@ -443,7 +450,9 @@ export default function IntakeFlow({
                 onClick={() => setCurrentStepIndex(index)}
               >
                 <span className="steps__index">{index + 1}</span>
-                <span className="steps__title">{item.title}</span>
+                <span className="steps__title">
+                  {getSectionTitleForMatterType(item.id, matterType)}
+                </span>
                 {missing && <span className="steps__alert">!</span>}
               </Button>
             );
@@ -454,22 +463,37 @@ export default function IntakeFlow({
         </aside>
 
         <div className="flow__panels">
-          <ChatPanel
-            questions={guidedQuestions}
-            answers={chatInputs}
-            statuses={chatStatusById}
+          <GuidedChatPanel
+            sectionId={step.id}
+            library={GUIDED_PROMPT_LIBRARY}
+            missingFields={missingFields}
             disabled={isLocked || loading}
             messages={messages}
-            onAnswerChange={(id, value) => setChatInputs((prev) => ({ ...prev, [id]: value }))}
-            onSend={handleGuidedSend}
+            onSendMessage={handleAppendChatMessage}
+            onJumpToField={(fieldKey) => {
+              const sectionId = fieldToSectionId.get(fieldKey);
+              if (sectionId) handleJumpToSection(sectionId);
+            }}
           />
 
           <main className="stage">
+            {step?.id === 'domestic_violence_risk'
+              && activeBanners.map((banner) => (
+                <SafetyBanner
+                  key={banner.key}
+                  banner={banner}
+                  onDismiss={() =>
+                    setDismissedBanners((prev) => ({ ...prev, [banner.key]: true }))
+                  }
+                />
+              ))}
             <WarningsPanel items={inlineWarnings} />
+            {sectionContextNote && <Alert variant="info">{sectionContextNote}</Alert>}
             <StepComponent
               payload={payload}
               missingKeys={sectionMissing}
               disabled={isLocked}
+              titleOverride={sectionTitleOverride}
               token={token}
               intakeId={intakeId ?? undefined}
               documents={documents}
@@ -490,7 +514,7 @@ export default function IntakeFlow({
               >
                 Back
               </Button>
-              {currentStepIndex < intakeSteps.length - 1 ? (
+              {currentStepIndex < visibleSteps.length - 1 ? (
                 <Button
                   variant="primary"
                   onClick={handleSaveStep}
@@ -514,15 +538,26 @@ export default function IntakeFlow({
               )}
             </div>
 
-            {currentStepIndex === intakeSteps.length - 1 && (
-              <ReviewSubmitStep
-                issues={validationIssues}
-                messages={messages}
-                onJump={handleJumpToSection}
-                confirmChecked={confirmFinal}
-                onConfirmChange={setConfirmFinal}
-                disabled={isLocked}
-              />
+            {currentStepIndex === visibleSteps.length - 1 && (
+              <>
+                {activeBanners.map((banner) => (
+                  <SafetyBanner
+                    key={`${banner.key}-review`}
+                    banner={banner}
+                    onDismiss={() =>
+                      setDismissedBanners((prev) => ({ ...prev, [banner.key]: true }))
+                    }
+                  />
+                ))}
+                <ReviewSubmitStep
+                  issues={validationIssues}
+                  messages={messages}
+                  onJump={handleJumpToSection}
+                  confirmChecked={confirmFinal}
+                  onConfirmChange={setConfirmFinal}
+                  disabled={isLocked}
+                />
+              </>
             )}
 
             <WarningsPanel items={warningItems} onJump={handleJumpToSection} />

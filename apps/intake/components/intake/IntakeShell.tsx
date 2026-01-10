@@ -226,6 +226,19 @@ const globalStyles = `
     gap: 10px;
   }
 
+  .chat__helper {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .chat__response {
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px dashed var(--border);
+    background: var(--surface-0);
+    font-size: 13px;
+  }
+
   .chat-panel__transcript {
     display: grid;
     gap: 8px;
@@ -727,6 +740,12 @@ const globalStyles = `
     padding: 0;
   }
 
+  .warning__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
   .actions {
     display: flex;
     justify-content: space-between;
@@ -792,6 +811,32 @@ const globalStyles = `
     background: rgba(99, 102, 241, 0.12);
     border-color: rgba(99, 102, 241, 0.3);
     color: #c7d2fe;
+  }
+
+  .safety {
+    display: grid;
+    gap: 10px;
+  }
+
+  .safety__title {
+    margin: 0;
+    font-size: 15px;
+  }
+
+  .safety__line {
+    margin: 0;
+    font-size: 13px;
+  }
+
+  .safety__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .safety__hide {
+    color: var(--accent-light);
   }
 
   .card {

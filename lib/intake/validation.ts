@@ -9,6 +9,7 @@ const conditionalVisibility: Record<string, FieldCondition> = {
   opposing_last_known_address: (payload) => payload.opposing_address_known === true,
   protective_order_exists: (payload) => payload.dv_present === true,
   date_of_separation: (payload) => payload.currently_cohabitating === false,
+  modification_existing_order: (payload) => payload.matter_type === 'modification',
 };
 
 const repeatableSectionIds = new Set(['child_object', 'asset_object', 'debt_object']);
@@ -105,7 +106,11 @@ function pathToFieldKey(path: string) {
   return match ? match[1] : path;
 }
 
-export function validate(payload: Payload, schema: SchemaDef = GA_DIVORCE_CUSTODY_V1): ValidationSummary {
+export function validate(
+  payload: Payload,
+  schema: SchemaDef = GA_DIVORCE_CUSTODY_V1,
+  enabledSectionIds?: Set<string>,
+): ValidationSummary {
   const errorsByPath: Record<string, string[]> = {};
   const missingRequiredPaths: string[] = [];
 
@@ -115,6 +120,9 @@ export function validate(payload: Payload, schema: SchemaDef = GA_DIVORCE_CUSTOD
   };
 
   for (const section of schema.sections) {
+    if (enabledSectionIds && !enabledSectionIds.has(section.id)) {
+      continue;
+    }
     if (isRepeatableSection(section.id)) {
       const fieldArrays = section.fields.map((field) => ({
         field,
@@ -156,8 +164,8 @@ export function validate(payload: Payload, schema: SchemaDef = GA_DIVORCE_CUSTOD
   return { errorsByPath, missingRequiredPaths };
 }
 
-export function validateIntakePayload(payload: Payload): ValidationResult {
-  const { missingRequiredPaths } = validate(payload);
+export function validateIntakePayload(payload: Payload, enabledSectionIds?: Set<string>): ValidationResult {
+  const { missingRequiredPaths } = validate(payload, GA_DIVORCE_CUSTODY_V1, enabledSectionIds);
   const missingKeys = new Set<string>();
   const missingBySection: Record<string, string[]> = {};
 
@@ -176,7 +184,7 @@ export function validateIntakePayload(payload: Payload): ValidationResult {
   };
 }
 
-export function validateEnumMembership(payload: Payload): EnumValidationResult {
+export function validateEnumMembership(payload: Payload, enabledSectionIds?: Set<string>): EnumValidationResult {
   const invalid = new Set<string>();
   const invalidBySection: Record<string, string[]> = {};
 
@@ -189,6 +197,9 @@ export function validateEnumMembership(payload: Payload): EnumValidationResult {
   };
 
   for (const section of GA_DIVORCE_CUSTODY_V1.sections) {
+    if (enabledSectionIds && !enabledSectionIds.has(section.id)) {
+      continue;
+    }
     for (const field of section.fields) {
       if (field.isSystem) continue;
       if (!field.enumValues || field.enumValues.length === 0) continue;
