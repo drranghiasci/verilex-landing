@@ -36,6 +36,7 @@ function extractToken(req: NextApiRequest, body?: { token?: string } | null): st
 
 type LoadBody = {
   intakeId?: string;
+  token?: string;
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
