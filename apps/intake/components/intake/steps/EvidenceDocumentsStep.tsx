@@ -41,6 +41,7 @@ export default function EvidenceDocumentsStep({
   onFieldChange,
   ...props
 }: EvidenceStepProps) {
+  const isDisabled = Boolean(props.disabled);
   const [documentType, setDocumentType] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -120,7 +121,7 @@ export default function EvidenceDocumentsStep({
             required={false}
             helpText="Select the closest category for this file."
             invalid={false}
-            disabled={uploading || props.narrativeDisabled}
+            disabled={uploading || isDisabled}
           />
 
           <div className="field">
@@ -134,7 +135,7 @@ export default function EvidenceDocumentsStep({
                   event.currentTarget.value = '';
                 }
               }}
-              disabled={uploading || props.narrativeDisabled}
+              disabled={uploading || isDisabled}
             />
           </div>
 

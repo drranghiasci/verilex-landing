@@ -5,6 +5,7 @@ import WarningsPanel from './WarningsPanel';
 import ReviewSubmitStep from './steps/ReviewSubmitStep';
 import LockedConfirmation from './LockedConfirmation';
 import ErrorBanner from './ErrorBanner';
+import ChatPanel from './ChatPanel';
 import { useIntakeSession } from './useIntakeSession';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -12,8 +13,12 @@ import Input from '../ui/Input';
 import { runConsistencyChecks } from '../../../../lib/intake/consistencyChecks';
 import type { ResolveFirmResponse } from '../../../../lib/intake/intakeApi';
 import {
+  formatLabel,
+  getSectionById,
   getSectionTitle,
+  isRepeatableSection,
   intakeSections,
+  shouldShowField,
   validate,
   validateIntakePayload,
 } from '../../../../lib/intake/validation';
@@ -36,6 +41,39 @@ const narrativePrompts: Record<string, string> = {
   evidence_documents: 'List evidence or documents you already have.',
 };
 
+type GuidedQuestion = {
+  id: string;
+  prompt: string;
+  fieldKey?: string;
+  repeatable?: boolean;
+};
+
+function buildGuidedQuestions(sectionId: string, payload: Record<string, unknown>): GuidedQuestion[] {
+  const section = getSectionById(sectionId);
+  if (!section) return [];
+
+  const prompts: GuidedQuestion[] = [];
+  const basePrompt = narrativePrompts[sectionId];
+  if (basePrompt) {
+    prompts.push({ id: `${sectionId}:narrative`, prompt: basePrompt });
+  }
+
+  const repeatable = isRepeatableSection(sectionId);
+  section.fields.forEach((field) => {
+    if (field.isSystem) return;
+    if (field.type !== 'text') return;
+    if (!shouldShowField(field.key, payload)) return;
+    prompts.push({
+      id: `${sectionId}:${field.key}`,
+      prompt: `Please provide ${formatLabel(field.key).toLowerCase()}.`,
+      fieldKey: field.key,
+      repeatable,
+    });
+  });
+
+  return prompts;
+}
+
 const fieldToSectionId = new Map<string, string>();
 for (const section of intakeSections) {
   for (const field of section.fields) {
@@ -56,9 +94,7 @@ type IntakeFlowProps = {
   onFirmResolved?: (firm: ResolveFirmResponse | null) => void;
 };
 
-type NarrativeHistoryItem = { prompt: string; response: string };
-
-type NarrativeStatus = 'idle' | 'saving' | 'saved' | 'error';
+type ChatStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export default function IntakeFlow({
   firmSlug,
@@ -70,9 +106,8 @@ export default function IntakeFlow({
   const router = useRouter();
   const [uiError, setUiError] = useState<string | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [narratives, setNarratives] = useState<Record<string, string>>({});
-  const [narrativeStatus, setNarrativeStatus] = useState<Record<string, NarrativeStatus>>({});
-  const [narrativeHistory, setNarrativeHistory] = useState<Record<string, NarrativeHistoryItem[]>>({});
+  const [chatInputs, setChatInputs] = useState<Record<string, string>>({});
+  const [chatStatusById, setChatStatusById] = useState<Record<string, ChatStatus>>({});
   const [hasLoaded, setHasLoaded] = useState(false);
   const [confirmFinal, setConfirmFinal] = useState(false);
 
@@ -105,6 +140,11 @@ export default function IntakeFlow({
   const status = intake?.status ?? null;
   const submittedAt = intake?.submitted_at ?? null;
   const isLocked = locked || status === 'submitted' || Boolean(submittedAt);
+
+  const guidedQuestions = useMemo(
+    () => buildGuidedQuestions(step.id, payload),
+    [step.id, payload],
+  );
 
   const validation = useMemo(() => validateIntakePayload(payload), [payload]);
   const missingBySection = validation.missingBySection;
@@ -158,6 +198,21 @@ export default function IntakeFlow({
   }, [firm, onFirmResolved]);
 
   useEffect(() => {
+    if (!guidedQuestions.length) return;
+    setChatInputs((prev) => {
+      const next = { ...prev };
+      guidedQuestions.forEach((question) => {
+        if (!question.fieldKey) return;
+        const existing = payload[question.fieldKey];
+        if (typeof existing === 'string' && existing.trim().length > 0 && !next[question.id]) {
+          next[question.id] = existing;
+        }
+      });
+      return next;
+    });
+  }, [guidedQuestions, payload]);
+
+  useEffect(() => {
     if (mode !== 'resume' || !token || hasLoaded) return;
     setUiError(null);
     void load(token).then((result) => {
@@ -185,33 +240,46 @@ export default function IntakeFlow({
     }
   };
 
-  const handleNarrativeSend = async () => {
+  const handleGuidedSend = async (question: GuidedQuestion) => {
     if (!token || !intakeId) return;
     if (isLocked) return;
-    const prompt = narrativePrompts[step.id] ?? 'Share details for this section.';
-    const responseText = (narratives[step.id] ?? '').trim();
+    const responseText = (chatInputs[question.id] ?? '').trim();
     if (!responseText) return;
 
-    setNarrativeStatus((prev) => ({ ...prev, [step.id]: 'saving' }));
-    const messages = [
-      { source: 'system', channel: 'chat', content: prompt },
+    setChatStatusById((prev) => ({ ...prev, [question.id]: 'saving' }));
+    const newMessages = [
+      { source: 'system', channel: 'chat', content: question.prompt },
       { source: 'client', channel: 'chat', content: responseText },
     ];
 
-    queueMessages(messages);
+    queueMessages(newMessages);
+
+    if (question.fieldKey) {
+      const existingValue = payload[question.fieldKey];
+      if (question.repeatable) {
+        const current = Array.isArray(existingValue)
+          ? existingValue
+          : existingValue
+            ? [existingValue]
+            : [];
+        updateField(question.fieldKey, [...current, responseText]);
+      } else {
+        updateField(question.fieldKey, responseText);
+      }
+    }
+
     const result = await flushPending();
     if (result.ok) {
-      setNarrativeHistory((prev) => ({
-        ...prev,
-        [step.id]: [...(prev[step.id] ?? []), { prompt, response: responseText }],
-      }));
-      setNarratives((prev) => ({ ...prev, [step.id]: '' }));
-      setNarrativeStatus((prev) => ({ ...prev, [step.id]: 'saved' }));
+      setChatInputs((prev) => ({ ...prev, [question.id]: '' }));
+      setChatStatusById((prev) => ({ ...prev, [question.id]: 'saved' }));
       setTimeout(() => {
-        setNarrativeStatus((prev) => ({ ...prev, [step.id]: 'idle' }));
+        setChatStatusById((prev) => ({ ...prev, [question.id]: 'idle' }));
       }, 1200);
     } else {
-      setNarrativeStatus((prev) => ({ ...prev, [step.id]: 'error' }));
+      if (result.locked) {
+        setUiError('Intake is locked.');
+      }
+      setChatStatusById((prev) => ({ ...prev, [question.id]: 'error' }));
     }
   };
 
@@ -319,7 +387,6 @@ export default function IntakeFlow({
   }
 
   const StepComponent = step.Component;
-  const prompt = narrativePrompts[step.id] ?? 'Share details for this section.';
   const handleJumpToSection = (sectionId: string) => {
     const targetIndex = stepIndexById.get(sectionId);
     if (targetIndex === undefined) return;
@@ -386,86 +453,81 @@ export default function IntakeFlow({
           </div>
         </aside>
 
-        <main className="stage">
-          <WarningsPanel items={inlineWarnings} />
-          <StepComponent
-            payload={payload}
-            missingKeys={sectionMissing}
-            narrativePrompt={prompt}
-            narrativeValue={narratives[step.id] ?? ''}
-            narrativeStatus={narrativeStatus[step.id] ?? 'idle'}
-            narrativeDisabled={isLocked}
-            token={token}
-            intakeId={intakeId ?? undefined}
-            documents={documents}
-            onReload={() => {
-              if (token) void load(token);
-            }}
-            onNarrativeChange={(value) => setNarratives((prev) => ({ ...prev, [step.id]: value }))}
-            onNarrativeSend={handleNarrativeSend}
-            onFieldChange={(key, value) => {
-              setUiError(null);
-              updateField(key, value);
-            }}
+        <div className="flow__panels">
+          <ChatPanel
+            questions={guidedQuestions}
+            answers={chatInputs}
+            statuses={chatStatusById}
+            disabled={isLocked || loading}
+            messages={messages}
+            onAnswerChange={(id, value) => setChatInputs((prev) => ({ ...prev, [id]: value }))}
+            onSend={handleGuidedSend}
           />
 
-          {narrativeHistory[step.id] && narrativeHistory[step.id].length > 0 && (
-            <div className="history">
-              <h4>Transcript snapshots</h4>
-              {narrativeHistory[step.id].map((entry, idx) => (
-                <div key={`${step.id}-${idx}`} className="history__item">
-                  <div className="history__prompt">{entry.prompt}</div>
-                  <div className="history__response">{entry.response}</div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="actions">
-            <Button
-              variant="secondary"
-              onClick={() => setCurrentStepIndex((prev) => Math.max(prev - 1, 0))}
-              disabled={currentStepIndex === 0}
-            >
-              Back
-            </Button>
-            {currentStepIndex < intakeSteps.length - 1 ? (
-              <Button
-                variant="primary"
-                onClick={handleSaveStep}
-                disabled={loading || isLocked}
-              >
-                {loading ? 'Saving...' : 'Save & Continue'}
-              </Button>
-            ) : (
-              <Button
-                variant="primary"
-                onClick={handleSubmit}
-                disabled={
-                  loading
-                  || validationSummary.missingRequiredPaths.length > 0
-                  || isLocked
-                  || !confirmFinal
-                }
-              >
-                {isLocked ? 'Submitted' : 'Submit intake'}
-              </Button>
-            )}
-          </div>
-
-          {currentStepIndex === intakeSteps.length - 1 && (
-            <ReviewSubmitStep
-              issues={validationIssues}
-              messages={messages}
-              onJump={handleJumpToSection}
-              confirmChecked={confirmFinal}
-              onConfirmChange={setConfirmFinal}
+          <main className="stage">
+            <WarningsPanel items={inlineWarnings} />
+            <StepComponent
+              payload={payload}
+              missingKeys={sectionMissing}
               disabled={isLocked}
+              token={token}
+              intakeId={intakeId ?? undefined}
+              documents={documents}
+              onReload={() => {
+                if (token) void load(token);
+              }}
+              onFieldChange={(key, value) => {
+                setUiError(null);
+                updateField(key, value);
+              }}
             />
-          )}
 
-          <WarningsPanel items={warningItems} onJump={handleJumpToSection} />
-        </main>
+            <div className="actions">
+              <Button
+                variant="secondary"
+                onClick={() => setCurrentStepIndex((prev) => Math.max(prev - 1, 0))}
+                disabled={currentStepIndex === 0}
+              >
+                Back
+              </Button>
+              {currentStepIndex < intakeSteps.length - 1 ? (
+                <Button
+                  variant="primary"
+                  onClick={handleSaveStep}
+                  disabled={loading || isLocked}
+                >
+                  {loading ? 'Saving...' : 'Save & Continue'}
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  onClick={handleSubmit}
+                  disabled={
+                    loading
+                    || validationSummary.missingRequiredPaths.length > 0
+                    || isLocked
+                    || !confirmFinal
+                  }
+                >
+                  {isLocked ? 'Submitted' : 'Submit intake'}
+                </Button>
+              )}
+            </div>
+
+            {currentStepIndex === intakeSteps.length - 1 && (
+              <ReviewSubmitStep
+                issues={validationIssues}
+                messages={messages}
+                onJump={handleJumpToSection}
+                confirmChecked={confirmFinal}
+                onConfirmChange={setConfirmFinal}
+                disabled={isLocked}
+              />
+            )}
+
+            <WarningsPanel items={warningItems} onJump={handleJumpToSection} />
+          </main>
+        </div>
       </div>
     </div>
   );

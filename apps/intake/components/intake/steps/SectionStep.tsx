@@ -12,24 +12,18 @@ import CountySelect from '../fields/CountySelect';
 import type { IntakeDocument } from '../../../../../lib/intake/intakeApi';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
-import Textarea from '../../ui/Textarea';
 
 export type StepProps = {
   sectionId: string;
   payload: Record<string, unknown>;
   missingKeys: Set<string>;
-  narrativePrompt: string;
-  narrativeValue: string;
-  narrativeStatus: 'idle' | 'saving' | 'saved' | 'error';
-  narrativeDisabled?: boolean;
+  disabled?: boolean;
   documents?: IntakeDocument[];
   token?: string;
   intakeId?: string;
   onReload?: () => void;
   hiddenFields?: string[];
   readOnlyFields?: string[];
-  onNarrativeChange: (value: string) => void;
-  onNarrativeSend: () => void;
   onFieldChange: (key: string, value: unknown) => void;
 };
 
@@ -215,14 +209,9 @@ export function SectionStep({
   sectionId,
   payload,
   missingKeys,
-  narrativePrompt,
-  narrativeValue,
-  narrativeStatus,
-  narrativeDisabled,
+  disabled,
   hiddenFields,
   readOnlyFields,
-  onNarrativeChange,
-  onNarrativeSend,
   onFieldChange,
 }: StepProps) {
   const section = getSectionById(sectionId);
@@ -231,7 +220,7 @@ export function SectionStep({
   }
 
   const sectionTitle = getSectionTitle(sectionId);
-  const isReadOnly = Boolean(narrativeDisabled);
+  const isReadOnly = Boolean(disabled);
   const repeatable = isRepeatableSection(sectionId);
 
   const renderTextField = (
@@ -665,36 +654,6 @@ export function SectionStep({
           <p className="step__summary">Complete the fields below. Required items are marked.</p>
         </div>
         <div className="step__badge">Schema locked</div>
-      </div>
-
-      <div className="step__narrative">
-        <div className="chat">
-          <div className="chat__prompt">{narrativePrompt}</div>
-          <Textarea
-            className="chat__input"
-            rows={3}
-            placeholder="Share the story in your own words..."
-            value={narrativeValue}
-            onChange={(event) => onNarrativeChange(event.target.value)}
-            disabled={Boolean(narrativeDisabled)}
-            unstyled
-          />
-          <div className="chat__actions">
-            <Button
-              variant="primary"
-              onClick={onNarrativeSend}
-              disabled={
-                Boolean(narrativeDisabled)
-                || narrativeStatus === 'saving'
-                || narrativeValue.trim().length === 0
-              }
-            >
-              {narrativeStatus === 'saving' ? 'Saving...' : 'Add to transcript'}
-            </Button>
-            {narrativeStatus === 'saved' && <span className="chat__status">Saved</span>}
-            {narrativeStatus === 'error' && <span className="chat__status error">Failed to save</span>}
-          </div>
-        </div>
       </div>
 
       {repeatable ? (

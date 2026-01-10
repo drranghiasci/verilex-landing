@@ -190,6 +190,63 @@ const globalStyles = `
     gap: 24px;
   }
 
+  .flow__panels {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.7fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+
+  .chat-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .chat-panel__card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .chat-panel__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .chat-panel__questions {
+    display: grid;
+    gap: 16px;
+  }
+
+  .chat-panel__question {
+    display: grid;
+    gap: 10px;
+  }
+
+  .chat-panel__transcript {
+    display: grid;
+    gap: 8px;
+    max-height: 320px;
+    overflow: auto;
+    padding-right: 4px;
+  }
+
+  .chat-panel__bubble {
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface-0);
+    font-size: 13px;
+  }
+
+  .chat-panel__bubble.is-client {
+    border-color: rgba(99, 102, 241, 0.35);
+    background: rgba(99, 102, 241, 0.12);
+  }
+
   .steps {
     background: var(--surface-1);
     border: 1px solid var(--border);
@@ -770,29 +827,6 @@ const globalStyles = `
     color: var(--text-2);
   }
 
-  .history {
-    margin-top: 20px;
-    border-top: 1px solid var(--border);
-    padding-top: 16px;
-  }
-
-  .history__item {
-    padding: 12px;
-    border-radius: 12px;
-    background: var(--surface-0);
-    margin-bottom: 10px;
-  }
-
-  .history__prompt {
-    font-size: 12px;
-    color: var(--text-2);
-  }
-
-  .history__response {
-    font-size: 14px;
-    margin-top: 6px;
-  }
-
   @media (max-width: 980px) {
     .shell__header {
       flex-direction: column;
@@ -800,6 +834,10 @@ const globalStyles = `
     }
 
     .flow__body {
+      grid-template-columns: 1fr;
+    }
+
+    .flow__panels {
       grid-template-columns: 1fr;
     }
 
