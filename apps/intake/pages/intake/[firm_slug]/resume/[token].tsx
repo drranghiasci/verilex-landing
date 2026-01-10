@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import IntakeFlow from '../../../../components/intake/IntakeFlow';
 import IntakeShell from '../../../../components/intake/IntakeShell';
-import type { ResolveFirmResponse } from '../../../../../lib/intake/intakeApi';
+import type { ResolveFirmResponse } from '../../../../../../lib/intake/intakeApi';
 
 export default function IntakeResumePage() {
   const router = useRouter();
