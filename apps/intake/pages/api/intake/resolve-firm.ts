@@ -6,7 +6,7 @@ import {
   parseJsonBody,
   requireMethod,
   sendError,
-} from './_utils';
+} from '@/lib/apiUtils';
 
 const SLUG_FORMAT = /^[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])?$/;
 

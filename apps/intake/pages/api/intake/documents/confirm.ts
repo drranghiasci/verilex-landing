@@ -8,7 +8,7 @@ import {
   parseJsonBody,
   requireMethod,
   sendError,
-} from '../_utils';
+} from '@/lib/apiUtils';
 
 type ConfirmUploadBody = {
   intakeId?: string;

@@ -6,7 +6,7 @@ import {
   logRequestStart,
   requireMethod,
   sendError,
-} from './_utils';
+} from '@/lib/apiUtils';
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const requestId = getRequestId(req);

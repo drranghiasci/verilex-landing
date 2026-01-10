@@ -8,7 +8,7 @@ import {
   parseJsonBody,
   requireMethod,
   sendError,
-} from './_utils';
+} from '@/lib/apiUtils';
 
 function extractToken(req: NextApiRequest, body?: { token?: string } | null): string {
   const authHeader = req.headers.authorization;

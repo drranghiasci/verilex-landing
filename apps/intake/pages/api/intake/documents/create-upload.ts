@@ -9,7 +9,7 @@ import {
   parseJsonBody,
   requireMethod,
   sendError,
-} from '../_utils';
+} from '@/lib/apiUtils';
 
 const DOCUMENTS_BUCKET = process.env.VERILEX_DOCUMENTS_BUCKET;
 
