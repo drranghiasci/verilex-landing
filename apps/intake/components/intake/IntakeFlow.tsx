@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 import { intakeSteps } from './steps';
 import WarningsPanel from './WarningsPanel';
 import ReviewSubmitStep from './steps/ReviewSubmitStep';
@@ -66,6 +67,7 @@ export default function IntakeFlow({
   onStatusChange,
   onFirmResolved,
 }: IntakeFlowProps) {
+  const router = useRouter();
   const [uiError, setUiError] = useState<string | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [narratives, setNarratives] = useState<Record<string, string>>({});
@@ -324,6 +326,12 @@ export default function IntakeFlow({
     setCurrentStepIndex(targetIndex);
   };
 
+  const handleStartNew = () => {
+    if (!firmSlug) return;
+    setUiError(null);
+    void router.push(`/intake/${firmSlug}?new=1`);
+  };
+
   return (
     <div className="flow">
       <ErrorBanner message={displayError} requestId={requestId} />
@@ -343,6 +351,15 @@ export default function IntakeFlow({
             <span className="muted">Status</span>
             <div className="pill">{status ?? 'draft'}</div>
           </div>
+          {mode === 'resume' && (
+            <Button
+              variant="secondary"
+              onClick={handleStartNew}
+              disabled={loading}
+            >
+              Start new intake
+            </Button>
+          )}
         </div>
       </div>
 
