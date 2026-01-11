@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFirm } from '@/lib/FirmProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { CaseCreateSchema, buildCaseTitle } from '@/lib/caseSchema';
@@ -10,6 +10,34 @@ import { useFirmPlan } from '@/lib/useFirmPlan';
 import { canCreateCase } from '@/lib/plans';
 
 const STATUS_OPTIONS = ['open', 'paused', 'closed'] as const;
+
+type IntakeQueueItem = {
+  id: string;
+  status: string;
+  submitted_at: string | null;
+  matter_type: string | null;
+  urgency_level: string | null;
+  intake_channel: string | null;
+  created_at: string;
+  raw_payload: Record<string, unknown> | null;
+};
+
+function formatIntakeClient(payload: Record<string, unknown> | null) {
+  if (!payload) return 'Unknown client';
+  const first = typeof payload.client_first_name === 'string' ? payload.client_first_name.trim() : '';
+  const last = typeof payload.client_last_name === 'string' ? payload.client_last_name.trim() : '';
+  const full = [first, last].filter(Boolean).join(' ');
+  return full || 'Unknown client';
+}
+
+function formatIntakeSubtitle(item: IntakeQueueItem) {
+  const bits = [
+    item.matter_type ? `${item.matter_type}` : null,
+    item.urgency_level ? `${item.urgency_level}` : null,
+    item.intake_channel ? `${item.intake_channel}` : null,
+  ].filter(Boolean);
+  return bits.length > 0 ? bits.join(' • ') : 'Intake submitted';
+}
 
 export default function IntakePage() {
   const router = useRouter();
@@ -33,6 +61,10 @@ export default function IntakePage() {
   const [fieldErrors, setFieldErrors] = useState<{ firstName?: string; lastName?: string }>({});
   const [caseCount, setCaseCount] = useState<number | null>(null);
   const [caseCountLoading, setCaseCountLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'manual' | 'automatic'>('manual');
+  const [intakeQueue, setIntakeQueue] = useState<IntakeQueueItem[]>([]);
+  const [queueLoading, setQueueLoading] = useState(false);
+  const [queueError, setQueueError] = useState<string | null>(null);
 
   const canEdit = canEditCases(state.role);
   const isReadOnly = Boolean(state.authed && state.firmId && !canEdit);
@@ -68,6 +100,37 @@ export default function IntakePage() {
     });
     setTitle(generated);
   }, [county, courtName, email, firstName, hasCustomTitle, lastName, matterType, notes, phone, caseNumber, stateField, status]);
+
+  useEffect(() => {
+    if (router.query.tab !== 'automatic') return;
+    setActiveTab('automatic');
+  }, [router.query.tab]);
+
+  const loadQueue = useCallback(async () => {
+    if (!state.authed || !state.firmId) return;
+    setQueueLoading(true);
+    setQueueError(null);
+    const { data, error: intakeError } = await supabase
+      .from('intakes')
+      .select('id, status, submitted_at, matter_type, urgency_level, intake_channel, created_at, raw_payload')
+      .eq('firm_id', state.firmId)
+      .eq('status', 'submitted')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (intakeError) {
+      setQueueError(intakeError.message);
+      setIntakeQueue([]);
+    } else {
+      setIntakeQueue((data ?? []) as IntakeQueueItem[]);
+    }
+    setQueueLoading(false);
+  }, [state.authed, state.firmId]);
+
+  useEffect(() => {
+    if (activeTab !== 'automatic') return;
+    void loadQueue();
+  }, [activeTab, loadQueue]);
 
   useEffect(() => {
     if (!state.authed || !state.firmId) return;
@@ -206,11 +269,29 @@ export default function IntakePage() {
           >
             ← Back
           </Link>
-          <h1 className="text-3xl font-semibold text-white">New Case Intake</h1>
+          <h1 className="text-3xl font-semibold text-white">Intake</h1>
         </div>
         <p className="mt-2 text-sm text-[color:var(--muted)]">
           Firm {state.firmId ? state.firmId.slice(0, 8) : 'No firm'} · Role {state.role ?? 'member'}
         </p>
+
+        <div className="mt-6 border-b border-[color:var(--border)] text-sm text-[color:var(--muted)]">
+          {[
+            { key: 'manual', label: 'Manual intake' },
+            { key: 'automatic', label: 'Automatic intake queue' },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key as typeof activeTab)}
+              className={`mr-6 border-b-2 pb-3 transition ${
+                activeTab === tab.key ? 'border-[color:var(--accent-light)] text-white' : 'border-transparent hover:text-white'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
         {state.loading && <p className="mt-6 text-[color:var(--muted)]">Loading...</p>}
         {!state.loading && !state.authed && <p className="mt-6 text-[color:var(--muted)]">Please sign in.</p>}
@@ -218,7 +299,7 @@ export default function IntakePage() {
           <p className="mt-6 text-[color:var(--muted)]">No firm linked yet.</p>
         )}
 
-        {state.authed && state.firmId && (
+        {activeTab === 'manual' && state.authed && state.firmId && (
           <form onSubmit={handleSubmit} className="mt-8 space-y-8">
             {isReadOnly && (
               <div className="rounded-lg border border-[color:var(--border)] bg-[var(--surface-0)] px-4 py-3 text-sm text-[color:var(--muted)]">
@@ -407,6 +488,75 @@ export default function IntakePage() {
               <p className="text-xs text-[color:var(--muted-2)]">Your data is secured and isolated to your firm.</p>
             </div>
           </form>
+        )}
+
+        {activeTab === 'automatic' && state.authed && state.firmId && (
+          <div className="mt-8 space-y-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Automatic Intake Queue</h2>
+                <p className="mt-1 text-sm text-[color:var(--muted)]">
+                  Review submitted client intakes and convert them into cases.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void loadQueue()}
+                className="rounded-lg border border-[color:var(--border)] px-4 py-2 text-sm text-white hover:bg-white/5"
+              >
+                Refresh queue
+              </button>
+            </div>
+
+            {queueLoading && <p className="text-sm text-[color:var(--muted)]">Loading intake queue...</p>}
+            {queueError && (
+              <div className="rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                {queueError}
+              </div>
+            )}
+
+            {!queueLoading && !queueError && intakeQueue.length === 0 && (
+              <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-0)] p-6 text-sm text-[color:var(--muted)]">
+                No submitted intakes yet.
+              </div>
+            )}
+
+            {!queueLoading && intakeQueue.length > 0 && (
+              <div className="space-y-4">
+                {intakeQueue.map((item) => {
+                  const clientName = formatIntakeClient(item.raw_payload);
+                  const subtitle = formatIntakeSubtitle(item);
+                  const submittedLabel = item.submitted_at
+                    ? `Submitted ${new Date(item.submitted_at).toLocaleDateString()}`
+                    : 'Draft in progress';
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex flex-col gap-4 rounded-2xl border border-[color:var(--border)] bg-[var(--surface-0)] p-5 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">{clientName}</h3>
+                        <p className="mt-1 text-sm text-[color:var(--muted)]">{subtitle}</p>
+                        <p className="mt-2 text-xs text-[color:var(--muted-2)]">{submittedLabel}</p>
+                      </div>
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <span className="inline-flex items-center rounded-full border border-white/10 px-3 py-1 text-xs text-[color:var(--muted)]">
+                          {item.status}
+                        </span>
+                        <Link
+                          href={`/myclient/intake/${item.id}/intake-review`}
+                          className="inline-flex items-center justify-center rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--accent)]"
+                        >
+                          Review intake
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         )}
       </div>
     </>
