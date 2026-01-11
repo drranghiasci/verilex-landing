@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useFirm } from '@/lib/FirmProvider';
 import { canEditCases } from '@/lib/permissions';
 import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../../lib/intake/schema/gaDivorceCustodyV1';
+import type { FieldDef, SectionDef } from '../../../../../../lib/intake/schema/types';
 import { runConsistencyChecks } from '../../../../../../lib/intake/consistencyChecks';
 import { formatLabel, isRepeatableSection } from '../../../../../../lib/intake/validation';
 
@@ -39,6 +40,15 @@ type IntakeDocumentRow = {
   classification: Record<string, unknown> | null;
   created_at: string;
 };
+
+type SummaryEntry = {
+  index: number;
+  fields: Array<{ field: FieldDef; value: unknown }>;
+};
+
+type SummarySection =
+  | { section: SectionDef; repeatable: true; entries: SummaryEntry[] }
+  | { section: SectionDef; repeatable: false; fields: Array<{ field: FieldDef; value: unknown }> };
 
 const SEVERITY_STYLES: Record<string, string> = {
   low: 'border-emerald-400/40 text-emerald-200',
@@ -191,7 +201,7 @@ export default function IntakeReviewPage() {
     return [first, last].filter(Boolean).join(' ') || 'Unknown client';
   }, [payload.client_first_name, payload.client_last_name]);
 
-  const summarySections = useMemo(() => {
+  const summarySections = useMemo<SummarySection[]>(() => {
     return GA_DIVORCE_CUSTODY_V1.sections.map((section) => {
       const repeatable = isRepeatableSection(section.id);
       if (repeatable) {

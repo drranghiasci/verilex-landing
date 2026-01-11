@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Textarea from '../ui/Textarea';
-import type { IntakeMessage } from '../../../lib/intake/intakeApi';
-import type { FieldPrompt, PromptLibrary } from '../../../lib/intake/guidedChat/types';
-import { formatLabel } from '../../../lib/intake/validation';
+import type { IntakeMessage } from '../../../../lib/intake/intakeApi';
+import type { FieldPrompt, PromptLibrary } from '../../../../lib/intake/guidedChat/types';
+import { formatLabel } from '../../../../lib/intake/validation';
 
 type ChatStatus = 'idle' | 'saving' | 'saved' | 'error';
 
