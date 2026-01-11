@@ -3,6 +3,7 @@ import { supabaseAdmin } from '../../../../../lib/server/supabaseAdmin';
 import { verifyIntakeToken } from '../../../../../lib/server/intakeToken';
 import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schema/gaDivorceCustodyV1';
 import { normalizePayloadToDocxV1 } from '../../../../../lib/intake/normalizePayload';
+import { runWorkflow3Rules } from '../../../../../src/workflow3/runWorkflow3Rules';
 import {
   getRequestId,
   logRequestStart,
@@ -148,6 +149,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (intake.submitted_at || intake.status === 'submitted') {
+    try {
+      await runWorkflow3Rules({ intake_id: intake.id, firm_id: intake.firm_id });
+    } catch (error) {
+      console.error(`[wf3] submit hook failed intake_id=${intake.id}`, error);
+    }
     return res.status(200).json({ ok: true, locked: true, submitted_at: intake.submitted_at });
   }
 
@@ -198,6 +204,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   if (!updated) {
     return res.status(409).json({ ok: false, locked: true, requestId });
+  }
+
+  try {
+    await runWorkflow3Rules({ intake_id: intakeId, firm_id: tokenResult.payload.firm_id });
+  } catch (error) {
+    console.error(`[wf3] submit hook failed intake_id=${intakeId}`, error);
   }
 
   return res.status(200).json({ ok: true, locked: true, submitted_at: updated.submitted_at });

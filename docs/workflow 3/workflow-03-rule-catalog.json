@@ -1,0 +1,2570 @@
+{
+  "ruleset_version": "wf3.ga_v1.0.ruleset.1.0.0",
+  "rules": [
+    {
+      "rule_id": "WF3.REQ.MATTER_TYPE",
+      "name": "Required field: matter_type",
+      "description": "Ensures `matter_type` is present when required by GA v1.0 schema (1. MATTER METADATA (SYSTEM + CLIENT)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.matter_type"
+      ],
+      "message_template": "Missing required field: matter_type.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.matter_type"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.URGENCY_LEVEL",
+      "name": "Required field: urgency_level",
+      "description": "Ensures `urgency_level` is present when required by GA v1.0 schema (1. MATTER METADATA (SYSTEM + CLIENT)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.urgency_level"
+      ],
+      "message_template": "Missing required field: urgency_level.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.urgency_level"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.INTAKE_CHANNEL",
+      "name": "Required field: intake_channel",
+      "description": "Ensures `intake_channel` is present when required by GA v1.0 schema (1. MATTER METADATA (SYSTEM + CLIENT)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.intake_channel"
+      ],
+      "message_template": "Missing required field: intake_channel.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.intake_channel"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.DATE_OF_INTAKE",
+      "name": "Required field: date_of_intake",
+      "description": "Ensures `date_of_intake` is present when required by GA v1.0 schema (1. MATTER METADATA (SYSTEM + CLIENT)).",
+      "severity": "warning",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.date_of_intake"
+      ],
+      "message_template": "Missing required field: date_of_intake.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.date_of_intake"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.CLIENT_FIRST_NAME",
+      "name": "Required field: client_first_name",
+      "description": "Ensures `client_first_name` is present when required by GA v1.0 schema (2. CLIENT IDENTITY).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.client_first_name"
+      ],
+      "message_template": "Missing required field: client_first_name.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.client_first_name"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.CLIENT_LAST_NAME",
+      "name": "Required field: client_last_name",
+      "description": "Ensures `client_last_name` is present when required by GA v1.0 schema (2. CLIENT IDENTITY).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.client_last_name"
+      ],
+      "message_template": "Missing required field: client_last_name.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.client_last_name"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.CLIENT_DOB",
+      "name": "Required field: client_dob",
+      "description": "Ensures `client_dob` is present when required by GA v1.0 schema (2. CLIENT IDENTITY).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.client_dob"
+      ],
+      "message_template": "Missing required field: client_dob.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.client_dob"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.CLIENT_PHONE",
+      "name": "Required field: client_phone",
+      "description": "Ensures `client_phone` is present when required by GA v1.0 schema (2. CLIENT IDENTITY).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.client_phone"
+      ],
+      "message_template": "Missing required field: client_phone.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.client_phone"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.CLIENT_EMAIL",
+      "name": "Required field: client_email",
+      "description": "Ensures `client_email` is present when required by GA v1.0 schema (2. CLIENT IDENTITY).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.client_email"
+      ],
+      "message_template": "Missing required field: client_email.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.client_email"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.CLIENT_ADDRESS",
+      "name": "Required field: client_address",
+      "description": "Ensures `client_address` is present when required by GA v1.0 schema (2. CLIENT IDENTITY).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.client_address"
+      ],
+      "message_template": "Missing required field: client_address.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.client_address"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.CLIENT_COUNTY",
+      "name": "Required field: client_county",
+      "description": "Ensures `client_county` is present when required by GA v1.0 schema (2. CLIENT IDENTITY).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.client_county"
+      ],
+      "message_template": "Missing required field: client_county.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.client_county"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.OPPOSING_NAME",
+      "name": "Required field: opposing_name",
+      "description": "Ensures `opposing_name` is present when required by GA v1.0 schema (3. OPPOSING PARTY (SPOUSE / OTHER PARENT)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.opposing_name"
+      ],
+      "message_template": "Missing required field: opposing_name.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.opposing_name"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.OPPOSING_ADDRESS_KNOWN",
+      "name": "Required field: opposing_address_known",
+      "description": "Ensures `opposing_address_known` is present when required by GA v1.0 schema (3. OPPOSING PARTY (SPOUSE / OTHER PARENT)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.opposing_address_known"
+      ],
+      "message_template": "Missing required field: opposing_address_known.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.opposing_address_known"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.OPPOSING_LAST_KNOWN_ADDRESS",
+      "name": "Required field: opposing_last_known_address",
+      "description": "Ensures `opposing_last_known_address` is present when required by GA v1.0 schema (3. OPPOSING PARTY (SPOUSE / OTHER PARENT)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.opposing_address_known",
+            "equals": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.opposing_last_known_address"
+      ],
+      "message_template": "Missing required field: opposing_last_known_address.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.opposing_last_known_address"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.DATE_OF_MARRIAGE",
+      "name": "Required field: date_of_marriage",
+      "description": "Ensures `date_of_marriage` is present when required by GA v1.0 schema (4. MARRIAGE DETAILS).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.date_of_marriage"
+      ],
+      "message_template": "Missing required field: date_of_marriage.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.date_of_marriage"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.PLACE_OF_MARRIAGE",
+      "name": "Required field: place_of_marriage",
+      "description": "Ensures `place_of_marriage` is present when required by GA v1.0 schema (4. MARRIAGE DETAILS).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.place_of_marriage"
+      ],
+      "message_template": "Missing required field: place_of_marriage.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.place_of_marriage"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.DATE_OF_SEPARATION",
+      "name": "Required field: date_of_separation",
+      "description": "Ensures `date_of_separation` is present when required by GA v1.0 schema (4. MARRIAGE DETAILS).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.currently_cohabitating",
+            "equals": false
+          }
+        ]
+      },
+      "field_paths": [
+        "$.date_of_separation"
+      ],
+      "message_template": "Missing required field: date_of_separation.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.date_of_separation"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.CURRENTLY_COHABITATING",
+      "name": "Required field: currently_cohabitating",
+      "description": "Ensures `currently_cohabitating` is present when required by GA v1.0 schema (4. MARRIAGE DETAILS).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.currently_cohabitating"
+      ],
+      "message_template": "Missing required field: currently_cohabitating.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.currently_cohabitating"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.GROUNDS_FOR_DIVORCE",
+      "name": "Required field: grounds_for_divorce",
+      "description": "Ensures `grounds_for_divorce` is present when required by GA v1.0 schema (5. SEPARATION & GROUNDS (GEORGIA)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.grounds_for_divorce"
+      ],
+      "message_template": "Missing required field: grounds_for_divorce.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.grounds_for_divorce"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.CHILD_FULL_NAME",
+      "name": "Required field: child_full_name",
+      "description": "Ensures `child_full_name` is present when required by GA v1.0 schema (6. CHILDREN & CUSTODY (CRITICAL)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.children[].child_full_name"
+      ],
+      "message_template": "Missing required field: child_full_name.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.children[].child_full_name"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.CHILD_DOB",
+      "name": "Required field: child_dob",
+      "description": "Ensures `child_dob` is present when required by GA v1.0 schema (6. CHILDREN & CUSTODY (CRITICAL)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.children[].child_dob"
+      ],
+      "message_template": "Missing required field: child_dob.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.children[].child_dob"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.CHILD_CURRENT_RESIDENCE",
+      "name": "Required field: child_current_residence",
+      "description": "Ensures `child_current_residence` is present when required by GA v1.0 schema (6. CHILDREN & CUSTODY (CRITICAL)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.children[].child_current_residence"
+      ],
+      "message_template": "Missing required field: child_current_residence.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.children[].child_current_residence"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.BIOLOGICAL_RELATION",
+      "name": "Required field: biological_relation",
+      "description": "Ensures `biological_relation` is present when required by GA v1.0 schema (6. CHILDREN & CUSTODY (CRITICAL)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.children[].biological_relation"
+      ],
+      "message_template": "Missing required field: biological_relation.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.children[].biological_relation"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.CUSTODY_TYPE_REQUESTED",
+      "name": "Required field: custody_type_requested",
+      "description": "Ensures `custody_type_requested` is present when required by GA v1.0 schema (6. CHILDREN & CUSTODY (CRITICAL)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.children_custody.custody_type_requested"
+      ],
+      "message_template": "Missing required field: custody_type_requested.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.children_custody.custody_type_requested"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.PARENTING_PLAN_EXISTS",
+      "name": "Required field: parenting_plan_exists",
+      "description": "Ensures `parenting_plan_exists` is present when required by GA v1.0 schema (6. CHILDREN & CUSTODY (CRITICAL)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.children_custody.parenting_plan_exists"
+      ],
+      "message_template": "Missing required field: parenting_plan_exists.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.children_custody.parenting_plan_exists"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.ASSET_TYPE",
+      "name": "Required field: asset_type",
+      "description": "Ensures `asset_type` is present when required by GA v1.0 schema (7. ASSETS & PROPERTY (MARITAL ESTATE)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.assets[].asset_type"
+      ],
+      "message_template": "Missing required field: asset_type.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.assets[].asset_type"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.OWNERSHIP",
+      "name": "Required field: ownership",
+      "description": "Ensures `ownership` is present when required by GA v1.0 schema (7. ASSETS & PROPERTY (MARITAL ESTATE)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.assets[].ownership"
+      ],
+      "message_template": "Missing required field: ownership.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.assets[].ownership"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.ESTIMATED_VALUE",
+      "name": "Required field: estimated_value",
+      "description": "Ensures `estimated_value` is present when required by GA v1.0 schema (7. ASSETS & PROPERTY (MARITAL ESTATE)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.assets[].estimated_value"
+      ],
+      "message_template": "Missing required field: estimated_value.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.assets[].estimated_value"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.TITLE_HOLDER",
+      "name": "Required field: title_holder",
+      "description": "Ensures `title_holder` is present when required by GA v1.0 schema (7. ASSETS & PROPERTY (MARITAL ESTATE)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.assets[].title_holder"
+      ],
+      "message_template": "Missing required field: title_holder.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.assets[].title_holder"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.ACQUIRED_PRE_MARRIAGE",
+      "name": "Required field: acquired_pre_marriage",
+      "description": "Ensures `acquired_pre_marriage` is present when required by GA v1.0 schema (7. ASSETS & PROPERTY (MARITAL ESTATE)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.assets[].acquired_pre_marriage"
+      ],
+      "message_template": "Missing required field: acquired_pre_marriage.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.assets[].acquired_pre_marriage"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.CLIENT_INCOME_MONTHLY",
+      "name": "Required field: client_income_monthly",
+      "description": "Ensures `client_income_monthly` is present when required by GA v1.0 schema (8. INCOME & SUPPORT).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.client_income_monthly"
+      ],
+      "message_template": "Missing required field: client_income_monthly.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.client_income_monthly"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.OPPOSING_INCOME_KNOWN",
+      "name": "Required field: opposing_income_known",
+      "description": "Ensures `opposing_income_known` is present when required by GA v1.0 schema (8. INCOME & SUPPORT).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.opposing_income_known"
+      ],
+      "message_template": "Missing required field: opposing_income_known.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.opposing_income_known"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.SUPPORT_REQUESTED",
+      "name": "Required field: support_requested",
+      "description": "Ensures `support_requested` is present when required by GA v1.0 schema (8. INCOME & SUPPORT).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.support_requested"
+      ],
+      "message_template": "Missing required field: support_requested.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.support_requested"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.DEBT_TYPE",
+      "name": "Required field: debt_type",
+      "description": "Ensures `debt_type` is present when required by GA v1.0 schema (9. LIABILITIES & DEBTS).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.debts[].debt_type"
+      ],
+      "message_template": "Missing required field: debt_type.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.debts[].debt_type"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.AMOUNT",
+      "name": "Required field: amount",
+      "description": "Ensures `amount` is present when required by GA v1.0 schema (9. LIABILITIES & DEBTS).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.debts[].amount"
+      ],
+      "message_template": "Missing required field: amount.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.debts[].amount"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.RESPONSIBLE_PARTY",
+      "name": "Required field: responsible_party",
+      "description": "Ensures `responsible_party` is present when required by GA v1.0 schema (9. LIABILITIES & DEBTS).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.debts[].responsible_party"
+      ],
+      "message_template": "Missing required field: responsible_party.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.debts[].responsible_party"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.INCURRED_DURING_MARRIAGE",
+      "name": "Required field: incurred_during_marriage",
+      "description": "Ensures `incurred_during_marriage` is present when required by GA v1.0 schema (9. LIABILITIES & DEBTS).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.debts[].incurred_during_marriage"
+      ],
+      "message_template": "Missing required field: incurred_during_marriage.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.debts[].incurred_during_marriage"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.DV_PRESENT",
+      "name": "Required field: dv_present",
+      "description": "Ensures `dv_present` is present when required by GA v1.0 schema (10. DOMESTIC VIOLENCE & SAFETY (HIGH PRIORITY)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.dv_present"
+      ],
+      "message_template": "Missing required field: dv_present.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.dv_present"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.PROTECTIVE_ORDER_EXISTS",
+      "name": "Required field: protective_order_exists",
+      "description": "Ensures `protective_order_exists` is present when required by GA v1.0 schema (10. DOMESTIC VIOLENCE & SAFETY (HIGH PRIORITY)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.dv_present",
+            "equals": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.protective_order_exists"
+      ],
+      "message_template": "Missing required field: protective_order_exists.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.protective_order_exists"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.IMMEDIATE_SAFETY_CONCERNS",
+      "name": "Required field: immediate_safety_concerns",
+      "description": "Ensures `immediate_safety_concerns` is present when required by GA v1.0 schema (10. DOMESTIC VIOLENCE & SAFETY (HIGH PRIORITY)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.immediate_safety_concerns"
+      ],
+      "message_template": "Missing required field: immediate_safety_concerns.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.immediate_safety_concerns"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.COUNTY_OF_FILING",
+      "name": "Required field: county_of_filing",
+      "description": "Ensures `county_of_filing` is present when required by GA v1.0 schema (11. JURISDICTION & VENUE (AUTOMATED)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.county_of_filing"
+      ],
+      "message_template": "Missing required field: county_of_filing.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.county_of_filing"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.RESIDENCY_DURATION_MONTHS",
+      "name": "Required field: residency_duration_months",
+      "description": "Ensures `residency_duration_months` is present when required by GA v1.0 schema (11. JURISDICTION & VENUE (AUTOMATED)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.residency_duration_months"
+      ],
+      "message_template": "Missing required field: residency_duration_months.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.residency_duration_months"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.PRIOR_DIVORCE_FILINGS",
+      "name": "Required field: prior_divorce_filings",
+      "description": "Ensures `prior_divorce_filings` is present when required by GA v1.0 schema (12. PRIOR LEGAL ACTIONS).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.prior_divorce_filings"
+      ],
+      "message_template": "Missing required field: prior_divorce_filings.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.prior_divorce_filings"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.PRIOR_CUSTODY_ORDERS",
+      "name": "Required field: prior_custody_orders",
+      "description": "Ensures `prior_custody_orders` is present when required by GA v1.0 schema (12. PRIOR LEGAL ACTIONS).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.prior_custody_orders"
+      ],
+      "message_template": "Missing required field: prior_custody_orders.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.prior_custody_orders"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.EXISTING_ATTORNEY",
+      "name": "Required field: existing_attorney",
+      "description": "Ensures `existing_attorney` is present when required by GA v1.0 schema (12. PRIOR LEGAL ACTIONS).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.existing_attorney"
+      ],
+      "message_template": "Missing required field: existing_attorney.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.existing_attorney"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.PRIMARY_GOAL",
+      "name": "Required field: primary_goal",
+      "description": "Ensures `primary_goal` is present when required by GA v1.0 schema (13. DESIRED OUTCOMES (CLIENT GOALS)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.primary_goal"
+      ],
+      "message_template": "Missing required field: primary_goal.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.primary_goal"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.SETTLEMENT_PREFERENCE",
+      "name": "Required field: settlement_preference",
+      "description": "Ensures `settlement_preference` is present when required by GA v1.0 schema (13. DESIRED OUTCOMES (CLIENT GOALS)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.settlement_preference"
+      ],
+      "message_template": "Missing required field: settlement_preference.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.settlement_preference"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.REQ.LITIGATION_TOLERANCE",
+      "name": "Required field: litigation_tolerance",
+      "description": "Ensures `litigation_tolerance` is present when required by GA v1.0 schema (13. DESIRED OUTCOMES (CLIENT GOALS)).",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.litigation_tolerance"
+      ],
+      "message_template": "Missing required field: litigation_tolerance.",
+      "evidence_strategy": {
+        "type": "missing_or_null",
+        "paths": [
+          "$.litigation_tolerance"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.COUNTY.CLIENT_COUNTY",
+      "name": "Validate GA county: client_county",
+      "description": "Validates `client_county` against ga_counties.csv canonical list and records normalization evidence.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.client_county",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.client_county"
+      ],
+      "message_template": "Invalid county value for client_county; must match ga_counties.csv.",
+      "evidence_strategy": {
+        "type": "csv_lookup",
+        "csv": "ga_counties.csv",
+        "input_path": "$.client_county",
+        "match_on": [
+          "slug",
+          "name"
+        ],
+        "output": "normalized_value"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.COUNTY.COUNTY_OF_FILING",
+      "name": "Validate GA county: county_of_filing",
+      "description": "Validates `county_of_filing` against ga_counties.csv canonical list and records normalization evidence.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.county_of_filing",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.county_of_filing"
+      ],
+      "message_template": "Invalid county value for county_of_filing; must match ga_counties.csv.",
+      "evidence_strategy": {
+        "type": "csv_lookup",
+        "csv": "ga_counties.csv",
+        "input_path": "$.county_of_filing",
+        "match_on": [
+          "slug",
+          "name"
+        ],
+        "output": "normalized_value"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.MATTER_TYPE",
+      "name": "Validate enum: matter_type",
+      "description": "Ensures `matter_type` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.matter_type",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.matter_type"
+      ],
+      "message_template": "Invalid value for matter_type; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.matter_type",
+        "allowed_values": [
+          "divorce",
+          "custody",
+          "legitimation",
+          "modification"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.URGENCY_LEVEL",
+      "name": "Validate enum: urgency_level",
+      "description": "Ensures `urgency_level` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.urgency_level",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.urgency_level"
+      ],
+      "message_template": "Invalid value for urgency_level; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.urgency_level",
+        "allowed_values": [
+          "routine",
+          "urgent",
+          "emergency"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.INTAKE_CHANNEL",
+      "name": "Validate enum: intake_channel",
+      "description": "Ensures `intake_channel` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.intake_channel",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.intake_channel"
+      ],
+      "message_template": "Invalid value for intake_channel; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.intake_channel",
+        "allowed_values": [
+          "web",
+          "referral",
+          "phone"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.LANGUAGE_PREFERENCE",
+      "name": "Validate enum: language_preference",
+      "description": "Ensures `language_preference` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.language_preference",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.language_preference"
+      ],
+      "message_template": "Invalid value for language_preference; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.language_preference",
+        "allowed_values": [
+          "english",
+          "spanish",
+          "other",
+          "unknown",
+          "prefer_not_to_say"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.CITIZENSHIP_STATUS",
+      "name": "Validate enum: citizenship_status",
+      "description": "Ensures `citizenship_status` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.citizenship_status",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.citizenship_status"
+      ],
+      "message_template": "Invalid value for citizenship_status; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.citizenship_status",
+        "allowed_values": [
+          "us_citizen",
+          "lawful_permanent_resident",
+          "nonimmigrant_visa_holder",
+          "undocumented",
+          "dual_citizen",
+          "unknown",
+          "prefer_not_to_say"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.OPPOSING_EMPLOYMENT_STATUS",
+      "name": "Validate enum: opposing_employment_status",
+      "description": "Ensures `opposing_employment_status` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.opposing_employment_status",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.opposing_employment_status"
+      ],
+      "message_template": "Invalid value for opposing_employment_status; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.opposing_employment_status",
+        "allowed_values": [
+          "employed_full_time",
+          "employed_part_time",
+          "self_employed",
+          "unemployed",
+          "student",
+          "retired",
+          "disabled",
+          "unknown"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.GROUNDS_FOR_DIVORCE",
+      "name": "Validate enum: grounds_for_divorce",
+      "description": "Ensures `grounds_for_divorce` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.grounds_for_divorce",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.grounds_for_divorce"
+      ],
+      "message_template": "Invalid value for grounds_for_divorce; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.grounds_for_divorce",
+        "allowed_values": [
+          "no_fault",
+          "adultery",
+          "desertion",
+          "cruel_treatment",
+          "habitual_drug_use",
+          "mental_incapacity",
+          "impotence",
+          "pregnancy_by_another",
+          "incest",
+          "conviction_of_felony",
+          "adultery",
+          "desertion",
+          "cruel_treatment",
+          "habitual_drug_use",
+          "mental_incapacity",
+          "impotence",
+          "pregnancy_by_another",
+          "incest",
+          "conviction_of_felony"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.CHILD_CURRENT_RESIDENCE",
+      "name": "Validate enum: child_current_residence",
+      "description": "Ensures `child_current_residence` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.children[].child_current_residence",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.children[].child_current_residence"
+      ],
+      "message_template": "Invalid value for child_current_residence; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.children[].child_current_residence",
+        "allowed_values": [
+          "with_client",
+          "with_opposing",
+          "shared",
+          "third_party",
+          "other",
+          "unknown"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.BIOLOGICAL_RELATION",
+      "name": "Validate enum: biological_relation",
+      "description": "Ensures `biological_relation` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.children[].biological_relation",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.children[].biological_relation"
+      ],
+      "message_template": "Invalid value for biological_relation; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.children[].biological_relation",
+        "allowed_values": [
+          "client",
+          "opposing",
+          "both",
+          "neither",
+          "unknown"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.CUSTODY_TYPE_REQUESTED",
+      "name": "Validate enum: custody_type_requested",
+      "description": "Ensures `custody_type_requested` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.children_custody.custody_type_requested",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.children_custody.custody_type_requested"
+      ],
+      "message_template": "Invalid value for custody_type_requested; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.children_custody.custody_type_requested",
+        "allowed_values": [
+          "legal_custody",
+          "physical_custody",
+          "joint_custody",
+          "sole_custody"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.ASSET_TYPE",
+      "name": "Validate enum: asset_type",
+      "description": "Ensures `asset_type` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.assets[].asset_type",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.assets[].asset_type"
+      ],
+      "message_template": "Invalid value for asset_type; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.assets[].asset_type",
+        "allowed_values": [
+          "real_estate",
+          "vehicle",
+          "bank_account",
+          "retirement_account",
+          "investment_account",
+          "business_interest",
+          "personal_property",
+          "other"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.OWNERSHIP",
+      "name": "Validate enum: ownership",
+      "description": "Ensures `ownership` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.assets[].ownership",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.assets[].ownership"
+      ],
+      "message_template": "Invalid value for ownership; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.assets[].ownership",
+        "allowed_values": [
+          "sole_client",
+          "sole_opposing",
+          "joint",
+          "third_party",
+          "unknown"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.TITLE_HOLDER",
+      "name": "Validate enum: title_holder",
+      "description": "Ensures `title_holder` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.assets[].title_holder",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.assets[].title_holder"
+      ],
+      "message_template": "Invalid value for title_holder; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.assets[].title_holder",
+        "allowed_values": [
+          "client",
+          "opposing",
+          "both",
+          "third_party",
+          "unknown"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.SUPPORT_REQUESTED",
+      "name": "Validate enum: support_requested",
+      "description": "Ensures `support_requested` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.support_requested",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.support_requested"
+      ],
+      "message_template": "Invalid value for support_requested; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.support_requested",
+        "allowed_values": [
+          "child_support",
+          "spousal_support",
+          "both"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.DEBT_TYPE",
+      "name": "Validate enum: debt_type",
+      "description": "Ensures `debt_type` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.debts[].debt_type",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.debts[].debt_type"
+      ],
+      "message_template": "Invalid value for debt_type; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.debts[].debt_type",
+        "allowed_values": [
+          "credit_card",
+          "student_loan",
+          "auto_loan",
+          "mortgage",
+          "medical_debt",
+          "tax_debt",
+          "personal_loan",
+          "other"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.RESPONSIBLE_PARTY",
+      "name": "Validate enum: responsible_party",
+      "description": "Ensures `responsible_party` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.debts[].responsible_party",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.debts[].responsible_party"
+      ],
+      "message_template": "Invalid value for responsible_party; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.debts[].responsible_party",
+        "allowed_values": [
+          "client",
+          "opposing",
+          "both",
+          "third_party",
+          "unknown"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.PRIMARY_GOAL",
+      "name": "Validate enum: primary_goal",
+      "description": "Ensures `primary_goal` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.primary_goal",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.primary_goal"
+      ],
+      "message_template": "Invalid value for primary_goal; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.primary_goal",
+        "allowed_values": [
+          "divorce_finalization",
+          "custody_determination",
+          "custody_modification",
+          "support_establishment",
+          "support_modification",
+          "property_division",
+          "protective_relief",
+          "legal_guidance",
+          "other"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.SETTLEMENT_PREFERENCE",
+      "name": "Validate enum: settlement_preference",
+      "description": "Ensures `settlement_preference` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.settlement_preference",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.settlement_preference"
+      ],
+      "message_template": "Invalid value for settlement_preference; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.settlement_preference",
+        "allowed_values": [
+          "strongly_prefer_settlement",
+          "prefer_settlement",
+          "open_to_either",
+          "prefer_litigation",
+          "strongly_prefer_litigation",
+          "unsure"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.LITIGATION_TOLERANCE",
+      "name": "Validate enum: litigation_tolerance",
+      "description": "Ensures `litigation_tolerance` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.litigation_tolerance",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.litigation_tolerance"
+      ],
+      "message_template": "Invalid value for litigation_tolerance; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.litigation_tolerance",
+        "allowed_values": [
+          "low",
+          "moderate",
+          "high",
+          "unknown"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.ENUM.DOCUMENT_TYPE",
+      "name": "Validate enum: document_type",
+      "description": "Ensures `document_type` value is one of the canonical WF2 enum values.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.documents[].document_type",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.documents[].document_type"
+      ],
+      "message_template": "Invalid value for document_type; must be one of the canonical enum values.",
+      "evidence_strategy": {
+        "type": "enum_membership",
+        "path": "$.documents[].document_type",
+        "allowed_values": [
+          "pay_stub",
+          "tax_return",
+          "bank_statement",
+          "financial_statement",
+          "real_estate_document",
+          "vehicle_title",
+          "retirement_statement",
+          "business_record",
+          "text_message",
+          "email",
+          "photo",
+          "video",
+          "police_report",
+          "court_order",
+          "protective_order",
+          "medical_record",
+          "school_record",
+          "other"
+        ]
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.DATE_OF_INTAKE",
+      "name": "Validate type: date_of_intake",
+      "description": "Ensures `date_of_intake` conforms to expected type `date` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.date_of_intake",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.date_of_intake"
+      ],
+      "message_template": "Invalid type/format for date_of_intake; expected date.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.date_of_intake",
+        "expected_type": "date"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.CLIENT_DOB",
+      "name": "Validate type: client_dob",
+      "description": "Ensures `client_dob` conforms to expected type `date` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.client_dob",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.client_dob"
+      ],
+      "message_template": "Invalid type/format for client_dob; expected date.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.client_dob",
+        "expected_type": "date"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.MILITARY_STATUS",
+      "name": "Validate type: military_status",
+      "description": "Ensures `military_status` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.military_status",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.military_status"
+      ],
+      "message_template": "Invalid type/format for military_status; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.military_status",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.OPPOSING_ADDRESS_KNOWN",
+      "name": "Validate type: opposing_address_known",
+      "description": "Ensures `opposing_address_known` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.opposing_address_known",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.opposing_address_known"
+      ],
+      "message_template": "Invalid type/format for opposing_address_known; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.opposing_address_known",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.SERVICE_CONCERNS",
+      "name": "Validate type: service_concerns",
+      "description": "Ensures `service_concerns` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.service_concerns",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.service_concerns"
+      ],
+      "message_template": "Invalid type/format for service_concerns; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.service_concerns",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.DATE_OF_MARRIAGE",
+      "name": "Validate type: date_of_marriage",
+      "description": "Ensures `date_of_marriage` conforms to expected type `date` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.date_of_marriage",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.date_of_marriage"
+      ],
+      "message_template": "Invalid type/format for date_of_marriage; expected date.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.date_of_marriage",
+        "expected_type": "date"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.MARRIAGE_CERTIFICATE_AVAILABLE",
+      "name": "Validate type: marriage_certificate_available",
+      "description": "Ensures `marriage_certificate_available` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.marriage_certificate_available",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.marriage_certificate_available"
+      ],
+      "message_template": "Invalid type/format for marriage_certificate_available; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.marriage_certificate_available",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.DATE_OF_SEPARATION",
+      "name": "Validate type: date_of_separation",
+      "description": "Ensures `date_of_separation` conforms to expected type `date` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.date_of_separation",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.date_of_separation"
+      ],
+      "message_template": "Invalid type/format for date_of_separation; expected date.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.date_of_separation",
+        "expected_type": "date"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.CURRENTLY_COHABITATING",
+      "name": "Validate type: currently_cohabitating",
+      "description": "Ensures `currently_cohabitating` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.currently_cohabitating",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.currently_cohabitating"
+      ],
+      "message_template": "Invalid type/format for currently_cohabitating; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.currently_cohabitating",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.RECONCILIATION_ATTEMPTED",
+      "name": "Validate type: reconciliation_attempted",
+      "description": "Ensures `reconciliation_attempted` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.reconciliation_attempted",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.reconciliation_attempted"
+      ],
+      "message_template": "Invalid type/format for reconciliation_attempted; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.reconciliation_attempted",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.CHILD_DOB",
+      "name": "Validate type: child_dob",
+      "description": "Ensures `child_dob` conforms to expected type `date` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.children[].child_dob",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.children[].child_dob"
+      ],
+      "message_template": "Invalid type/format for child_dob; expected date.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.children[].child_dob",
+        "expected_type": "date"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.SPECIAL_NEEDS",
+      "name": "Validate type: special_needs",
+      "description": "Ensures `special_needs` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.children[].special_needs",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.children[].special_needs"
+      ],
+      "message_template": "Invalid type/format for special_needs; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.children[].special_needs",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.PARENTING_PLAN_EXISTS",
+      "name": "Validate type: parenting_plan_exists",
+      "description": "Ensures `parenting_plan_exists` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.children_custody.parenting_plan_exists",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.children_custody.parenting_plan_exists"
+      ],
+      "message_template": "Invalid type/format for parenting_plan_exists; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.children_custody.parenting_plan_exists",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.ESTIMATED_VALUE",
+      "name": "Validate type: estimated_value",
+      "description": "Ensures `estimated_value` conforms to expected type `number` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.assets[].estimated_value",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.assets[].estimated_value"
+      ],
+      "message_template": "Invalid type/format for estimated_value; expected number.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.assets[].estimated_value",
+        "expected_type": "number"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.ACQUIRED_PRE_MARRIAGE",
+      "name": "Validate type: acquired_pre_marriage",
+      "description": "Ensures `acquired_pre_marriage` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.assets[].acquired_pre_marriage",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.assets[].acquired_pre_marriage"
+      ],
+      "message_template": "Invalid type/format for acquired_pre_marriage; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.assets[].acquired_pre_marriage",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.CLIENT_INCOME_MONTHLY",
+      "name": "Validate type: client_income_monthly",
+      "description": "Ensures `client_income_monthly` conforms to expected type `number` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.client_income_monthly",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.client_income_monthly"
+      ],
+      "message_template": "Invalid type/format for client_income_monthly; expected number.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.client_income_monthly",
+        "expected_type": "number"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.OPPOSING_INCOME_KNOWN",
+      "name": "Validate type: opposing_income_known",
+      "description": "Ensures `opposing_income_known` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.opposing_income_known",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.opposing_income_known"
+      ],
+      "message_template": "Invalid type/format for opposing_income_known; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.opposing_income_known",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.CHILD_SUPPORT_ESTIMATE",
+      "name": "Validate type: child_support_estimate",
+      "description": "Ensures `child_support_estimate` conforms to expected type `number` when provided.",
+      "severity": "warning",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.child_support_estimate",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.child_support_estimate"
+      ],
+      "message_template": "Invalid type/format for child_support_estimate; expected number.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.child_support_estimate",
+        "expected_type": "number"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.ALIMONY_REQUESTED",
+      "name": "Validate type: alimony_requested",
+      "description": "Ensures `alimony_requested` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.alimony_requested",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.alimony_requested"
+      ],
+      "message_template": "Invalid type/format for alimony_requested; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.alimony_requested",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.AMOUNT",
+      "name": "Validate type: amount",
+      "description": "Ensures `amount` conforms to expected type `number` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.debts[].amount",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.debts[].amount"
+      ],
+      "message_template": "Invalid type/format for amount; expected number.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.debts[].amount",
+        "expected_type": "number"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.INCURRED_DURING_MARRIAGE",
+      "name": "Validate type: incurred_during_marriage",
+      "description": "Ensures `incurred_during_marriage` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.debts[].incurred_during_marriage",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.debts[].incurred_during_marriage"
+      ],
+      "message_template": "Invalid type/format for incurred_during_marriage; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.debts[].incurred_during_marriage",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.DV_PRESENT",
+      "name": "Validate type: dv_present",
+      "description": "Ensures `dv_present` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.dv_present",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.dv_present"
+      ],
+      "message_template": "Invalid type/format for dv_present; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.dv_present",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.PROTECTIVE_ORDER_EXISTS",
+      "name": "Validate type: protective_order_exists",
+      "description": "Ensures `protective_order_exists` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.protective_order_exists",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.protective_order_exists"
+      ],
+      "message_template": "Invalid type/format for protective_order_exists; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.protective_order_exists",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.IMMEDIATE_SAFETY_CONCERNS",
+      "name": "Validate type: immediate_safety_concerns",
+      "description": "Ensures `immediate_safety_concerns` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.immediate_safety_concerns",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.immediate_safety_concerns"
+      ],
+      "message_template": "Invalid type/format for immediate_safety_concerns; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.immediate_safety_concerns",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.CHILDREN_EXPOSED",
+      "name": "Validate type: children_exposed",
+      "description": "Ensures `children_exposed` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.children_exposed",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.children_exposed"
+      ],
+      "message_template": "Invalid type/format for children_exposed; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.children_exposed",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.RESIDENCY_DURATION_MONTHS",
+      "name": "Validate type: residency_duration_months",
+      "description": "Ensures `residency_duration_months` conforms to expected type `number` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.residency_duration_months",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.residency_duration_months"
+      ],
+      "message_template": "Invalid type/format for residency_duration_months; expected number.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.residency_duration_months",
+        "expected_type": "number"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.VENUE_CONFIRMED",
+      "name": "Validate type: venue_confirmed",
+      "description": "Ensures `venue_confirmed` conforms to expected type `boolean` when provided.",
+      "severity": "warning",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.venue_confirmed",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.venue_confirmed"
+      ],
+      "message_template": "Invalid type/format for venue_confirmed; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.venue_confirmed",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.PRIOR_DIVORCE_FILINGS",
+      "name": "Validate type: prior_divorce_filings",
+      "description": "Ensures `prior_divorce_filings` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.prior_divorce_filings",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.prior_divorce_filings"
+      ],
+      "message_template": "Invalid type/format for prior_divorce_filings; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.prior_divorce_filings",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.PRIOR_CUSTODY_ORDERS",
+      "name": "Validate type: prior_custody_orders",
+      "description": "Ensures `prior_custody_orders` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.prior_custody_orders",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.prior_custody_orders"
+      ],
+      "message_template": "Invalid type/format for prior_custody_orders; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.prior_custody_orders",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.EXISTING_ATTORNEY",
+      "name": "Validate type: existing_attorney",
+      "description": "Ensures `existing_attorney` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.existing_attorney",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.existing_attorney"
+      ],
+      "message_template": "Invalid type/format for existing_attorney; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.existing_attorney",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.VALID.TYPE.UPLOADED",
+      "name": "Validate type: uploaded",
+      "description": "Ensures `uploaded` conforms to expected type `boolean` when provided.",
+      "severity": "block",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.documents[].uploaded",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.documents[].uploaded"
+      ],
+      "message_template": "Invalid type/format for uploaded; expected boolean.",
+      "evidence_strategy": {
+        "type": "type_check",
+        "path": "$.documents[].uploaded",
+        "expected_type": "boolean"
+      }
+    },
+    {
+      "rule_id": "WF3.CONSISTENCY.SEPARATION_DATE_ORDER",
+      "name": "Separation date not before marriage date",
+      "description": "If both dates are provided, date_of_separation should not be earlier than date_of_marriage.",
+      "severity": "warning",
+      "applies_when": {
+        "all": [
+          {
+            "path": "$.date_of_marriage",
+            "exists": true
+          },
+          {
+            "path": "$.date_of_separation",
+            "exists": true
+          }
+        ]
+      },
+      "field_paths": [
+        "$.date_of_marriage",
+        "$.date_of_separation"
+      ],
+      "message_template": "Potential inconsistency: date_of_separation is earlier than date_of_marriage.",
+      "evidence_strategy": {
+        "type": "date_order",
+        "earlier_path": "$.date_of_marriage",
+        "later_path": "$.date_of_separation",
+        "operator": "<="
+      }
+    }
+  ]
+}

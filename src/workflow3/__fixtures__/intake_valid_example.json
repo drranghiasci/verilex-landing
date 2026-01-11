@@ -1,0 +1,19 @@
+{
+  "matter_type": "divorce",
+  "urgency_level": "routine",
+  "intake_channel": "web",
+  "date_of_intake": "2026-01-11",
+  "client_first_name": "Alex",
+  "client_last_name": "Jordan",
+  "client_dob": "1990-04-12",
+  "client_phone": "404-555-0100",
+  "client_email": "alex.jordan@example.com",
+  "client_address": {
+    "line1": "123 Peachtree St",
+    "city": "Atlanta",
+    "state": "GA",
+    "zip": "30303"
+  },
+  "client_county": "fulton",
+  "county_of_filing": "Fulton"
+}
