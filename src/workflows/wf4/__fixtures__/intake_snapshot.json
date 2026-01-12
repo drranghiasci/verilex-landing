@@ -1,0 +1,30 @@
+{
+  "intake_id": "intake-fixture-1",
+  "submission_id": "intake-fixture-1",
+  "structured_fields": {
+    "matter_type": "divorce",
+    "client_first_name": "Taylor"
+  },
+  "free_text_fields": {
+    "narrative": "We separated last year."
+  },
+  "messages": [
+    {
+      "message_id": "msg-1",
+      "role": "client",
+      "content": "We have two kids.",
+      "created_at": "2026-01-11T00:00:00.000Z"
+    }
+  ],
+  "documents": [
+    {
+      "document_id": "doc-1",
+      "filename": "note.pdf",
+      "mimetype": "application/pdf",
+      "text_extract": null,
+      "created_at": "2026-01-11T00:00:00.000Z"
+    }
+  ],
+  "created_at": "2026-01-11T00:00:00.000Z",
+  "firm_id": "firm-fixture-1"
+}

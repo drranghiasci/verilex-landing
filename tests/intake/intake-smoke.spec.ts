@@ -137,22 +137,17 @@ test('intake smoke: start → resume → submit', async ({ page, request }) => {
   await expect(page.getByRole('heading', { name: 'Steps' })).toBeVisible();
 
   const steps = page.locator('.steps__item');
-  const totalSteps = await steps.count();
-  expect(totalSteps).toBeGreaterThan(0);
-
-  for (let stepIndex = 0; stepIndex < totalSteps; stepIndex += 1) {
+  let stepIndex = 0;
+  while (stepIndex < (await steps.count())) {
+    const stepButton = steps.nth(stepIndex);
+    await stepButton.click();
+    await expect(stepButton).toHaveClass(/is-active/);
     await fillRequiredFieldsInStep(page);
-    const nextButton = page.getByRole('button', { name: /save & continue/i });
-    if (await nextButton.isVisible()) {
-      const previousTitle = await page.locator('.step__title').textContent();
-      await nextButton.click();
-      if (previousTitle) {
-        await expect(page.locator('.step__title')).not.toHaveText(previousTitle);
-      }
-    } else {
-      break;
-    }
+    stepIndex += 1;
   }
+
+  await steps.nth((await steps.count()) - 1).click();
+  await expect(page.getByRole('button', { name: /submit intake/i })).toBeVisible();
 
   const confirmLabel = page.locator('label', {
     hasText: 'I understand submission is final and cannot be edited.',

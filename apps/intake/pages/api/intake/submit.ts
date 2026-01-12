@@ -4,6 +4,8 @@ import { verifyIntakeToken } from '../../../../../lib/server/intakeToken';
 import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schema/gaDivorceCustodyV1';
 import { normalizePayloadToDocxV1 } from '../../../../../lib/intake/normalizePayload';
 import { runWorkflow3Rules } from '../../../../../src/workflow3/runWorkflow3Rules';
+import { runWf4 } from '../../../../../src/workflows/wf4/runWf4';
+import { createWf4OpenAiProvider } from '../../../../../src/workflows/wf4/openaiProvider';
 import {
   getRequestId,
   logRequestStart,
@@ -149,10 +151,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (intake.submitted_at || intake.status === 'submitted') {
+    let wf3Result: { extraction_id?: string } | null = null;
     try {
-      await runWorkflow3Rules({ intake_id: intake.id, firm_id: intake.firm_id });
+      wf3Result = await runWorkflow3Rules({ intake_id: intake.id, firm_id: intake.firm_id });
     } catch (error) {
       console.error(`[wf3] submit hook failed intake_id=${intake.id}`, error);
+    }
+    if (wf3Result?.extraction_id) {
+      try {
+        const monthlyBudgetUsd = Number(process.env.OPENAI_MONTHLY_BUDGET_USD ?? '100');
+        const maxRetries = Number(process.env.OPENAI_MAX_RETRIES ?? '2');
+        const provider = process.env.OPENAI_API_KEY && intake.firm_id
+          ? createWf4OpenAiProvider({
+              firmId: intake.firm_id,
+              monthlyBudgetUsd: Number.isFinite(monthlyBudgetUsd) ? monthlyBudgetUsd : 100,
+              retries: Number.isFinite(maxRetries) ? maxRetries : 2,
+            })
+          : undefined;
+        await runWf4(
+          { intakeId: intake.id, wf3RunId: wf3Result.extraction_id },
+          provider ? { llmProvider: provider } : undefined,
+        );
+      } catch (error) {
+        console.error(`[wf4] submit hook failed intake_id=${intake.id}`, error);
+      }
     }
     return res.status(200).json({ ok: true, locked: true, submitted_at: intake.submitted_at });
   }
@@ -206,10 +228,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(409).json({ ok: false, locked: true, requestId });
   }
 
+  let wf3Result: { extraction_id?: string } | null = null;
   try {
-    await runWorkflow3Rules({ intake_id: intakeId, firm_id: tokenResult.payload.firm_id });
+    wf3Result = await runWorkflow3Rules({ intake_id: intakeId, firm_id: tokenResult.payload.firm_id });
   } catch (error) {
     console.error(`[wf3] submit hook failed intake_id=${intakeId}`, error);
+  }
+  if (wf3Result?.extraction_id) {
+    try {
+      const monthlyBudgetUsd = Number(process.env.OPENAI_MONTHLY_BUDGET_USD ?? '100');
+      const maxRetries = Number(process.env.OPENAI_MAX_RETRIES ?? '2');
+      const provider = process.env.OPENAI_API_KEY && tokenResult.payload.firm_id
+        ? createWf4OpenAiProvider({
+            firmId: tokenResult.payload.firm_id,
+            monthlyBudgetUsd: Number.isFinite(monthlyBudgetUsd) ? monthlyBudgetUsd : 100,
+            retries: Number.isFinite(maxRetries) ? maxRetries : 2,
+          })
+        : undefined;
+      await runWf4(
+        { intakeId, wf3RunId: wf3Result.extraction_id },
+        provider ? { llmProvider: provider } : undefined,
+      );
+    } catch (error) {
+      console.error(`[wf4] submit hook failed intake_id=${intakeId}`, error);
+    }
   }
 
   return res.status(200).json({ ok: true, locked: true, submitted_at: updated.submitted_at });

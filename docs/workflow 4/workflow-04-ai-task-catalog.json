@@ -1,0 +1,251 @@
+{
+  "version": "v0.1",
+  "workflow": "WF4",
+  "name": "AI Extraction, Flags, & Supervision",
+  "principles": {
+    "advisory_only": true,
+    "human_in_the_loop_required": true,
+    "never_override_wf3": true,
+    "schema_bound": true,
+    "evidence_required": true,
+    "fail_safe": true
+  },
+  "tasks": [
+    {
+      "task_id": "wf4.extract.schema_fields.v1",
+      "description": "Extract schema-bound structured values from free-text intake content into Phase 1 schema fields without expanding the schema. Output only fields explicitly allowed for AI extraction.",
+      "input_fields": [
+        "intake_snapshot.structured_fields",
+        "intake_snapshot.free_text_fields",
+        "intake_snapshot.messages",
+        "wf3_snapshot.canonical_fields",
+        "wf3_snapshot.validation_summary"
+      ],
+      "output_schema": {
+        "extractions": [
+          {
+            "field_key": "string",
+            "value": "any_or_null",
+            "value_type": "string|number|boolean|date|enum|object",
+            "confidence_score": "number_0_to_1",
+            "confidence_level": "LOW|MED|HIGH",
+            "confidence_rationale_code": "DIRECT_STATEMENT|MULTI_SOURCE_SUPPORT|IMPLIED|AMBIGUOUS|INSUFFICIENT_EVIDENCE",
+            "evidence": [
+              {
+                "source_type": "field|message|document",
+                "source_id": "string",
+                "path_or_span": "string",
+                "snippet": "string_optional_bounded"
+              }
+            ],
+            "notes_for_reviewer": "string_optional"
+          }
+        ]
+      },
+      "confidence_model": "Per-field confidence. HIGH only when explicit, direct, supported by evidence; otherwise MED/LOW. Null outputs require INSUFFICIENT_EVIDENCE.",
+      "evidence_strategy": "Evidence pointers required for every non-null extraction. If no direct evidence, output null and reason code.",
+      "failure_mode": "Return empty extractions array; log run as PARTIAL/FAIL depending on pipeline. Never block downstream review."
+    },
+    {
+      "task_id": "wf4.flags.dv_indicators.v1",
+      "description": "Detect domestic violence (DV) indicators in intake content. Produce advisory flags only with evidence and non-conclusory phrasing. No legal advice.",
+      "input_fields": [
+        "intake_snapshot.free_text_fields",
+        "intake_snapshot.messages",
+        "wf3_snapshot.validation_summary"
+      ],
+      "output_schema": {
+        "flags": [
+          {
+            "flag_key": "DV_INDICATOR",
+            "flag_present": "boolean",
+            "confidence_score": "number_0_to_1",
+            "confidence_level": "LOW|MED|HIGH",
+            "evidence": [
+              {
+                "source_type": "field|message|document",
+                "source_id": "string",
+                "path_or_span": "string",
+                "snippet": "string_optional_bounded"
+              }
+            ],
+            "why_it_matters_for_review": "string",
+            "notes_for_reviewer": "string_optional"
+          }
+        ]
+      },
+      "confidence_model": "HIGH only if clear mention of physical harm/threats/coercive control with direct evidence; otherwise MED/LOW. If ambiguous, flag_present may be true with LOW confidence and explicit ambiguity note.",
+      "evidence_strategy": "At least one supporting evidence pointer required when flag_present=true.",
+      "failure_mode": "Return flag_present=false with confidence LOW and a system note 'TASK_FAILED' only if model call fails; do not invent evidence."
+    },
+    {
+      "task_id": "wf4.flags.jurisdiction_complexity.v1",
+      "description": "Detect jurisdictional complexity signals (multi-state residence, relocation, military, multiple counties mentioned, contested jurisdiction) as advisory review flags, without making determinations.",
+      "input_fields": [
+        "intake_snapshot.structured_fields",
+        "intake_snapshot.free_text_fields",
+        "intake_snapshot.messages",
+        "wf3_snapshot.canonical_fields"
+      ],
+      "output_schema": {
+        "flags": [
+          {
+            "flag_key": "JURISDICTION_COMPLEXITY_SIGNAL",
+            "flag_present": "boolean",
+            "confidence_score": "number_0_to_1",
+            "confidence_level": "LOW|MED|HIGH",
+            "evidence": [
+              {
+                "source_type": "field|message|document",
+                "source_id": "string",
+                "path_or_span": "string",
+                "snippet": "string_optional_bounded"
+              }
+            ],
+            "why_it_matters_for_review": "string",
+            "notes_for_reviewer": "string_optional"
+          }
+        ]
+      },
+      "confidence_model": "Signals only. Confidence based on explicitness and number of corroborating sources; never claims eligibility or proper venue.",
+      "evidence_strategy": "Evidence required for flag_present=true. Prefer structured answers first, then narrative.",
+      "failure_mode": "Return flag_present=false with LOW confidence if task cannot run; log task failure."
+    },
+    {
+      "task_id": "wf4.flags.custody_conflict.v1",
+      "description": "Detect custody conflict signals (disagreement on custody/parenting time, safety concerns, withholding access, relocation conflict) as advisory flags with evidence.",
+      "input_fields": [
+        "intake_snapshot.structured_fields",
+        "intake_snapshot.free_text_fields",
+        "intake_snapshot.messages"
+      ],
+      "output_schema": {
+        "flags": [
+          {
+            "flag_key": "CUSTODY_CONFLICT_SIGNAL",
+            "flag_present": "boolean",
+            "confidence_score": "number_0_to_1",
+            "confidence_level": "LOW|MED|HIGH",
+            "evidence": [
+              {
+                "source_type": "field|message|document",
+                "source_id": "string",
+                "path_or_span": "string",
+                "snippet": "string_optional_bounded"
+              }
+            ],
+            "why_it_matters_for_review": "string",
+            "notes_for_reviewer": "string_optional"
+          }
+        ]
+      },
+      "confidence_model": "Confidence increases with explicit dispute language and corroboration across answers.",
+      "evidence_strategy": "Evidence required when true; cite specific statements.",
+      "failure_mode": "Fail-safe to false/LOW if task fails; never block review."
+    },
+    {
+      "task_id": "wf4.consistency.cross_field.v1",
+      "description": "Detect contradictions or inconsistencies across structured fields and free-text (dates, residency, marriage facts, children count, county mentions) and output inconsistency findings with evidence.",
+      "input_fields": [
+        "intake_snapshot.structured_fields",
+        "intake_snapshot.free_text_fields",
+        "intake_snapshot.messages",
+        "wf3_snapshot.validation_summary",
+        "wf3_snapshot.canonical_fields"
+      ],
+      "output_schema": {
+        "inconsistencies": [
+          {
+            "inconsistency_key": "string",
+            "fields_involved": ["string"],
+            "summary": "string",
+            "severity": "LOW|MED|HIGH",
+            "confidence_score": "number_0_to_1",
+            "evidence": [
+              {
+                "source_type": "field|message|document|wf3",
+                "source_id": "string",
+                "path_or_span": "string",
+                "snippet": "string_optional_bounded"
+              }
+            ],
+            "notes_for_reviewer": "string_optional"
+          }
+        ]
+      },
+      "confidence_model": "HIGH when explicit contradiction between two sources; MED when ambiguous; LOW when inference needed (should be avoided).",
+      "evidence_strategy": "Provide at least two evidence pointers showing conflict when severity is MED/HIGH.",
+      "failure_mode": "Return empty list if task fails; log failure."
+    },
+    {
+      "task_id": "wf4.normalize.county_mentions.v1",
+      "description": "Extract county mentions from free-text and suggest normalization against ga_counties.csv. Must defer to WF3 canonical county if present and must not overwrite anything.",
+      "input_fields": [
+        "intake_snapshot.free_text_fields",
+        "intake_snapshot.messages",
+        "wf3_snapshot.canonical_fields",
+        "reference.ga_counties"
+      ],
+      "output_schema": {
+        "county_mentions": [
+          {
+            "raw_mention": "string",
+            "suggested_county": "string_or_null",
+            "match_type": "EXACT|FUZZY|NONE",
+            "confidence_score": "number_0_to_1",
+            "evidence": [
+              {
+                "source_type": "field|message|document",
+                "source_id": "string",
+                "path_or_span": "string",
+                "snippet": "string_optional_bounded"
+              }
+            ],
+            "notes_for_reviewer": "string_optional"
+          }
+        ],
+        "deference": {
+          "wf3_canonical_county_present": "boolean",
+          "wf3_canonical_county_value": "string_optional"
+        }
+      },
+      "confidence_model": "HIGH for exact matches; MED for strong fuzzy match; LOW if ambiguous or multiple matches.",
+      "evidence_strategy": "Evidence pointer required for each mention; do not suggest without a source mention.",
+      "failure_mode": "Return empty mentions; do not block any flow."
+    },
+    {
+      "task_id": "wf4.review_attention.summary.v1",
+      "description": "Produce a short reviewer-facing checklist summary of the most important AI-detected items (extractions with MED/LOW confidence, flags present, and key inconsistencies). No advice, no conclusions, cite evidence pointers (references only).",
+      "input_fields": [
+        "wf4_outputs.extractions",
+        "wf4_outputs.flags",
+        "wf4_outputs.inconsistencies"
+      ],
+      "output_schema": {
+        "review_attention": {
+          "high_priority_items": [
+            {
+              "item": "string",
+              "references": ["string"]
+            }
+          ],
+          "medium_priority_items": [
+            {
+              "item": "string",
+              "references": ["string"]
+            }
+          ],
+          "low_priority_items": [
+            {
+              "item": "string",
+              "references": ["string"]
+            }
+          ]
+        }
+      },
+      "confidence_model": "Not applicable; summary only. Uses upstream confidences for prioritization.",
+      "evidence_strategy": "No new evidence; references must point to existing evidence IDs from prior WF4 tasks.",
+      "failure_mode": "Return empty sections; log failure."
+    }
+  ]
+}
