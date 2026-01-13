@@ -1,6 +1,7 @@
-import OpenAI from 'openai';
 import { WF4_PROMPT_IDS } from './prompts';
 import type { LlmProvider, UsageSummary } from './types';
+
+declare const require: (id: string) => any;
 
 type ModelPricing = {
   input_per_million: number;
@@ -39,6 +40,20 @@ function parsePricingEnv(): Record<string, ModelPricing> {
     return merged;
   } catch {
     return DEFAULT_PRICING;
+  }
+}
+
+function getOpenAiClientCtor() {
+  try {
+    const { createRequire } = require('module');
+    const requireFromApp = createRequire(`${process.cwd()}/`);
+    const mod = requireFromApp('openai') as { default?: new (args: any) => any };
+    if (!mod.default) {
+      throw new Error('Missing OpenAI default export');
+    }
+    return mod.default;
+  } catch (error) {
+    throw new Error('Missing openai dependency; install it in the app workspace.');
   }
 }
 
@@ -466,6 +481,7 @@ export function createWf4OpenAiProvider(
   }
 
   const timeoutMs = Number(process.env.OPENAI_REQUEST_TIMEOUT_MS ?? '');
+  const OpenAI = getOpenAiClientCtor();
   const client = new OpenAI({
     apiKey,
     ...(Number.isFinite(timeoutMs) && timeoutMs > 0 ? { timeout: timeoutMs } : {}),
