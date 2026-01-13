@@ -36,16 +36,16 @@ export function appliesWhen(payload: unknown, applies: RuleAppliesWhen | undefin
       if (!presentValues.some((value) => value === condition.equals)) return false;
     }
 
-    if (condition.gt !== undefined && !presentValues.some((value) => compareNumeric(value, 'gt', condition.gt))) {
+    if (typeof condition.gt === 'number' && !presentValues.some((value) => compareNumeric(value, 'gt', condition.gt))) {
       return false;
     }
-    if (condition.gte !== undefined && !presentValues.some((value) => compareNumeric(value, 'gte', condition.gte))) {
+    if (typeof condition.gte === 'number' && !presentValues.some((value) => compareNumeric(value, 'gte', condition.gte))) {
       return false;
     }
-    if (condition.lt !== undefined && !presentValues.some((value) => compareNumeric(value, 'lt', condition.lt))) {
+    if (typeof condition.lt === 'number' && !presentValues.some((value) => compareNumeric(value, 'lt', condition.lt))) {
       return false;
     }
-    if (condition.lte !== undefined && !presentValues.some((value) => compareNumeric(value, 'lte', condition.lte))) {
+    if (typeof condition.lte === 'number' && !presentValues.some((value) => compareNumeric(value, 'lte', condition.lte))) {
       return false;
     }
 
