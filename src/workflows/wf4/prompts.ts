@@ -33,41 +33,49 @@ export const WF4_PROMPT_TEMPLATES: Record<string, PromptTemplate> = {
   [WF4_PROMPT_IDS.extract]: {
     id: WF4_PROMPT_IDS.extract,
     system: 'Use wf4.system.v1',
-    user: 'Extract schema-bound fields from intake inputs using the schema allowlist. Return JSON only.',
+    user:
+      'Extract schema-bound fields from intake inputs using the schema allowlist. Return JSON only. Always include the "extractions" array (empty if none) and include all required keys for each item.',
   },
   [WF4_PROMPT_IDS.dv]: {
     id: WF4_PROMPT_IDS.dv,
     system: 'Use wf4.system.v1',
-    user: 'Detect DV indicators with evidence. Return JSON only.',
+    user:
+      'Detect DV indicators with evidence. Return JSON only. Always include the "flags" array (empty if none) and include all required keys for each item.',
   },
   [WF4_PROMPT_IDS.jurisdiction]: {
     id: WF4_PROMPT_IDS.jurisdiction,
     system: 'Use wf4.system.v1',
-    user: 'Detect jurisdiction complexity signals with evidence. Return JSON only.',
+    user:
+      'Detect jurisdiction complexity signals with evidence. Return JSON only. Always include the "flags" array (empty if none) and include all required keys for each item.',
   },
   [WF4_PROMPT_IDS.custody]: {
     id: WF4_PROMPT_IDS.custody,
     system: 'Use wf4.system.v1',
-    user: 'Detect custody conflict signals with evidence. Return JSON only.',
+    user:
+      'Detect custody conflict signals with evidence. Return JSON only. Always include the "flags" array (empty if none) and include all required keys for each item.',
   },
   [WF4_PROMPT_IDS.consistency]: {
     id: WF4_PROMPT_IDS.consistency,
     system: 'Use wf4.system.v1',
-    user: 'Detect cross-field inconsistencies with evidence. Return JSON only.',
+    user:
+      'Detect cross-field inconsistencies with evidence. Return JSON only. Always include the "inconsistencies" array (empty if none) and include all required keys for each item.',
   },
   [WF4_PROMPT_IDS.countyMentions]: {
     id: WF4_PROMPT_IDS.countyMentions,
     system: 'Use wf4.system.v1',
-    user: 'Extract county mentions and suggest normalization. Return JSON only.',
+    user:
+      'Extract county mentions and suggest normalization. Return JSON only. Always include "county_mentions" (array) and "deference" (object) with required keys, even if empty.',
   },
   [WF4_PROMPT_IDS.documentClassify]: {
     id: WF4_PROMPT_IDS.documentClassify,
     system: 'Use wf4.system.v1',
-    user: 'Classify intake documents with evidence. Return JSON only.',
+    user:
+      'Classify intake documents with evidence. Return JSON only. Always include "document_classifications" array (empty if none) and required keys for each item.',
   },
   [WF4_PROMPT_IDS.reviewAttention]: {
     id: WF4_PROMPT_IDS.reviewAttention,
     system: 'Use wf4.system.v1',
-    user: 'Summarize review attention priorities based on WF4 outputs. Return JSON only.',
+    user:
+      'Summarize review attention priorities based on WF4 outputs. Return JSON only. Always include "review_attention" with high_priority_items, medium_priority_items, low_priority_items arrays (empty if none).',
   },
 };

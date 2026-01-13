@@ -122,6 +122,334 @@ function parseJsonStrict(raw: string) {
   return JSON.parse(raw) as Record<string, unknown>;
 }
 
+type JsonSchema = {
+  name: string;
+  schema: Record<string, unknown>;
+};
+
+const EVIDENCE_POINTER_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['source_type', 'source_id', 'path_or_span'],
+  properties: {
+    source_type: {
+      type: 'string',
+      enum: ['field', 'message', 'document', 'wf3'],
+    },
+    source_id: { type: 'string' },
+    path_or_span: { type: 'string' },
+    snippet: { type: 'string' },
+  },
+};
+
+const REVIEW_ATTENTION_ITEM_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['item', 'references'],
+  properties: {
+    item: { type: 'string' },
+    references: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+  },
+};
+
+const JSON_SCHEMAS: Record<string, JsonSchema> = {
+  [WF4_PROMPT_IDS.extract]: {
+    name: 'wf4_extract_schema_fields',
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['extractions'],
+      properties: {
+        extractions: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: [
+              'field_key',
+              'value',
+              'value_type',
+              'confidence_score',
+              'confidence_level',
+              'confidence_rationale_code',
+              'evidence',
+            ],
+            properties: {
+              field_key: { type: 'string' },
+              value: { type: ['string', 'number', 'boolean', 'object', 'array', 'null'] },
+              value_type: { type: 'string' },
+              confidence_score: { type: 'number' },
+              confidence_level: { type: 'string' },
+              confidence_rationale_code: { type: 'string' },
+              evidence: {
+                type: 'array',
+                items: EVIDENCE_POINTER_SCHEMA,
+              },
+              notes_for_reviewer: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  },
+  [WF4_PROMPT_IDS.dv]: {
+    name: 'wf4_flags_dv_indicators',
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['flags'],
+      properties: {
+        flags: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: [
+              'flag_key',
+              'flag_present',
+              'confidence_score',
+              'confidence_level',
+              'evidence',
+              'why_it_matters_for_review',
+            ],
+            properties: {
+              flag_key: { type: 'string' },
+              flag_present: { type: 'boolean' },
+              confidence_score: { type: 'number' },
+              confidence_level: { type: 'string' },
+              evidence: { type: 'array', items: EVIDENCE_POINTER_SCHEMA },
+              why_it_matters_for_review: { type: 'string' },
+              notes_for_reviewer: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  },
+  [WF4_PROMPT_IDS.jurisdiction]: {
+    name: 'wf4_flags_jurisdiction_complexity',
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['flags'],
+      properties: {
+        flags: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: [
+              'flag_key',
+              'flag_present',
+              'confidence_score',
+              'confidence_level',
+              'evidence',
+              'why_it_matters_for_review',
+            ],
+            properties: {
+              flag_key: { type: 'string' },
+              flag_present: { type: 'boolean' },
+              confidence_score: { type: 'number' },
+              confidence_level: { type: 'string' },
+              evidence: { type: 'array', items: EVIDENCE_POINTER_SCHEMA },
+              why_it_matters_for_review: { type: 'string' },
+              notes_for_reviewer: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  },
+  [WF4_PROMPT_IDS.custody]: {
+    name: 'wf4_flags_custody_conflict',
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['flags'],
+      properties: {
+        flags: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: [
+              'flag_key',
+              'flag_present',
+              'confidence_score',
+              'confidence_level',
+              'evidence',
+              'why_it_matters_for_review',
+            ],
+            properties: {
+              flag_key: { type: 'string' },
+              flag_present: { type: 'boolean' },
+              confidence_score: { type: 'number' },
+              confidence_level: { type: 'string' },
+              evidence: { type: 'array', items: EVIDENCE_POINTER_SCHEMA },
+              why_it_matters_for_review: { type: 'string' },
+              notes_for_reviewer: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  },
+  [WF4_PROMPT_IDS.consistency]: {
+    name: 'wf4_consistency_cross_field',
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['inconsistencies'],
+      properties: {
+        inconsistencies: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: [
+              'inconsistency_key',
+              'fields_involved',
+              'summary',
+              'severity',
+              'confidence_score',
+              'evidence',
+            ],
+            properties: {
+              inconsistency_key: { type: 'string' },
+              fields_involved: { type: 'array', items: { type: 'string' } },
+              summary: { type: 'string' },
+              severity: { type: 'string' },
+              confidence_score: { type: 'number' },
+              evidence: { type: 'array', items: EVIDENCE_POINTER_SCHEMA },
+              notes_for_reviewer: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  },
+  [WF4_PROMPT_IDS.countyMentions]: {
+    name: 'wf4_county_mentions',
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['county_mentions', 'deference'],
+      properties: {
+        county_mentions: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: [
+              'raw_mention',
+              'suggested_county',
+              'match_type',
+              'confidence_score',
+              'evidence',
+            ],
+            properties: {
+              raw_mention: { type: 'string' },
+              suggested_county: { type: ['string', 'null'] },
+              match_type: { type: 'string' },
+              confidence_score: { type: 'number' },
+              evidence: { type: 'array', items: EVIDENCE_POINTER_SCHEMA },
+              notes_for_reviewer: { type: 'string' },
+            },
+          },
+        },
+        deference: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['wf3_canonical_county_present'],
+          properties: {
+            wf3_canonical_county_present: { type: 'boolean' },
+            wf3_canonical_county_value: { type: 'string' },
+          },
+        },
+      },
+    },
+  },
+  [WF4_PROMPT_IDS.documentClassify]: {
+    name: 'wf4_document_classifications',
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['document_classifications'],
+      properties: {
+        document_classifications: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: [
+              'document_id',
+              'document_type',
+              'confidence_score',
+              'confidence_level',
+              'evidence',
+            ],
+            properties: {
+              document_id: { type: 'string' },
+              document_type: { type: ['string', 'null'] },
+              confidence_score: { type: 'number' },
+              confidence_level: { type: 'string' },
+              evidence: { type: 'array', items: EVIDENCE_POINTER_SCHEMA },
+              notes_for_reviewer: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  },
+  [WF4_PROMPT_IDS.reviewAttention]: {
+    name: 'wf4_review_attention_summary',
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['review_attention'],
+      properties: {
+        review_attention: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['high_priority_items', 'medium_priority_items', 'low_priority_items'],
+          properties: {
+            high_priority_items: {
+              type: 'array',
+              items: REVIEW_ATTENTION_ITEM_SCHEMA,
+            },
+            medium_priority_items: {
+              type: 'array',
+              items: REVIEW_ATTENTION_ITEM_SCHEMA,
+            },
+            low_priority_items: {
+              type: 'array',
+              items: REVIEW_ATTENTION_ITEM_SCHEMA,
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+function getResponseFormat(promptId: string) {
+  const schema = JSON_SCHEMAS[promptId];
+  if (!schema) {
+    return { type: 'json_object' } as const;
+  }
+  return {
+    type: 'json_schema',
+    json_schema: {
+      name: schema.name,
+      schema: schema.schema,
+      strict: true,
+    },
+  } as const;
+}
+
 export function createWf4OpenAiProvider(options: ProviderOptions): LlmProvider {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -195,7 +523,7 @@ export function createWf4OpenAiProvider(options: ProviderOptions): LlmProvider {
               { role: 'system', content: systemPrompt },
               { role: 'user', content: buildUserContent(userPrompt, input) },
             ],
-            response_format: { type: 'json_object' },
+            response_format: getResponseFormat(promptId),
             ...(Number.isFinite(maxOutputTokens) && maxOutputTokens > 0
               ? { max_tokens: maxOutputTokens }
               : {}),

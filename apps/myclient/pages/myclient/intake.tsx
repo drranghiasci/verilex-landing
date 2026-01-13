@@ -79,8 +79,9 @@ export default function IntakePage() {
   const [fieldErrors, setFieldErrors] = useState<{ firstName?: string; lastName?: string }>({});
   const [caseCount, setCaseCount] = useState<number | null>(null);
   const [caseCountLoading, setCaseCountLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'manual' | 'automatic'>('manual');
+  const [activeTab, setActiveTab] = useState<'manual' | 'automatic' | 'archive'>('manual');
   const [intakeQueue, setIntakeQueue] = useState<IntakeQueueItem[]>([]);
+  const [archiveQueue, setArchiveQueue] = useState<Array<IntakeQueueItem & { decision: IntakeDecisionRow | null }>>([]);
   const [wf4StatusMap, setWf4StatusMap] = useState<Record<string, string>>({});
   const [queueLoading, setQueueLoading] = useState(false);
   const [queueError, setQueueError] = useState<string | null>(null);
@@ -121,8 +122,13 @@ export default function IntakePage() {
   }, [county, courtName, email, firstName, hasCustomTitle, lastName, matterType, notes, phone, caseNumber, stateField, status]);
 
   useEffect(() => {
-    if (router.query.tab !== 'automatic') return;
-    setActiveTab('automatic');
+    if (router.query.tab === 'automatic') {
+      setActiveTab('automatic');
+      return;
+    }
+    if (router.query.tab === 'archive') {
+      setActiveTab('archive');
+    }
   }, [router.query.tab]);
 
   const loadQueue = useCallback(async () => {
@@ -182,6 +188,7 @@ export default function IntakePage() {
 
         if (decisionError) {
           setQueueError(decisionError.message);
+          setArchiveQueue([]);
         } else if (decisionRows) {
           const decisionMap: Record<string, IntakeDecisionRow> = {};
           (decisionRows as IntakeDecisionRow[]).forEach((row) => {
@@ -190,18 +197,26 @@ export default function IntakePage() {
               decisionMap[row.intake_id] = row;
             }
           });
-          const filtered = items.filter((item) => decisionMap[item.id]?.decision !== 'rejected');
-          setIntakeQueue(filtered);
+          const archived = items
+            .filter((item) => decisionMap[item.id])
+            .map((item) => ({
+              ...item,
+              decision: decisionMap[item.id] ?? null,
+            }));
+          const pending = items.filter((item) => !decisionMap[item.id]);
+          setIntakeQueue(pending);
+          setArchiveQueue(archived);
         }
       } else {
         setWf4StatusMap({});
+        setArchiveQueue([]);
       }
     }
     setQueueLoading(false);
   }, [state.authed, state.firmId]);
 
   useEffect(() => {
-    if (activeTab !== 'automatic') return;
+    if (activeTab !== 'automatic' && activeTab !== 'archive') return;
     void loadQueue();
   }, [activeTab, loadQueue]);
 
@@ -352,6 +367,7 @@ export default function IntakePage() {
           {[
             { key: 'manual', label: 'Manual intake' },
             { key: 'automatic', label: 'Automatic intake queue' },
+            { key: 'archive', label: 'Auto intake archive' },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -633,6 +649,86 @@ export default function IntakePage() {
                           className={`inline-flex items-center rounded-full border px-3 py-1 text-xs ${WF4_STATUS_STYLES[wf4Status.tone] ?? WF4_STATUS_STYLES.loading}`}
                         >
                           WF4 {wf4Status.label}
+                        </span>
+                        <Link
+                          href={`/myclient/intake/${item.id}/intake-review`}
+                          className="inline-flex items-center justify-center rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--accent)]"
+                        >
+                          Review intake
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'archive' && state.authed && state.firmId && (
+          <div className="mt-8 space-y-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Auto Intake Archive</h2>
+                <p className="mt-1 text-sm text-[color:var(--muted)]">
+                  Accepted and rejected intakes are archived here for reference.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void loadQueue()}
+                className="rounded-lg border border-[color:var(--border)] px-4 py-2 text-sm text-white hover:bg-white/5"
+              >
+                Refresh archive
+              </button>
+            </div>
+
+            {queueLoading && <p className="text-sm text-[color:var(--muted)]">Loading archive...</p>}
+            {queueError && (
+              <div className="rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                {queueError}
+              </div>
+            )}
+
+            {!queueLoading && !queueError && archiveQueue.length === 0 && (
+              <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-0)] p-6 text-sm text-[color:var(--muted)]">
+                No archived intakes yet.
+              </div>
+            )}
+
+            {!queueLoading && archiveQueue.length > 0 && (
+              <div className="space-y-4">
+                {archiveQueue.map((item) => {
+                  const clientName = formatIntakeClient(item.raw_payload);
+                  const subtitle = formatIntakeSubtitle(item);
+                  const submittedLabel = item.submitted_at
+                    ? `Submitted ${new Date(item.submitted_at).toLocaleDateString()}`
+                    : 'Draft in progress';
+                  const decisionLabel = item.decision?.decision === 'accepted' ? 'Accepted' : 'Rejected';
+                  const decidedAt = item.decision?.decided_at
+                    ? `Decision ${new Date(item.decision.decided_at).toLocaleDateString()}`
+                    : null;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex flex-col gap-4 rounded-2xl border border-[color:var(--border)] bg-[var(--surface-0)] p-5 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">{clientName}</h3>
+                        <p className="mt-1 text-sm text-[color:var(--muted)]">{subtitle}</p>
+                        <p className="mt-2 text-xs text-[color:var(--muted-2)]">{submittedLabel}</p>
+                        {decidedAt && <p className="mt-1 text-xs text-[color:var(--muted-2)]">{decidedAt}</p>}
+                      </div>
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <span
+                          className={`inline-flex items-center rounded-full border px-3 py-1 text-xs ${
+                            item.decision?.decision === 'accepted'
+                              ? 'border-emerald-400/40 text-emerald-200'
+                              : 'border-red-400/40 text-red-200'
+                          }`}
+                        >
+                          {decisionLabel}
                         </span>
                         <Link
                           href={`/myclient/intake/${item.id}/intake-review`}
