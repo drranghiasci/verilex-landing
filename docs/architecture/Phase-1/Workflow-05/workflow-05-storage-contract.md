@@ -68,12 +68,12 @@ Optional fields:
 - Require valid intake token.
 - Intake must be draft (not submitted/locked).
 - Path must match intake scope: `{firm_id}/intakes/{intake_id}/documents/`.
-- Signed URL TTL: short-lived (5-15 minutes).
+- Signed URL TTL: short-lived (Supabase signed upload URLs are ~2 hours).
 
 ### 4.2 Firm signed URLs (authenticated)
 - Require firm member auth session.
 - Path must match case scope: `{firm_id}/cases/{case_id}/documents/`.
-- Signed URL TTL: short-lived (5-15 minutes).
+- Signed URL TTL: short-lived (Supabase signed upload URLs are ~2 hours).
 
 ## 5) Validation Policies
 

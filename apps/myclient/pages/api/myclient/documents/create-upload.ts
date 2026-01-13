@@ -21,7 +21,7 @@ type SuccessResponse = {
 
 const UUID_RE = /^[0-9a-fA-F-]{36}$/;
 const DOCUMENTS_BUCKET = process.env.VERILEX_DOCUMENTS_BUCKET || 'case-documents';
-const SIGNED_URL_TTL_SECONDS = 60 * 15;
+const SIGNED_URL_TTL_SECONDS = 60 * 60 * 2;
 
 function sanitizeFilename(name: string) {
   const trimmed = name.replace(/[/\\]/g, '').trim();
@@ -152,7 +152,7 @@ export default async function handler(
 
   const { data: signedData, error: signedError } = await adminClient.storage
     .from(DOCUMENTS_BUCKET)
-    .createSignedUploadUrl(storagePath, SIGNED_URL_TTL_SECONDS);
+    .createSignedUploadUrl(storagePath, { upsert: false });
 
   if (signedError || !signedData?.signedUrl) {
     return res.status(500).json({ ok: false, error: signedError?.message || 'Unable to create upload URL' });

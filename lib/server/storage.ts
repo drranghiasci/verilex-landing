@@ -4,17 +4,16 @@ if (typeof window !== 'undefined') {
   throw new Error('storage helpers are server-only');
 }
 
-const DEFAULT_EXPIRES_IN = 60 * 15;
+const DEFAULT_EXPIRES_IN = 60 * 60 * 2;
 
 export async function createSignedUploadUrl(params: {
   bucket: string;
   path: string;
 }) {
   const { bucket, path } = params;
-  const expires = DEFAULT_EXPIRES_IN;
   const { data, error } = await supabaseAdmin.storage
     .from(bucket)
-    .createSignedUploadUrl(path, expires);
+    .createSignedUploadUrl(path, { upsert: false });
 
   if (error || !data) {
     throw new Error('Unable to create upload URL');
@@ -23,6 +22,6 @@ export async function createSignedUploadUrl(params: {
   return {
     signedUrl: data.signedUrl,
     path: data.path,
-    expiresIn: expires,
+    expiresIn: DEFAULT_EXPIRES_IN,
   };
 }
