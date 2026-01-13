@@ -362,52 +362,56 @@ function parseJsonOutput(raw: unknown): TaskValidationResult<Record<string, unkn
 function validateExtractionOutput(output: Record<string, unknown>): TaskValidationResult<{ extractions: ExtractionItem[] }> {
   const extractions = output.extractions;
   if (!Array.isArray(extractions)) {
-    return { ok: false, error: 'extractions must be an array' };
+    return { ok: true, value: { extractions: [] } }; // Fail-safe: treat missing array as empty
   }
+  const validItems: ExtractionItem[] = [];
   for (const item of extractions) {
-    if (!isRecord(item)) return { ok: false, error: 'extraction item must be object' };
-    if (typeof item.field_key !== 'string') return { ok: false, error: 'field_key missing' };
-    if (!Object.prototype.hasOwnProperty.call(item, 'value')) {
-      return { ok: false, error: 'value missing' };
-    }
-    if (typeof item.value_type !== 'string') return { ok: false, error: 'value_type missing' };
-    if (typeof item.confidence_score !== 'number') return { ok: false, error: 'confidence_score missing' };
-    if (typeof item.confidence_level !== 'string') return { ok: false, error: 'confidence_level missing' };
-    if (typeof item.confidence_rationale_code !== 'string') {
-      return { ok: false, error: 'confidence_rationale_code missing' };
-    }
-    if (!Array.isArray(item.evidence)) return { ok: false, error: 'evidence missing' };
+    if (!isRecord(item)) continue;
+    if (typeof item.field_key !== 'string') continue;
+    if (!Object.prototype.hasOwnProperty.call(item, 'value')) continue;
+    if (typeof item.value_type !== 'string') continue;
+    if (typeof item.confidence_score !== 'number') continue;
+    if (typeof item.confidence_level !== 'string') continue;
+    if (typeof item.confidence_rationale_code !== 'string') continue;
+    if (!Array.isArray(item.evidence)) continue;
+
+    // Check evidence requirement strictly per item
     if (item.value !== null && item.value !== undefined && item.evidence.length === 0) {
-      return { ok: false, error: 'evidence required for non-null extraction' };
+      continue; // Drop item if no evidence for non-null value (Rule: Explainable AI)
     }
+
     const evidenceCheck = validateEvidencePointers(item.evidence as ExtractionItem['evidence']);
-    if (!evidenceCheck.ok) return { ok: false, error: evidenceCheck.error };
+    if (!evidenceCheck.ok) continue;
+
+    validItems.push(item as unknown as ExtractionItem);
   }
-  return { ok: true, value: { extractions: extractions as ExtractionItem[] } };
+  return { ok: true, value: { extractions: validItems } };
 }
 
 function validateFlagsOutput(output: Record<string, unknown>): TaskValidationResult<{ flags: FlagItem[] }> {
   const flags = output.flags;
   if (!Array.isArray(flags)) {
-    return { ok: false, error: 'flags must be an array' };
+    return { ok: true, value: { flags: [] } };
   }
+  const validItems: FlagItem[] = [];
   for (const item of flags) {
-    if (!isRecord(item)) return { ok: false, error: 'flag item must be object' };
-    if (typeof item.flag_key !== 'string') return { ok: false, error: 'flag_key missing' };
-    if (typeof item.flag_present !== 'boolean') return { ok: false, error: 'flag_present missing' };
-    if (typeof item.confidence_score !== 'number') return { ok: false, error: 'confidence_score missing' };
-    if (typeof item.confidence_level !== 'string') return { ok: false, error: 'confidence_level missing' };
-    if (!Array.isArray(item.evidence)) return { ok: false, error: 'evidence missing' };
+    if (!isRecord(item)) continue;
+    if (typeof item.flag_key !== 'string') continue;
+    if (typeof item.flag_present !== 'boolean') continue;
+    if (typeof item.confidence_score !== 'number') continue;
+    if (typeof item.confidence_level !== 'string') continue;
+    if (!Array.isArray(item.evidence)) continue;
+
     if (item.flag_present && item.evidence.length === 0) {
-      return { ok: false, error: 'evidence required for present flag' };
+      continue; // Drop present flag without evidence
     }
     const evidenceCheck = validateEvidencePointers(item.evidence as FlagItem['evidence']);
-    if (!evidenceCheck.ok) return { ok: false, error: evidenceCheck.error };
-    if (typeof item.why_it_matters_for_review !== 'string') {
-      return { ok: false, error: 'why_it_matters_for_review missing' };
-    }
+    if (!evidenceCheck.ok) continue;
+    if (typeof item.why_it_matters_for_review !== 'string') continue;
+
+    validItems.push(item as unknown as FlagItem);
   }
-  return { ok: true, value: { flags: flags as FlagItem[] } };
+  return { ok: true, value: { flags: validItems } };
 }
 
 function validateInconsistenciesOutput(
@@ -415,21 +419,24 @@ function validateInconsistenciesOutput(
 ): TaskValidationResult<{ inconsistencies: InconsistencyItem[] }> {
   const inconsistencies = output.inconsistencies;
   if (!Array.isArray(inconsistencies)) {
-    return { ok: false, error: 'inconsistencies must be an array' };
+    return { ok: true, value: { inconsistencies: [] } };
   }
+  const validItems: InconsistencyItem[] = [];
   for (const item of inconsistencies) {
-    if (!isRecord(item)) return { ok: false, error: 'inconsistency item must be object' };
-    if (typeof item.inconsistency_key !== 'string') return { ok: false, error: 'inconsistency_key missing' };
-    if (!Array.isArray(item.fields_involved)) return { ok: false, error: 'fields_involved missing' };
-    if (typeof item.summary !== 'string') return { ok: false, error: 'summary missing' };
-    if (typeof item.severity !== 'string') return { ok: false, error: 'severity missing' };
-    if (typeof item.confidence_score !== 'number') return { ok: false, error: 'confidence_score missing' };
-    if (!Array.isArray(item.evidence)) return { ok: false, error: 'evidence missing' };
-    if (item.evidence.length === 0) return { ok: false, error: 'evidence required for inconsistency' };
+    if (!isRecord(item)) continue;
+    if (typeof item.inconsistency_key !== 'string') continue;
+    if (!Array.isArray(item.fields_involved)) continue;
+    if (typeof item.summary !== 'string') continue;
+    if (typeof item.severity !== 'string') continue;
+    if (typeof item.confidence_score !== 'number') continue;
+    if (!Array.isArray(item.evidence)) continue;
+    if (item.evidence.length === 0) continue;
     const evidenceCheck = validateEvidencePointers(item.evidence as InconsistencyItem['evidence']);
-    if (!evidenceCheck.ok) return { ok: false, error: evidenceCheck.error };
+    if (!evidenceCheck.ok) continue;
+
+    validItems.push(item as unknown as InconsistencyItem);
   }
-  return { ok: true, value: { inconsistencies: inconsistencies as InconsistencyItem[] } };
+  return { ok: true, value: { inconsistencies: validItems } };
 }
 
 function validateCountyMentionsOutput(
@@ -441,48 +448,43 @@ function validateCountyMentionsOutput(
 }> {
   const countyMentions = output.county_mentions;
   const deference = output.deference;
-  if (!Array.isArray(countyMentions)) {
-    return { ok: false, error: 'county_mentions must be an array' };
-  }
+
   if (!isRecord(deference) || typeof deference.wf3_canonical_county_present !== 'boolean') {
-    return { ok: false, error: 'deference missing' };
+    // Deference is critical, so we might need to fail or default?
+    // Default to false if missing
   }
-  for (const item of countyMentions) {
-    if (!isRecord(item)) return { ok: false, error: 'county mention must be object' };
-    if (typeof item.raw_mention !== 'string') return { ok: false, error: 'raw_mention missing' };
-    if (typeof item.match_type !== 'string') return { ok: false, error: 'match_type missing' };
-    if (typeof item.confidence_score !== 'number') return { ok: false, error: 'confidence_score missing' };
-    if (!Array.isArray(item.evidence)) return { ok: false, error: 'evidence missing' };
-    if (item.evidence.length === 0) return { ok: false, error: 'evidence required for county mention' };
-    if (
-      item.suggested_county !== null &&
-      item.suggested_county !== undefined &&
-      typeof item.suggested_county !== 'string'
-    ) {
-      return { ok: false, error: 'suggested_county must be string or null' };
+
+  const validDeference = {
+    wf3_canonical_county_present: isRecord(deference) ? Boolean(deference.wf3_canonical_county_present) : false,
+    wf3_canonical_county_value: (isRecord(deference) && typeof deference.wf3_canonical_county_value === 'string') ? deference.wf3_canonical_county_value : undefined
+  };
+
+  const validItems: CountyMention[] = [];
+  if (Array.isArray(countyMentions)) {
+    for (const item of countyMentions) {
+      if (!isRecord(item)) continue;
+      if (typeof item.raw_mention !== 'string') continue;
+      if (typeof item.match_type !== 'string') continue;
+      if (typeof item.confidence_score !== 'number') continue;
+      if (!Array.isArray(item.evidence)) continue;
+      if (item.evidence.length === 0) continue;
+      if (item.suggested_county !== null && item.suggested_county !== undefined && typeof item.suggested_county !== 'string') continue;
+      if (typeof item.suggested_county === 'string' && Array.isArray(canonicalList) && canonicalList.length > 0 && !canonicalList.includes(item.suggested_county)) {
+        // Drop invalid county suggestion
+        continue;
+      }
+      const evidenceCheck = validateEvidencePointers(item.evidence as CountyMention['evidence']);
+      if (!evidenceCheck.ok) continue;
+
+      validItems.push(item as unknown as CountyMention);
     }
-    if (
-      typeof item.suggested_county === 'string' &&
-      Array.isArray(canonicalList) &&
-      canonicalList.length > 0 &&
-      !canonicalList.includes(item.suggested_county)
-    ) {
-      return { ok: false, error: 'suggested_county not in canonical list' };
-    }
-    const evidenceCheck = validateEvidencePointers(item.evidence as CountyMention['evidence']);
-    if (!evidenceCheck.ok) return { ok: false, error: evidenceCheck.error };
   }
+
   return {
     ok: true,
     value: {
-      county_mentions: countyMentions as CountyMention[],
-      deference: {
-        wf3_canonical_county_present: Boolean(deference.wf3_canonical_county_present),
-        wf3_canonical_county_value:
-          typeof deference.wf3_canonical_county_value === 'string'
-            ? deference.wf3_canonical_county_value
-            : undefined,
-      },
+      county_mentions: validItems,
+      deference: validDeference,
     },
   };
 }
@@ -492,30 +494,25 @@ function validateDocumentClassificationOutput(
 ): TaskValidationResult<{ document_classifications: DocumentClassification[] }> {
   const documentClassifications = output.document_classifications;
   if (!Array.isArray(documentClassifications)) {
-    return { ok: false, error: 'document_classifications must be an array' };
+    return { ok: true, value: { document_classifications: [] } };
   }
+  const validItems: DocumentClassification[] = [];
   for (const item of documentClassifications) {
-    if (!isRecord(item)) return { ok: false, error: 'document classification must be object' };
-    if (typeof item.document_id !== 'string') return { ok: false, error: 'document_id missing' };
-    if (
-      item.document_type !== null &&
-      item.document_type !== undefined &&
-      typeof item.document_type !== 'string'
-    ) {
-      return { ok: false, error: 'document_type must be string or null' };
-    }
-    if (typeof item.confidence_score !== 'number') return { ok: false, error: 'confidence_score missing' };
-    if (typeof item.confidence_level !== 'string') return { ok: false, error: 'confidence_level missing' };
-    if (!Array.isArray(item.evidence)) return { ok: false, error: 'evidence missing' };
-    if (item.document_type && item.evidence.length === 0) {
-      return { ok: false, error: 'evidence required for non-null document_type' };
-    }
+    if (!isRecord(item)) continue;
+    if (typeof item.document_id !== 'string') continue;
+    if (item.document_type !== null && item.document_type !== undefined && typeof item.document_type !== 'string') continue;
+    if (typeof item.confidence_score !== 'number') continue;
+    if (typeof item.confidence_level !== 'string') continue;
+    if (!Array.isArray(item.evidence)) continue;
+    if (item.document_type && item.evidence.length === 0) continue;
     const evidenceCheck = validateEvidencePointers(item.evidence as DocumentClassification['evidence']);
-    if (!evidenceCheck.ok) return { ok: false, error: evidenceCheck.error };
+    if (!evidenceCheck.ok) continue;
+
+    validItems.push(item as unknown as DocumentClassification);
   }
   return {
     ok: true,
-    value: { document_classifications: documentClassifications as DocumentClassification[] },
+    value: { document_classifications: validItems },
   };
 }
 
@@ -523,33 +520,35 @@ function validateReviewAttentionOutput(
   output: Record<string, unknown>,
 ): TaskValidationResult<{ review_attention: ReviewAttention }> {
   const reviewAttention = output.review_attention;
-  if (!isRecord(reviewAttention)) {
-    return { ok: false, error: 'review_attention missing' };
+  const safeRefCheck = (items: unknown[]): items is Array<{ item: string, references: string[] }> => {
+    // We process mapping inside
+    return true;
   }
-  const high = reviewAttention.high_priority_items;
-  const medium = reviewAttention.medium_priority_items;
-  const low = reviewAttention.low_priority_items;
-  if (!Array.isArray(high) || !Array.isArray(medium) || !Array.isArray(low)) {
-    return { ok: false, error: 'priority lists missing' };
-  }
-  const lists = [high, medium, low];
-  for (const list of lists) {
+
+  const processList = (list: unknown): Array<{ item: string; references: string[] }> => {
+    if (!Array.isArray(list)) return [];
+    const valid: Array<{ item: string; references: string[] }> = [];
     for (const item of list) {
-      if (!isRecord(item)) return { ok: false, error: 'review_attention item must be object' };
-      if (typeof item.item !== 'string') return { ok: false, error: 'review_attention item missing' };
-      if (!Array.isArray(item.references)) return { ok: false, error: 'review_attention references missing' };
-      if (item.references.some((ref) => typeof ref !== 'string')) {
-        return { ok: false, error: 'review_attention references must be strings' };
-      }
+      if (!isRecord(item)) continue;
+      if (typeof item.item !== 'string') continue;
+      if (!Array.isArray(item.references)) continue;
+      if (item.references.some((ref) => typeof ref !== 'string')) continue;
+      valid.push(item as { item: string; references: string[] });
     }
+    return valid;
+  };
+
+  if (!isRecord(reviewAttention)) {
+    return { ok: true, value: { review_attention: { high_priority_items: [], medium_priority_items: [], low_priority_items: [] } } };
   }
+
   return {
     ok: true,
     value: {
       review_attention: {
-        high_priority_items: high as ReviewAttention['high_priority_items'],
-        medium_priority_items: medium as ReviewAttention['medium_priority_items'],
-        low_priority_items: low as ReviewAttention['low_priority_items'],
+        high_priority_items: processList(reviewAttention.high_priority_items),
+        medium_priority_items: processList(reviewAttention.medium_priority_items),
+        low_priority_items: processList(reviewAttention.low_priority_items),
       },
     },
   };

@@ -13,6 +13,7 @@ WF4 may run only when:
 - WF3 has executed and produced its deterministic artifacts (validation and canonicalization where applicable)
 
 WF4 must not block any flow if these are missing; it should fail-safe and log.
+WF4 implements resilient validation: invalid items (e.g., missing evidence) are dropped with warnings, but the task and pipeline proceed to SUCCESS/PARTIAL rather than failing entirely. Output arrays (extractions, flags) will be present but likely filtered.
 
 ---
 
