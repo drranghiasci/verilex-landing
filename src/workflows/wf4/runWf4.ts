@@ -112,19 +112,23 @@ async function loadIntakeSnapshot(intakeId: string): Promise<IntakeSnapshot> {
     submission_id: intake.id,
     structured_fields: structuredFields,
     free_text_fields: {},
-    messages: (messages ?? []).map((message) => ({
+    messages: (messages ?? []).map(
+      (message: { id: string; source: string; content: string; created_at: string }) => ({
       message_id: message.id,
       role: message.source,
       content: message.content,
       created_at: message.created_at,
-    })),
-    documents: (documents ?? []).map((doc) => ({
+    }),
+    ),
+    documents: (documents ?? []).map(
+      (doc: { id: string; storage_object_path: string | null; document_type: string | null; created_at: string }) => ({
       document_id: doc.id,
       filename: doc.storage_object_path ?? null,
       mimetype: doc.document_type ?? null,
       text_extract: null,
       created_at: doc.created_at,
-    })),
+    }),
+    ),
     created_at: intake.created_at,
     firm_id: intake.firm_id,
   };
