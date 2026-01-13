@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import type { RunLog, RunOutput } from '../src/workflows/wf4/types';
 
 type JsonRecord = Record<string, unknown>;
@@ -14,6 +16,21 @@ function getEnv(name: string) {
     throw new Error(`Missing ${name}`);
   }
   return value;
+}
+
+function loadEnvFile(filePath: string) {
+  if (!fs.existsSync(filePath)) return;
+  const raw = fs.readFileSync(filePath, 'utf8');
+  raw.split(/\r?\n/).forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) return;
+    const [key, ...rest] = trimmed.split('=');
+    if (!key) return;
+    const value = rest.join('=').trim();
+    if (!process.env[key]) {
+      process.env[key] = value.replace(/^['"]|['"]$/g, '');
+    }
+  });
 }
 
 async function postJson<T>(baseUrl: string, path: string, body: JsonRecord, token?: string): Promise<T> {
@@ -34,6 +51,10 @@ async function postJson<T>(baseUrl: string, path: string, body: JsonRecord, toke
 }
 
 async function run() {
+  const repoRoot = process.cwd();
+  loadEnvFile(path.join(repoRoot, '.env.local'));
+  loadEnvFile(path.join(repoRoot, 'apps', 'intake', '.env.local'));
+
   const baseUrl = getEnv('INTAKE_BASE_URL').replace(/\/+$/, '');
   const firmSlug = getEnv('TEST_FIRM_SLUG');
 

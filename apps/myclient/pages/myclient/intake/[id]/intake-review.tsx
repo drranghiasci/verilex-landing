@@ -33,6 +33,12 @@ type AiFlagRow = {
   created_at: string;
 };
 
+type AiRunRow = {
+  id: string;
+  status: string;
+  created_at: string;
+};
+
 type IntakeDocumentRow = {
   id: string;
   storage_object_path: string;
@@ -54,6 +60,15 @@ const SEVERITY_STYLES: Record<string, string> = {
   low: 'border-emerald-400/40 text-emerald-200',
   medium: 'border-amber-400/40 text-amber-200',
   high: 'border-red-400/40 text-red-200',
+};
+
+const WF4_STATUS_STYLES: Record<string, string> = {
+  complete: 'border-emerald-400/40 text-emerald-200',
+  partial: 'border-amber-400/40 text-amber-200',
+  failed: 'border-red-400/40 text-red-200',
+  running: 'border-sky-400/40 text-sky-200',
+  queued: 'border-sky-400/40 text-sky-200',
+  not_run: 'border-white/10 text-[color:var(--muted)]',
 };
 
 function humanize(value: string) {
@@ -117,6 +132,7 @@ export default function IntakeReviewPage() {
   const { state } = useFirm();
   const [intake, setIntake] = useState<IntakeRecord | null>(null);
   const [flags, setFlags] = useState<AiFlagRow[]>([]);
+  const [wf4Run, setWf4Run] = useState<AiRunRow | null>(null);
   const [documents, setDocuments] = useState<IntakeDocumentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -160,7 +176,11 @@ export default function IntakeReviewPage() {
       return;
     }
 
-    const [{ data: flagRows, error: flagError }, { data: documentRows, error: documentError }] = await Promise.all([
+    const [
+      { data: flagRows, error: flagError },
+      { data: documentRows, error: documentError },
+      { data: runRows, error: runError },
+    ] = await Promise.all([
       supabase
         .from('ai_flags')
         .select('id, flag_key, severity, summary, details, created_at')
@@ -173,6 +193,14 @@ export default function IntakeReviewPage() {
         .eq('intake_id', intakeRow.id)
         .eq('firm_id', intakeRow.firm_id)
         .order('created_at', { ascending: false }),
+      supabase
+        .from('ai_runs')
+        .select('id, status, created_at')
+        .eq('intake_id', intakeRow.id)
+        .eq('firm_id', intakeRow.firm_id)
+        .eq('run_kind', 'wf4')
+        .order('created_at', { ascending: false })
+        .limit(1),
     ]);
 
     if (flagError) {
@@ -185,6 +213,13 @@ export default function IntakeReviewPage() {
       setError(documentError.message);
     } else {
       setDocuments((documentRows ?? []) as IntakeDocumentRow[]);
+    }
+
+    if (runError) {
+      setError(runError.message);
+    } else {
+      const latestRun = Array.isArray(runRows) && runRows.length > 0 ? (runRows[0] as AiRunRow) : null;
+      setWf4Run(latestRun);
     }
 
     setLoading(false);
@@ -229,6 +264,29 @@ export default function IntakeReviewPage() {
   }, [payload]);
 
   const contradictions = useMemo(() => runConsistencyChecks(payload).warnings, [payload]);
+
+  const wf4Status = useMemo(() => {
+    if (!wf4Run) {
+      return { label: 'Not run', tone: 'not_run' };
+    }
+    const status = wf4Run.status?.toLowerCase?.() ?? '';
+    if (status === 'success' || status === 'completed') {
+      return { label: 'Complete', tone: 'complete' };
+    }
+    if (status === 'partial') {
+      return { label: 'Partial', tone: 'partial' };
+    }
+    if (status === 'fail' || status === 'failed') {
+      return { label: 'Failed', tone: 'failed' };
+    }
+    if (status === 'running') {
+      return { label: 'Running', tone: 'running' };
+    }
+    if (status === 'queued') {
+      return { label: 'Queued', tone: 'queued' };
+    }
+    return { label: status || 'Unknown', tone: 'not_run' };
+  }, [wf4Run]);
 
   const ensureLocked = async () => {
     if (!intake || intake.submitted_at) return;
@@ -398,6 +456,12 @@ export default function IntakeReviewPage() {
                   <p>Status: <span className="text-white">{intake.status}</span></p>
                   <p>Submitted: <span className="text-white">{intake.submitted_at ? new Date(intake.submitted_at).toLocaleString() : '—'}</span></p>
                   <p>Created: <span className="text-white">{intake.created_at ? new Date(intake.created_at).toLocaleString() : '—'}</span></p>
+                  <p className="flex items-center gap-2">
+                    WF4 status:
+                    <span className={`rounded-full border px-2 py-0.5 text-xs ${WF4_STATUS_STYLES[wf4Status.tone] ?? WF4_STATUS_STYLES.not_run}`}>
+                      {wf4Status.label}
+                    </span>
+                  </p>
                 </div>
               </div>
               <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-5">

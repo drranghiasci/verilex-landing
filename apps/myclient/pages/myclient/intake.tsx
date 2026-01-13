@@ -22,6 +22,18 @@ type IntakeQueueItem = {
   raw_payload: Record<string, unknown> | null;
 };
 
+type Wf4RunRow = {
+  intake_id: string;
+  status: string;
+  created_at: string;
+};
+
+const WF4_STATUS_STYLES: Record<string, string> = {
+  ready: 'border-emerald-400/40 text-emerald-200',
+  loading: 'border-sky-400/40 text-sky-200',
+  down: 'border-red-400/40 text-red-200',
+};
+
 function formatIntakeClient(payload: Record<string, unknown> | null) {
   if (!payload) return 'Unknown client';
   const first = typeof payload.client_first_name === 'string' ? payload.client_first_name.trim() : '';
@@ -63,6 +75,7 @@ export default function IntakePage() {
   const [caseCountLoading, setCaseCountLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'manual' | 'automatic'>('manual');
   const [intakeQueue, setIntakeQueue] = useState<IntakeQueueItem[]>([]);
+  const [wf4StatusMap, setWf4StatusMap] = useState<Record<string, string>>({});
   const [queueLoading, setQueueLoading] = useState(false);
   const [queueError, setQueueError] = useState<string | null>(null);
 
@@ -122,7 +135,39 @@ export default function IntakePage() {
       setQueueError(intakeError.message);
       setIntakeQueue([]);
     } else {
-      setIntakeQueue((data ?? []) as IntakeQueueItem[]);
+      const items = (data ?? []) as IntakeQueueItem[];
+      setIntakeQueue(items);
+
+      if (items.length > 0) {
+        const intakeIds = items.map((item) => item.id);
+        const { data: wf4Runs, error: wf4Error } = await supabase
+          .from('ai_runs')
+          .select('intake_id, status, created_at')
+          .eq('firm_id', state.firmId)
+          .eq('run_kind', 'wf4')
+          .in('intake_id', intakeIds);
+
+        if (wf4Error) {
+          setWf4StatusMap({});
+        } else {
+          const latestByIntake: Record<string, Wf4RunRow> = {};
+          (wf4Runs ?? []).forEach((row) => {
+            const entry = row as Wf4RunRow;
+            const existing = latestByIntake[entry.intake_id];
+            if (!existing || entry.created_at > existing.created_at) {
+              latestByIntake[entry.intake_id] = entry;
+            }
+          });
+
+          const statusMap: Record<string, string> = {};
+          Object.entries(latestByIntake).forEach(([intakeId, entry]) => {
+            statusMap[intakeId] = entry.status;
+          });
+          setWf4StatusMap(statusMap);
+        }
+      } else {
+        setWf4StatusMap({});
+      }
     }
     setQueueLoading(false);
   }, [state.authed, state.firmId]);
@@ -529,6 +574,18 @@ export default function IntakePage() {
                   const submittedLabel = item.submitted_at
                     ? `Submitted ${new Date(item.submitted_at).toLocaleDateString()}`
                     : 'Draft in progress';
+                  const wf4StatusRaw = wf4StatusMap[item.id];
+                  const wf4Status = (() => {
+                    const status = typeof wf4StatusRaw === 'string' ? wf4StatusRaw.toLowerCase() : '';
+                    if (!status) return { label: 'Loading', tone: 'loading' };
+                    if (status === 'success' || status === 'completed' || status === 'partial') {
+                      return { label: 'Ready', tone: 'ready' };
+                    }
+                    if (status === 'queued' || status === 'running') {
+                      return { label: 'Loading', tone: 'loading' };
+                    }
+                    return { label: 'Down', tone: 'down' };
+                  })();
 
                   return (
                     <div
@@ -543,6 +600,11 @@ export default function IntakePage() {
                       <div className="flex flex-col gap-2 sm:flex-row">
                         <span className="inline-flex items-center rounded-full border border-white/10 px-3 py-1 text-xs text-[color:var(--muted)]">
                           {item.status}
+                        </span>
+                        <span
+                          className={`inline-flex items-center rounded-full border px-3 py-1 text-xs ${WF4_STATUS_STYLES[wf4Status.tone] ?? WF4_STATUS_STYLES.loading}`}
+                        >
+                          WF4 {wf4Status.label}
                         </span>
                         <Link
                           href={`/myclient/intake/${item.id}/intake-review`}
