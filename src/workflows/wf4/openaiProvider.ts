@@ -14,11 +14,11 @@ type ProviderOptions = {
 };
 
 const DEFAULT_PRICING: Record<string, ModelPricing> = {
-  'gpt-4.1': { input_per_million: 10, output_per_million: 30 },
+  'gpt-4o': { input_per_million: 2.5, output_per_million: 10 },
   'gpt-4o-mini': { input_per_million: 0.15, output_per_million: 0.6 },
 };
 
-const DEFAULT_EXTRACTION_MODEL = 'gpt-4.1';
+const DEFAULT_EXTRACTION_MODEL = 'gpt-4o';
 const DEFAULT_CLASSIFICATION_MODEL = 'gpt-4o-mini';
 
 function parsePricingEnv(): Record<string, ModelPricing> {
