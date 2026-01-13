@@ -3,6 +3,7 @@ export const WF4_PROMPT_BUNDLE_VERSION = 'v0.1';
 export const WF4_PROMPT_IDS = {
   system: 'wf4.system.v1',
   extract: 'wf4.task.extract.schema_fields.v1',
+  summary: 'wf4.task.summarize.case_narrative.v1',
   dv: 'wf4.task.flags.dv_indicators.v1',
   jurisdiction: 'wf4.task.flags.jurisdiction_complexity.v1',
   custody: 'wf4.task.flags.custody_conflict.v1',
@@ -14,6 +15,7 @@ export const WF4_PROMPT_IDS = {
 
 export const WF4_TASK_PROMPT_MAP: Record<string, string> = {
   'wf4.extract.schema_fields.v1': WF4_PROMPT_IDS.extract,
+  'wf4.summarize.case_narrative.v1': WF4_PROMPT_IDS.summary,
   'wf4.flags.dv_indicators.v1': WF4_PROMPT_IDS.dv,
   'wf4.flags.jurisdiction_complexity.v1': WF4_PROMPT_IDS.jurisdiction,
   'wf4.flags.custody_conflict.v1': WF4_PROMPT_IDS.custody,
@@ -36,6 +38,12 @@ export const WF4_PROMPT_TEMPLATES: Record<string, PromptTemplate> = {
     user:
       'Extract schema-bound fields from intake inputs using the schema allowlist. Return JSON only. Always include the "extractions" array (empty if none) and include all required keys for each item.',
   },
+  [WF4_PROMPT_IDS.summary]: {
+    id: WF4_PROMPT_IDS.summary,
+    system: 'Use wf4.system.v1',
+    user:
+      'Summarize the case narrative from the intake. Focus on: 1) The Parties (history, status), 2) The Conflict (core dispute), 3) The Goals (client objectives). Return JSON only.',
+  },
   [WF4_PROMPT_IDS.dv]: {
     id: WF4_PROMPT_IDS.dv,
     system: 'Use wf4.system.v1',
@@ -46,13 +54,13 @@ export const WF4_PROMPT_TEMPLATES: Record<string, PromptTemplate> = {
     id: WF4_PROMPT_IDS.jurisdiction,
     system: 'Use wf4.system.v1',
     user:
-      'Detect jurisdiction complexity signals with evidence. Return JSON only. Always include the "flags" array (empty if none) and include all required keys for each item.',
+      'Detect jurisdiction complexity signals with evidence. Cite relevant Georgia statutes (e.g., UCCJEA, OCGA 19-9-61) in the "why_it_matters_for_review" field for each flag. Return JSON only. Always include the "flags" array (empty if none).',
   },
   [WF4_PROMPT_IDS.custody]: {
     id: WF4_PROMPT_IDS.custody,
     system: 'Use wf4.system.v1',
     user:
-      'Detect custody conflict signals with evidence. Return JSON only. Always include the "flags" array (empty if none) and include all required keys for each item.',
+      'Detect custody conflict signals with evidence. Cite relevant Georgia statutes (e.g., OCGA 19-9-3) in the "why_it_matters_for_review" field to contextualize the risk. Return JSON only. Always include the "flags" array (empty if none).',
   },
   [WF4_PROMPT_IDS.consistency]: {
     id: WF4_PROMPT_IDS.consistency,

@@ -47,6 +47,26 @@
       "failure_mode": "Return empty extractions array; log run as PARTIAL/FAIL depending on pipeline. Never block downstream review."
     },
     {
+      "task_id": "wf4.summarize.case_narrative.v1",
+      "description": "Synthesize a coherent 1-page case narrative from structured fields and messages, focusing on Parties, Conflict, and Goals.",
+      "input_fields": [
+        "intake_snapshot.structured_fields",
+        "intake_snapshot.free_text_fields",
+        "intake_snapshot.messages"
+      ],
+      "output_schema": {
+        "case_narrative": {
+          "parties_summary": "string",
+          "conflict_summary": "string",
+          "goals_summary": "string",
+          "timeline_overview": "string_optional"
+        }
+      },
+      "confidence_model": "Summarization only; inherent confidence. Must be grounded in input text.",
+      "evidence_strategy": "No strict evidence pointers required for summary text, but must not hallucinate facts.",
+      "failure_mode": "Return empty narrative object; log failure."
+    },
+    {
       "task_id": "wf4.flags.dv_indicators.v1",
       "description": "Detect domestic violence (DV) indicators in intake content. Produce advisory flags only with evidence and non-conclusory phrasing. No legal advice.",
       "input_fields": [
@@ -80,7 +100,7 @@
     },
     {
       "task_id": "wf4.flags.jurisdiction_complexity.v1",
-      "description": "Detect jurisdictional complexity signals (multi-state residence, relocation, military, multiple counties mentioned, contested jurisdiction) as advisory review flags, without making determinations.",
+      "description": "Detect jurisdictional complexity signals (multi-state residence, relocation, military) and cite relevant Georgia statutes (e.g., UCCJEA, OCGA 19-9-61).",
       "input_fields": [
         "intake_snapshot.structured_fields",
         "intake_snapshot.free_text_fields",
@@ -113,7 +133,7 @@
     },
     {
       "task_id": "wf4.flags.custody_conflict.v1",
-      "description": "Detect custody conflict signals (disagreement on custody/parenting time, safety concerns, withholding access, relocation conflict) as advisory flags with evidence.",
+      "description": "Detect custody conflict signals and cite relevant Georgia statutes (e.g., OCGA 19-9-3 for Best Interests, relocation notice requirements).",
       "input_fields": [
         "intake_snapshot.structured_fields",
         "intake_snapshot.free_text_fields",
@@ -157,7 +177,9 @@
         "inconsistencies": [
           {
             "inconsistency_key": "string",
-            "fields_involved": ["string"],
+            "fields_involved": [
+              "string"
+            ],
             "summary": "string",
             "severity": "LOW|MED|HIGH",
             "confidence_score": "number_0_to_1",
@@ -226,19 +248,25 @@
           "high_priority_items": [
             {
               "item": "string",
-              "references": ["string"]
+              "references": [
+                "string"
+              ]
             }
           ],
           "medium_priority_items": [
             {
               "item": "string",
-              "references": ["string"]
+              "references": [
+                "string"
+              ]
             }
           ],
           "low_priority_items": [
             {
               "item": "string",
-              "references": ["string"]
+              "references": [
+                "string"
+              ]
             }
           ]
         }

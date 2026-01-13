@@ -175,6 +175,12 @@ export type RunOutput = {
     county_mentions: CountyMention[];
     deference: { wf3_canonical_county_present: boolean; wf3_canonical_county_value?: string };
   };
+  case_narrative?: {
+    parties_summary: string;
+    conflict_summary: string;
+    goals_summary: string;
+    timeline_overview?: string;
+  };
   review_attention?: { review_attention: ReviewAttention };
   task_outputs: Record<string, TaskResult<unknown>>;
 };

@@ -142,6 +142,18 @@ const EVIDENCE_POINTER_SCHEMA = {
   },
 };
 
+const CASE_NARRATIVE_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['parties_summary', 'conflict_summary', 'goals_summary'],
+  properties: {
+    parties_summary: { type: 'string' },
+    conflict_summary: { type: 'string' },
+    goals_summary: { type: 'string' },
+    timeline_overview: { type: 'string' },
+  },
+};
+
 const REVIEW_ATTENTION_ITEM_SCHEMA = {
   type: 'object',
   additionalProperties: false,
@@ -192,6 +204,17 @@ const JSON_SCHEMAS: Record<string, JsonSchema> = {
             },
           },
         },
+      },
+    },
+  },
+  [WF4_PROMPT_IDS.summary]: {
+    name: 'wf4_summarize_case_narrative',
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['case_narrative'],
+      properties: {
+        case_narrative: CASE_NARRATIVE_SCHEMA,
       },
     },
   },

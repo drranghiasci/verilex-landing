@@ -516,6 +516,34 @@ function validateDocumentClassificationOutput(
   };
 }
 
+function validateCaseNarrativeOutput(
+  output: Record<string, unknown>,
+): TaskValidationResult<{
+  case_narrative: {
+    parties_summary: string;
+    conflict_summary: string;
+    goals_summary: string;
+    timeline_overview?: string;
+  };
+}> {
+  const caseNarrative = output.case_narrative;
+  if (!isRecord(caseNarrative)) {
+    return { ok: true, value: { case_narrative: { parties_summary: '', conflict_summary: '', goals_summary: '' } } };
+  }
+
+  return {
+    ok: true,
+    value: {
+      case_narrative: {
+        parties_summary: typeof caseNarrative.parties_summary === 'string' ? caseNarrative.parties_summary : '',
+        conflict_summary: typeof caseNarrative.conflict_summary === 'string' ? caseNarrative.conflict_summary : '',
+        goals_summary: typeof caseNarrative.goals_summary === 'string' ? caseNarrative.goals_summary : '',
+        timeline_overview: typeof caseNarrative.timeline_overview === 'string' ? caseNarrative.timeline_overview : undefined,
+      },
+    },
+  };
+}
+
 function validateReviewAttentionOutput(
   output: Record<string, unknown>,
 ): TaskValidationResult<{ review_attention: ReviewAttention }> {
@@ -705,6 +733,8 @@ export async function runWf4(
         validation = validateCountyMentionsOutput(output, counties);
       } else if (taskId === 'wf4.classify.documents.v1') {
         validation = validateDocumentClassificationOutput(output);
+      } else if (taskId === 'wf4.summarize.case_narrative.v1') {
+        validation = validateCaseNarrativeOutput(output);
       } else if (taskId === 'wf4.review_attention.summary.v1') {
         validation = validateReviewAttentionOutput(output);
       }
@@ -754,6 +784,9 @@ export async function runWf4(
         runOutput.document_classifications = validation.value as {
           document_classifications: DocumentClassification[];
         };
+      }
+      if (taskId === 'wf4.summarize.case_narrative.v1') {
+        runOutput.case_narrative = (validation.value as any).case_narrative;
       }
       if (taskId === 'wf4.review_attention.summary.v1') {
         runOutput.review_attention = validation.value as { review_attention: ReviewAttention };

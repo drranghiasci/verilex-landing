@@ -19,7 +19,7 @@ const mockProvider: LlmProvider = {
                         confidence_score: 0.9,
                         confidence_level: 'HIGH',
                         confidence_rationale_code: 'DIRECT_STATEMENT',
-                        evidence: [] // EMPTY EVIDENCE -> SHOULD FAIL VALIDATION
+                        evidence: [] // EMPTY EVIDENCE -> SHOULD FAIL VALIDATION (but be resiliently dropped)
                     }
                 ]
             };
@@ -28,6 +28,16 @@ const mockProvider: LlmProvider = {
         if (promptId === 'wf4.task.flags.dv_indicators.v1') {
             return {
                 flags: []
+            };
+        }
+        // RETURN CASE NARRATIVE
+        if (promptId === 'wf4.task.summarize.case_narrative.v1') {
+            return {
+                case_narrative: {
+                    parties_summary: 'John and Jane Doe, married 10 years.',
+                    conflict_summary: 'Dispute over custody.',
+                    goals_summary: 'Primary custody.'
+                }
             };
         }
         // Default valid empty for others
