@@ -55,26 +55,7 @@ function modelForPrompt(promptId: string) {
   return classifierModel;
 }
 
-async function getMonthlySpendUsd(firmId: string) {
-  const { supabaseAdmin } = await import('../../../lib/server/supabaseAdmin');
-  const monthStart = startOfMonthIso();
-  const { data, error } = await supabaseAdmin
-    .from('ai_runs')
-    .select('inputs')
-    .eq('firm_id', firmId)
-    .eq('run_kind', 'wf4')
-    .gte('created_at', monthStart);
 
-  if (error || !data) {
-    return 0;
-  }
-
-  return data.reduce((total: number, row: { inputs?: any }) => {
-    const inputs = row.inputs as { cost_usd?: unknown } | null;
-    const cost = typeof inputs?.cost_usd === 'number' ? inputs.cost_usd : 0;
-    return total + cost;
-  }, 0);
-}
 
 function buildUserContent(userPrompt: string, input: Record<string, unknown>) {
   const payload = JSON.stringify(input);
@@ -473,7 +454,11 @@ function getResponseFormat(promptId: string) {
   } as const;
 }
 
-export function createWf4OpenAiProvider(options: ProviderOptions): LlmProvider {
+opts: ProviderOptions,
+  dependencies: {
+  getMonthlySpendUsd ?: (firmId: string) => Promise<number>;
+} = { },
+): LlmProvider {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY is required for WF4 provider');
@@ -487,15 +472,15 @@ export function createWf4OpenAiProvider(options: ProviderOptions): LlmProvider {
   const pricing = parsePricingEnv();
   const envRetries = Number(process.env.OPENAI_MAX_RETRIES ?? '');
   const retries =
-    typeof options.retries === 'number'
-      ? options.retries
+    typeof opts.retries === 'number'
+      ? opts.retries
       : Number.isFinite(envRetries)
         ? envRetries
         : 2;
   const envBudget = Number(process.env.OPENAI_MONTHLY_BUDGET_USD ?? '');
   const monthlyBudgetUsd =
-    typeof options.monthlyBudgetUsd === 'number'
-      ? options.monthlyBudgetUsd
+    typeof opts.monthlyBudgetUsd === 'number'
+      ? opts.monthlyBudgetUsd
       : Number.isFinite(envBudget)
         ? envBudget
         : 100;
@@ -518,7 +503,10 @@ export function createWf4OpenAiProvider(options: ProviderOptions): LlmProvider {
     }
     const currentMonth = startOfMonthIso();
     if (!monthlySpendCache || monthlySpendCache.monthStart !== currentMonth) {
-      const total = await getMonthlySpendUsd(options.firmId);
+      // Use injected dependency or default to 0 if not provided (avoids heavy import)
+      const total = dependencies.getMonthlySpendUsd
+        ? await dependencies.getMonthlySpendUsd(opts.firmId)
+        : 0;
       monthlySpendCache = { monthStart: currentMonth, total };
     }
     const projected = monthlySpendCache.total + usageTotals.cost_usd;
