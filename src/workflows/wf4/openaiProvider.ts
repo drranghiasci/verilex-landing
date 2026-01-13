@@ -454,10 +454,11 @@ function getResponseFormat(promptId: string) {
   } as const;
 }
 
-opts: ProviderOptions,
+export function createWf4OpenAiProvider(
+  opts: ProviderOptions,
   dependencies: {
-  getMonthlySpendUsd ?: (firmId: string) => Promise<number>;
-} = { },
+    getMonthlySpendUsd?: (firmId: string) => Promise<number>;
+  } = {},
 ): LlmProvider {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
