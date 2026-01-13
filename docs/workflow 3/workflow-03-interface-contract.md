@@ -5,6 +5,11 @@ Defines the strict inputs and outputs for the Phase 1 deterministic rules engine
 
 WF3 is deterministic, explainable, versioned, and produces no legal conclusions.
 
+## Applicability Scoping
+Rules are deterministically gated by:
+1. **Matter Type**: Rules specific to divorce (e.g., marriage details, assets, debts) only apply when `matter_type == 'divorce'`.
+2. **Repeatable Objects**: Rules for array items (e.g., assets, children) only apply if the array contains items (at least one entry). Empty arrays do not trigger missing field blocks for their children.
+
 ---
 
 ## Inputs

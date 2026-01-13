@@ -1,0 +1,26 @@
+{
+    "matter_type": "divorce",
+    "urgency_level": "routine",
+    "intake_channel": "web",
+    "client_first_name": "Divorce",
+    "client_last_name": "Test",
+    "client_dob": "1990-01-01",
+    "client_phone": "555-123-4567",
+    "client_email": "divorce@test.com",
+    "client_address": {
+        "line1": "123 Main"
+    },
+    "client_county": "fulton",
+    "opposing_name": "Spouse",
+    "opposing_address_known": false,
+    "client_income_monthly": 5000,
+    "support_requested": "spousal_support",
+    "prior_divorce_filings": false,
+    "prior_custody_orders": false,
+    "existing_attorney": false,
+    "primary_goal": "divorce_finalization",
+    "settlement_preference": "open_to_either",
+    "litigation_tolerance": "moderate",
+    "assets": [],
+    "debts": []
+}
