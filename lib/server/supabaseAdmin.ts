@@ -20,12 +20,17 @@ const requireFromApp = (() => {
   }
 })();
 
-let createClient: ((...args: any[]) => any) | undefined;
-try {
-  ({ createClient } = requireFromApp('@supabase/supabase-js'));
-} catch (error) {
-  throw new Error('Missing @supabase/supabase-js; install it in the app workspace.');
-}
+const createClient = (() => {
+  try {
+    const mod = requireFromApp('@supabase/supabase-js') as { createClient?: (...args: any[]) => any };
+    if (!mod.createClient) {
+      throw new Error('Missing createClient export');
+    }
+    return mod.createClient;
+  } catch (error) {
+    throw new Error('Missing @supabase/supabase-js; install it in the app workspace.');
+  }
+})();
 
 export const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
   auth: {
