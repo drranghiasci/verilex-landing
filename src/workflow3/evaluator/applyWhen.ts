@@ -1,5 +1,5 @@
 import type { RuleAppliesWhen } from '../catalog/types';
-import { getField } from './getField';
+import { getFieldValues } from './getField';
 import { isMissingValue } from './requirements';
 
 type NumericOperator = 'gt' | 'gte' | 'lt' | 'lte';
@@ -24,21 +24,30 @@ export function appliesWhen(payload: unknown, applies: RuleAppliesWhen | undefin
   if (!applies || !Array.isArray(applies.all)) return true;
 
   return applies.all.every((condition) => {
-    const value = getField(payload, condition.path);
+    const values = getFieldValues(payload, condition.path);
+    const presentValues = values.filter((value) => !isMissingValue(value));
 
     if (typeof condition.exists === 'boolean') {
-      const exists = !isMissingValue(value);
+      const exists = presentValues.length > 0;
       if (exists !== condition.exists) return false;
     }
 
     if (condition.equals !== undefined) {
-      if (value !== condition.equals) return false;
+      if (!presentValues.some((value) => value === condition.equals)) return false;
     }
 
-    if (condition.gt !== undefined && !compareNumeric(value, 'gt', condition.gt)) return false;
-    if (condition.gte !== undefined && !compareNumeric(value, 'gte', condition.gte)) return false;
-    if (condition.lt !== undefined && !compareNumeric(value, 'lt', condition.lt)) return false;
-    if (condition.lte !== undefined && !compareNumeric(value, 'lte', condition.lte)) return false;
+    if (condition.gt !== undefined && !presentValues.some((value) => compareNumeric(value, 'gt', condition.gt))) {
+      return false;
+    }
+    if (condition.gte !== undefined && !presentValues.some((value) => compareNumeric(value, 'gte', condition.gte))) {
+      return false;
+    }
+    if (condition.lt !== undefined && !presentValues.some((value) => compareNumeric(value, 'lt', condition.lt))) {
+      return false;
+    }
+    if (condition.lte !== undefined && !presentValues.some((value) => compareNumeric(value, 'lte', condition.lte))) {
+      return false;
+    }
 
     return true;
   });

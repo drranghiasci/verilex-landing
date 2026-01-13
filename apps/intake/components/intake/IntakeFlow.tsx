@@ -53,6 +53,7 @@ export default function IntakeFlow({
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [confirmFinal, setConfirmFinal] = useState(false);
+  const [showRequiredErrors, setShowRequiredErrors] = useState(false);
   const safetyLoggedRef = useRef<Set<string>>(new Set());
 
   const {
@@ -108,11 +109,13 @@ export default function IntakeFlow({
     () => validateIntakePayload(payload, enabledSectionIds),
     [payload, enabledSectionIds],
   );
-  const missingBySection = validation.missingBySection;
   const validationSummary = useMemo(
     () => validate(payload, undefined, enabledSectionIds),
     [payload, enabledSectionIds],
   );
+  const hasMissingRequired = validationSummary.missingRequiredPaths.length > 0;
+  const shouldShowMissingIndicators = showRequiredErrors;
+  const missingBySection = shouldShowMissingIndicators ? validation.missingBySection : {};
   const consistency = useMemo(() => runConsistencyChecks(payload), [payload]);
   const countyWarnings = useMemo(() => getCountyWarnings(payload), [payload]);
   const safetyBanners = useMemo(() => getSafetyBanners(payload), [payload]);
@@ -241,6 +244,10 @@ export default function IntakeFlow({
     if (intakeId) setHasLoaded(true);
   }, [intakeId]);
 
+  useEffect(() => {
+    if (intakeId) setShowRequiredErrors(false);
+  }, [intakeId]);
+
   const sectionMissing = new Set(missingBySection[step?.id ?? ''] ?? []);
   const inlineWarnings = warningItems.filter((item) =>
     item.sections?.some((section) => section.id === step?.id),
@@ -284,8 +291,9 @@ export default function IntakeFlow({
       setUiError('Please confirm that submission is final.');
       return;
     }
-    if (validationSummary.missingRequiredPaths.length > 0) {
-      setUiError('Please complete required fields before submitting.');
+    if (hasMissingRequired) {
+      setUiError(null);
+      setShowRequiredErrors(true);
       return;
     }
 
@@ -299,6 +307,12 @@ export default function IntakeFlow({
       setConfirmFinal(false);
     }
   }, [confirmFinal, currentStepIndex, visibleSteps.length]);
+
+  useEffect(() => {
+    if (currentStepIndex === visibleSteps.length - 1) {
+      setShowRequiredErrors(true);
+    }
+  }, [currentStepIndex, visibleSteps.length]);
 
   const renderAccessGate = () => {
     if (!token && mode === 'resume') {
@@ -441,7 +455,7 @@ export default function IntakeFlow({
         <aside className="steps">
           <h3>Steps</h3>
           {visibleSteps.map((item, index) => {
-            const missing = (missingBySection[item.id] ?? []).length > 0;
+            const missing = shouldShowMissingIndicators && (missingBySection[item.id] ?? []).length > 0;
             return (
               <Button
                 key={item.id}
@@ -458,7 +472,9 @@ export default function IntakeFlow({
             );
           })}
           <div className="steps__footer">
-            <div className="muted">Missing required: {validation.missingKeys.length}</div>
+            <div className="muted">
+              Missing required: {shouldShowMissingIndicators ? validation.missingKeys.length : '-'}
+            </div>
           </div>
         </aside>
 
@@ -488,6 +504,9 @@ export default function IntakeFlow({
                 />
               ))}
             <WarningsPanel items={inlineWarnings} />
+            {showRequiredErrors && hasMissingRequired && (
+              <Alert variant="info">Required fields are missing. They are highlighted in red.</Alert>
+            )}
             {sectionContextNote && <Alert variant="info">{sectionContextNote}</Alert>}
             <StepComponent
               payload={payload}

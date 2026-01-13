@@ -2,7 +2,7 @@ import type { EvidenceMissingOrNull, RuleCatalog, RuleDefinition } from '../cata
 import type { GaCountyLookup } from '../counties/types';
 import { normalizeCounty } from '../counties/gaCountyNormalize';
 import { appliesWhen } from './applyWhen';
-import { getField } from './getField';
+import { getFieldValues } from './getField';
 import { findMissingPaths, isMissingValue } from './requirements';
 import type { CountyNormalization, RuleEvidence, RuleEvaluation, RuleFinding, RulesEngineResult } from './types';
 
@@ -13,8 +13,13 @@ type EvaluateRulesOptions = {
 function buildPathsEvidence(payload: unknown, paths: string[]): RuleEvidence {
   const values: Record<string, unknown> = {};
   paths.forEach((path) => {
-    const value = getField(payload, path);
-    values[path] = isMissingValue(value) ? null : value;
+    const resolved = getFieldValues(payload, path);
+    if (resolved.length === 0) {
+      values[path] = null;
+      return;
+    }
+    const normalized = resolved.map((value) => (isMissingValue(value) ? null : value));
+    values[path] = normalized.length === 1 ? normalized[0] : normalized;
   });
   return { paths: values };
 }
@@ -36,26 +41,21 @@ function evaluateEnumMembership(payload: unknown, rule: RuleDefinition) {
   if (strategy.type !== 'enum_membership') {
     return { passed: true, evidence: {} };
   }
-  const value = getField(payload, strategy.path);
-  if (isMissingValue(value)) {
+  const values = getFieldValues(payload, strategy.path).filter((value) => !isMissingValue(value));
+  if (values.length === 0) {
     return { passed: true, evidence: { path: strategy.path, value: null } };
   }
-  if (typeof value !== 'string') {
-    return {
-      passed: false,
-      evidence: {
-        path: strategy.path,
-        value,
-        allowed_values: strategy.allowed_values,
-      },
-    };
-  }
-  const passed = strategy.allowed_values.includes(value);
+  const invalidType = values.find((value) => typeof value !== 'string');
+  const invalidValue = values.find(
+    (value) => typeof value === 'string' && !strategy.allowed_values.includes(value),
+  );
+  const passed = !invalidType && !invalidValue;
+  const evidenceValue = values.length === 1 ? values[0] : values;
   return {
     passed,
     evidence: {
       path: strategy.path,
-      value,
+      value: evidenceValue,
       allowed_values: strategy.allowed_values,
     },
   };
@@ -66,25 +66,30 @@ function evaluateTypeCheck(payload: unknown, rule: RuleDefinition) {
   if (strategy.type !== 'type_check') {
     return { passed: true, evidence: {} };
   }
-  const value = getField(payload, strategy.path);
-  if (isMissingValue(value)) {
+  const values = getFieldValues(payload, strategy.path).filter((value) => !isMissingValue(value));
+  if (values.length === 0) {
     return { passed: true, evidence: { path: strategy.path, value: null } };
   }
 
-  let passed = false;
-  if (strategy.expected_type === 'number') {
-    passed = typeof value === 'number' && !Number.isNaN(value);
-  } else if (strategy.expected_type === 'boolean') {
-    passed = typeof value === 'boolean';
-  } else if (strategy.expected_type === 'date') {
-    passed = typeof value === 'string' && !Number.isNaN(Date.parse(value));
-  }
+  const isExpectedType = (value: unknown) => {
+    if (strategy.expected_type === 'number') {
+      return typeof value === 'number' && !Number.isNaN(value);
+    }
+    if (strategy.expected_type === 'boolean') {
+      return typeof value === 'boolean';
+    }
+    if (strategy.expected_type === 'date') {
+      return typeof value === 'string' && !Number.isNaN(Date.parse(value));
+    }
+    return false;
+  };
+  const passed = values.every((value) => isExpectedType(value));
 
   return {
     passed,
     evidence: {
       path: strategy.path,
-      value,
+      value: values.length === 1 ? values[0] : values,
       expected_type: strategy.expected_type,
     },
   };
@@ -95,8 +100,10 @@ function evaluateDateOrder(payload: unknown, rule: RuleDefinition) {
   if (strategy.type !== 'date_order') {
     return { passed: true, evidence: {} };
   }
-  const earlierValue = getField(payload, strategy.earlier_path);
-  const laterValue = getField(payload, strategy.later_path);
+  const earlierValues = getFieldValues(payload, strategy.earlier_path);
+  const laterValues = getFieldValues(payload, strategy.later_path);
+  const earlierValue = earlierValues.find((value) => !isMissingValue(value));
+  const laterValue = laterValues.find((value) => !isMissingValue(value));
 
   if (isMissingValue(earlierValue) || isMissingValue(laterValue)) {
     return {
@@ -162,8 +169,9 @@ function evaluateCsvLookup(payload: unknown, rule: RuleDefinition, lookup: GaCou
     return { passed: true, evidence: {}, normalization: null };
   }
 
-  const value = getField(payload, strategy.input_path);
-  if (isMissingValue(value)) {
+  const values = getFieldValues(payload, strategy.input_path);
+  const value = values.find((entry) => !isMissingValue(entry));
+  if (value === undefined || value === null) {
     return { passed: true, evidence: { input_path: strategy.input_path, input_value: null }, normalization: null };
   }
 

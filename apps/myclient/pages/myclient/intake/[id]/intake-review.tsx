@@ -167,6 +167,9 @@ export default function IntakeReviewPage() {
   const [wf4Run, setWf4Run] = useState<AiRunRow | null>(null);
   const [wf4Output, setWf4Output] = useState<RunOutput | null>(null);
   const [wf3Rules, setWf3Rules] = useState<RulesEngineResult | null>(null);
+  const [wf3ResolveStatus, setWf3ResolveStatus] = useState<'idle' | 'resolving'>('idle');
+  const [wf3ResolveError, setWf3ResolveError] = useState<string | null>(null);
+  const [wf3ResolveNotice, setWf3ResolveNotice] = useState<string | null>(null);
   const [documents, setDocuments] = useState<IntakeDocumentRow[]>([]);
   const [decision, setDecision] = useState<IntakeDecisionRow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -410,6 +413,51 @@ export default function IntakeReviewPage() {
     );
   };
 
+  const handleResolveWf3 = async () => {
+    if (!intake) return;
+    if (!canEdit) {
+      setWf3ResolveError("You don't have permission to resolve WF3 blocks.");
+      return;
+    }
+    setWf3ResolveError(null);
+    setWf3ResolveNotice(null);
+    setWf3ResolveStatus('resolving');
+
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session?.access_token) {
+        setWf3ResolveError(sessionError?.message || 'Please sign in to resolve WF3 blocks.');
+        setWf3ResolveStatus('idle');
+        return;
+      }
+
+      const res = await fetch('/api/myclient/intake/resolve-wf3', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
+        body: JSON.stringify({ intakeId: intake.id }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        setWf3ResolveError(data.error || 'Unable to resolve WF3 blocks.');
+        setWf3ResolveStatus('idle');
+        return;
+      }
+
+      if (data.evaluation && typeof data.evaluation === 'object') {
+        setWf3Rules(data.evaluation as RulesEngineResult);
+      }
+      setWf3ResolveNotice('WF3 rules re-run. Blocks refreshed.');
+      setWf3ResolveStatus('idle');
+    } catch (err) {
+      setWf3ResolveError(err instanceof Error ? err.message : 'Unable to resolve WF3 blocks.');
+      setWf3ResolveStatus('idle');
+    }
+  };
+
   const handleAccept = async () => {
     if (!intake) return;
     if (hasBlocks) {
@@ -609,6 +657,16 @@ export default function IntakeReviewPage() {
             {ackError}
           </div>
         )}
+        {wf3ResolveError && (
+          <div className="rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {wf3ResolveError}
+          </div>
+        )}
+        {wf3ResolveNotice && (
+          <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+            {wf3ResolveNotice}
+          </div>
+        )}
 
         {state.loading && <p className="text-[color:var(--muted)]">Loading...</p>}
         {!state.loading && !state.authed && <p className="text-[color:var(--muted)]">Please sign in.</p>}
@@ -724,7 +782,19 @@ export default function IntakeReviewPage() {
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-5">
-                  <h2 className="text-lg font-semibold text-white">WF3 Rules</h2>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <h2 className="text-lg font-semibold text-white">WF3 Rules</h2>
+                    {wf3Rules && hasBlocks && (
+                      <button
+                        type="button"
+                        onClick={handleResolveWf3}
+                        disabled={!canEdit || wf3ResolveStatus !== 'idle'}
+                        className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white hover:bg-white/10 disabled:opacity-60"
+                      >
+                        {wf3ResolveStatus === 'resolving' ? 'Resolving…' : 'Resolve WF3 blocks'}
+                      </button>
+                    )}
+                  </div>
                   {!wf3Rules && (
                     <p className="mt-3 text-sm text-[color:var(--muted)]">Rules output unavailable.</p>
                   )}

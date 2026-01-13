@@ -8,6 +8,7 @@ import type { RulesEngineResult } from './evaluator/types';
 export type RunWorkflow3Input = {
   intake_id: string;
   firm_id?: string;
+  force?: boolean;
 };
 
 export type RunWorkflow3Result = {
@@ -20,6 +21,107 @@ export type RunWorkflow3Result = {
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function toArray(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value;
+  if (value === undefined || value === null || value === '') return [];
+  return [value];
+}
+
+function hasValue(value: unknown): boolean {
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (Array.isArray(value)) return value.length > 0;
+  return true;
+}
+
+function buildRepeatableGroup(payload: Record<string, unknown>, keys: string[]) {
+  const arrays = keys.map((key) => toArray(payload[key]));
+  const count = arrays.reduce((max, entries) => Math.max(max, entries.length), 0);
+  if (count === 0) return [];
+
+  const entries: Array<Record<string, unknown>> = [];
+  for (let index = 0; index < count; index += 1) {
+    const entry: Record<string, unknown> = {};
+    let hasAny = false;
+    keys.forEach((key, keyIndex) => {
+      const value = arrays[keyIndex][index];
+      if (value !== undefined) {
+        entry[key] = value;
+      }
+      if (hasValue(value)) {
+        hasAny = true;
+      }
+    });
+    if (hasAny) {
+      entries.push(entry);
+    }
+  }
+
+  return entries;
+}
+
+function buildWorkflow3Payload(payload: Record<string, unknown>): Record<string, unknown> {
+  const next = { ...payload };
+
+  if (!Array.isArray(payload.children) || payload.children.length === 0) {
+    const children = buildRepeatableGroup(payload, [
+      'child_full_name',
+      'child_dob',
+      'child_current_residence',
+      'biological_relation',
+      'special_needs',
+    ]);
+    if (children.length > 0) {
+      next.children = children;
+    }
+  }
+
+  if (!Array.isArray(payload.assets) || payload.assets.length === 0) {
+    const assets = buildRepeatableGroup(payload, [
+      'asset_type',
+      'ownership',
+      'estimated_value',
+      'title_holder',
+      'acquired_pre_marriage',
+    ]);
+    if (assets.length > 0) {
+      next.assets = assets;
+    }
+  }
+
+  if (!Array.isArray(payload.debts) || payload.debts.length === 0) {
+    const debts = buildRepeatableGroup(payload, [
+      'debt_type',
+      'amount',
+      'responsible_party',
+      'incurred_during_marriage',
+    ]);
+    if (debts.length > 0) {
+      next.debts = debts;
+    }
+  }
+
+  const custody: Record<string, unknown> = isPlainObject(payload.children_custody)
+    ? { ...payload.children_custody }
+    : {};
+  [
+    'custody_type_requested',
+    'parenting_plan_exists',
+    'modification_existing_order',
+    'current_parenting_schedule',
+    'school_district',
+  ].forEach((key) => {
+    if (payload[key] !== undefined && custody[key] === undefined) {
+      custody[key] = payload[key];
+    }
+  });
+  if (Object.keys(custody).length > 0) {
+    next.children_custody = custody;
+  }
+
+  return next;
 }
 
 async function loadIntake(intakeId: string) {
@@ -74,7 +176,7 @@ export async function runWorkflow3Rules(
 
   const { catalog, ruleset_version } = getRuleCatalog();
 
-  const existing = await findExistingEvaluation(intake.id, ruleset_version);
+  const existing = input.force ? null : await findExistingEvaluation(intake.id, ruleset_version);
   if (existing) {
     return {
       evaluation: existing.rules_engine,
@@ -86,8 +188,9 @@ export async function runWorkflow3Rules(
   }
 
   const payload = isPlainObject(intake.raw_payload) ? intake.raw_payload : {};
+  const normalizedPayload = buildWorkflow3Payload(payload);
   const counties = loadGaCounties();
-  const evaluation = evaluateRules(payload, catalog, counties);
+  const evaluation = evaluateRules(normalizedPayload, catalog, counties);
 
   const inserted = await writeRulesEvaluation(intake.id, evaluation);
 
