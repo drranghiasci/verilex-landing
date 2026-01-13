@@ -179,6 +179,9 @@ export default function IntakeReviewPage() {
   const [actionNotice, setActionNotice] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [ackError, setAckError] = useState<string | null>(null);
+  const [wf4RerunStatus, setWf4RerunStatus] = useState<'idle' | 'running'>('idle');
+  const [wf4RerunError, setWf4RerunError] = useState<string | null>(null);
+  const [wf4RerunNotice, setWf4RerunNotice] = useState<string | null>(null);
 
   const intakeId = useMemo(
     () => (typeof router.query.id === 'string' ? router.query.id : null),
@@ -458,6 +461,51 @@ export default function IntakeReviewPage() {
     }
   };
 
+  const handleRerunWf4 = async () => {
+    if (!intake) return;
+    if (!canEdit) {
+      setWf4RerunError("You don't have permission to run AI tasks.");
+      return;
+    }
+    setWf4RerunError(null);
+    setWf4RerunNotice(null);
+    setWf4RerunStatus('running');
+
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session?.access_token) {
+        setWf4RerunError(sessionError?.message || 'Please sign in to run AI tasks.');
+        setWf4RerunStatus('idle');
+        return;
+      }
+
+      const res = await fetch('/api/myclient/intake/rerun-wf4', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
+        body: JSON.stringify({ intakeId: intake.id }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        setWf4RerunError(data.error || 'Unable to re-run AI pipeline.');
+        setWf4RerunStatus('idle');
+        return;
+      }
+
+      setWf4RerunNotice('AI pipeline triggered. Page will reload in 3 seconds to show results.');
+      setTimeout(() => {
+        router.reload();
+      }, 3000);
+
+    } catch (err) {
+      setWf4RerunError(err instanceof Error ? err.message : 'Unable to re-run AI pipeline.');
+      setWf4RerunStatus('idle');
+    }
+  };
+
   const handleAccept = async () => {
     if (!intake) return;
     if (hasBlocks) {
@@ -665,6 +713,16 @@ export default function IntakeReviewPage() {
         {wf3ResolveNotice && (
           <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
             {wf3ResolveNotice}
+          </div>
+        )}
+        {wf4RerunError && (
+          <div className="rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {wf4RerunError}
+          </div>
+        )}
+        {wf4RerunNotice && (
+          <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+            {wf4RerunNotice}
           </div>
         )}
 
@@ -878,25 +936,25 @@ export default function IntakeReviewPage() {
                                 : null;
                             return (
                               <>
-                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                              <div className="text-white">{filenameFromPath(doc.storage_object_path)}</div>
-                              <div className="text-xs text-[color:var(--muted)]">{doc.document_type ?? 'Uncategorized'}</div>
-                            </div>
-                            <span className="text-xs text-[color:var(--muted-2)]">
-                              {new Date(doc.created_at).toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="mt-2 text-xs text-[color:var(--muted)]">
-                            {doc.uploaded_by_role ? `Uploaded by ${doc.uploaded_by_role}` : 'Uploaded'}
-                            {doc.mime_type ? ` • ${doc.mime_type}` : ''}
-                            {typeof doc.size_bytes === 'number' ? ` • ${Math.round(doc.size_bytes / 1024)} KB` : ''}
-                          </div>
-                          {classificationType && (
-                            <div className="mt-3 text-xs text-[color:var(--muted)]">
-                              Classification: {classificationType} ({classificationConfidence ?? '—'})
-                            </div>
-                          )}
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                  <div>
+                                    <div className="text-white">{filenameFromPath(doc.storage_object_path)}</div>
+                                    <div className="text-xs text-[color:var(--muted)]">{doc.document_type ?? 'Uncategorized'}</div>
+                                  </div>
+                                  <span className="text-xs text-[color:var(--muted-2)]">
+                                    {new Date(doc.created_at).toLocaleString()}
+                                  </span>
+                                </div>
+                                <div className="mt-2 text-xs text-[color:var(--muted)]">
+                                  {doc.uploaded_by_role ? `Uploaded by ${doc.uploaded_by_role}` : 'Uploaded'}
+                                  {doc.mime_type ? ` • ${doc.mime_type}` : ''}
+                                  {typeof doc.size_bytes === 'number' ? ` • ${Math.round(doc.size_bytes / 1024)} KB` : ''}
+                                </div>
+                                {classificationType && (
+                                  <div className="mt-3 text-xs text-[color:var(--muted)]">
+                                    Classification: {classificationType} ({classificationConfidence ?? '—'})
+                                  </div>
+                                )}
                               </>
                             );
                           })()}
@@ -909,7 +967,17 @@ export default function IntakeReviewPage() {
 
               <div className="space-y-6">
                 <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-5">
-                  <h2 className="text-lg font-semibold text-white">WF4 AI Output</h2>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <h2 className="text-lg font-semibold text-white">WF4 AI Output</h2>
+                    <button
+                      type="button"
+                      onClick={handleRerunWf4}
+                      disabled={!canEdit || wf4RerunStatus !== 'idle'}
+                      className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white hover:bg-white/10 disabled:opacity-60"
+                    >
+                      {wf4RerunStatus === 'running' ? 'Running AI…' : 'Re-run AI'}
+                    </button>
+                  </div>
                   {!wf4Output && (
                     <p className="mt-3 text-sm text-[color:var(--muted)]">AI output unavailable.</p>
                   )}
@@ -1057,7 +1125,7 @@ export default function IntakeReviewPage() {
             </div>
           </>
         )}
-      </div>
+      </div >
     </>
   );
 }
