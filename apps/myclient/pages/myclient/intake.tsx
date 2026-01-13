@@ -28,6 +28,12 @@ type Wf4RunRow = {
   created_at: string;
 };
 
+type IntakeDecisionRow = {
+  intake_id: string;
+  decision: 'accepted' | 'rejected';
+  decided_at: string;
+};
+
 const WF4_STATUS_STYLES: Record<string, string> = {
   ready: 'border-emerald-400/40 text-emerald-200',
   loading: 'border-sky-400/40 text-sky-200',
@@ -140,12 +146,20 @@ export default function IntakePage() {
 
       if (items.length > 0) {
         const intakeIds = items.map((item) => item.id);
-        const { data: wf4Runs, error: wf4Error } = await supabase
-          .from('ai_runs')
-          .select('intake_id, status, created_at')
-          .eq('firm_id', state.firmId)
-          .eq('run_kind', 'wf4')
-          .in('intake_id', intakeIds);
+        const [{ data: wf4Runs, error: wf4Error }, { data: decisionRows, error: decisionError }] =
+          await Promise.all([
+            supabase
+              .from('ai_runs')
+              .select('intake_id, status, created_at')
+              .eq('firm_id', state.firmId)
+              .eq('run_kind', 'wf4')
+              .in('intake_id', intakeIds),
+            supabase
+              .from('intake_decisions')
+              .select('intake_id, decision, decided_at')
+              .eq('firm_id', state.firmId)
+              .in('intake_id', intakeIds),
+          ]);
 
         if (wf4Error) {
           setWf4StatusMap({});
@@ -164,6 +178,20 @@ export default function IntakePage() {
             statusMap[intakeId] = entry.status;
           });
           setWf4StatusMap(statusMap);
+        }
+
+        if (decisionError) {
+          setQueueError(decisionError.message);
+        } else if (decisionRows) {
+          const decisionMap: Record<string, IntakeDecisionRow> = {};
+          (decisionRows as IntakeDecisionRow[]).forEach((row) => {
+            const existing = decisionMap[row.intake_id];
+            if (!existing || row.decided_at > existing.decided_at) {
+              decisionMap[row.intake_id] = row;
+            }
+          });
+          const filtered = items.filter((item) => decisionMap[item.id]?.decision !== 'rejected');
+          setIntakeQueue(filtered);
         }
       } else {
         setWf4StatusMap({});

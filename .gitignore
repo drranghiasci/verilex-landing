@@ -47,3 +47,4 @@ verilex-workflow1-artifacts.zip
 # Local artifact bundles
 verilex-workflow1-artifacts/
 verilex-workflow1-artifacts.zip
+apps/*/.next

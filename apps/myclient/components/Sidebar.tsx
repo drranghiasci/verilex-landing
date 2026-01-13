@@ -8,6 +8,7 @@ import {
   Users,
   Settings,
   Sparkles,
+  BarChart3,
 } from 'lucide-react';
 
 type SidebarProps = {
@@ -35,6 +36,7 @@ const CalendarIcon = ({ className }: { className?: string }) => (
 
 const NAV_ITEMS = [
   { href: '/myclient/app', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/myclient/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/myclient/cases', label: 'Active Cases', icon: Briefcase },
   { href: '/myclient/calendar', label: 'Calendar', icon: CalendarIcon },
   { href: '/myclient/intake', label: 'New Intake', icon: FilePlus2 },

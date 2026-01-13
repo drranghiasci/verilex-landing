@@ -7,6 +7,7 @@ import { useFirm } from '@/lib/FirmProvider';
 import { canEditCases } from '@/lib/permissions';
 import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../../lib/intake/schema/gaDivorceCustodyV1';
 import type { FieldDef, SectionDef } from '../../../../../../lib/intake/schema/types';
+import type { InconsistencyItem, ReviewAttention, RunOutput } from '../../../../../../src/workflows/wf4/types';
 import { runConsistencyChecks } from '../../../../../../lib/intake/consistencyChecks';
 import { formatLabel, isRepeatableSection } from '../../../../../../lib/intake/validation';
 
@@ -30,12 +31,16 @@ type AiFlagRow = {
   severity: 'low' | 'medium' | 'high';
   summary: string;
   details: Record<string, unknown> | null;
+  is_acknowledged: boolean;
+  acknowledged_at: string | null;
   created_at: string;
 };
 
 type AiRunRow = {
   id: string;
   status: string;
+  model_name: string | null;
+  outputs: Record<string, unknown> | null;
   created_at: string;
 };
 
@@ -44,7 +49,25 @@ type IntakeDocumentRow = {
   storage_object_path: string;
   document_type: string | null;
   classification: Record<string, unknown> | null;
+  mime_type: string | null;
+  size_bytes: number | null;
+  uploaded_by_role: string | null;
   created_at: string;
+};
+
+type IntakeDecisionRow = {
+  id: string;
+  decision: 'accepted' | 'rejected';
+  case_id: string | null;
+  reason?: string | null;
+  decided_at: string;
+};
+
+type RulesEngineResult = {
+  ruleset_version?: string;
+  required_fields_missing?: string[];
+  blocks?: Array<{ rule_id: string; message: string; field_paths: string[] }>;
+  warnings?: Array<{ rule_id: string; message: string; field_paths: string[] }>;
 };
 
 type SummaryEntry = {
@@ -71,6 +94,10 @@ const WF4_STATUS_STYLES: Record<string, string> = {
   not_run: 'border-white/10 text-[color:var(--muted)]',
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
 function humanize(value: string) {
   return value
     .replace(/-/g, ' ')
@@ -78,6 +105,11 @@ function humanize(value: string) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
+}
+
+function filenameFromPath(path: string) {
+  const parts = path.split('/');
+  return parts[parts.length - 1] ?? path;
 }
 
 function formatStructuredAddress(value: unknown) {
@@ -133,12 +165,17 @@ export default function IntakeReviewPage() {
   const [intake, setIntake] = useState<IntakeRecord | null>(null);
   const [flags, setFlags] = useState<AiFlagRow[]>([]);
   const [wf4Run, setWf4Run] = useState<AiRunRow | null>(null);
+  const [wf4Output, setWf4Output] = useState<RunOutput | null>(null);
+  const [wf3Rules, setWf3Rules] = useState<RulesEngineResult | null>(null);
   const [documents, setDocuments] = useState<IntakeDocumentRow[]>([]);
+  const [decision, setDecision] = useState<IntakeDecisionRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionStatus, setActionStatus] = useState<'idle' | 'accepting' | 'rejecting'>('idle');
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [ackError, setAckError] = useState<string | null>(null);
 
   const intakeId = useMemo(
     () => (typeof router.query.id === 'string' ? router.query.id : null),
@@ -180,25 +217,41 @@ export default function IntakeReviewPage() {
       { data: flagRows, error: flagError },
       { data: documentRows, error: documentError },
       { data: runRows, error: runError },
+      { data: wf3Rows, error: wf3Error },
+      { data: decisionRows, error: decisionError },
     ] = await Promise.all([
       supabase
         .from('ai_flags')
-        .select('id, flag_key, severity, summary, details, created_at')
+        .select('id, flag_key, severity, summary, details, is_acknowledged, acknowledged_at, created_at')
         .eq('intake_id', intakeRow.id)
         .eq('firm_id', intakeRow.firm_id)
         .order('created_at', { ascending: false }),
       supabase
         .from('intake_documents')
-        .select('id, storage_object_path, document_type, classification, created_at')
+        .select('id, storage_object_path, document_type, classification, mime_type, size_bytes, uploaded_by_role, created_at')
         .eq('intake_id', intakeRow.id)
         .eq('firm_id', intakeRow.firm_id)
         .order('created_at', { ascending: false }),
       supabase
         .from('ai_runs')
-        .select('id, status, created_at')
+        .select('id, status, model_name, outputs, created_at')
         .eq('intake_id', intakeRow.id)
         .eq('firm_id', intakeRow.firm_id)
         .eq('run_kind', 'wf4')
+        .order('created_at', { ascending: false })
+        .limit(1),
+      supabase
+        .from('intake_extractions')
+        .select('extracted_data, version, created_at')
+        .eq('intake_id', intakeRow.id)
+        .eq('firm_id', intakeRow.firm_id)
+        .order('version', { ascending: false })
+        .limit(1),
+      supabase
+        .from('intake_decisions')
+        .select('id, decision, case_id, reason, decided_at, created_at')
+        .eq('intake_id', intakeRow.id)
+        .eq('firm_id', intakeRow.firm_id)
         .order('created_at', { ascending: false })
         .limit(1),
     ]);
@@ -220,6 +273,28 @@ export default function IntakeReviewPage() {
     } else {
       const latestRun = Array.isArray(runRows) && runRows.length > 0 ? (runRows[0] as AiRunRow) : null;
       setWf4Run(latestRun);
+      if (latestRun && isRecord(latestRun.outputs) && isRecord(latestRun.outputs.run_output)) {
+        setWf4Output(latestRun.outputs.run_output as RunOutput);
+      } else {
+        setWf4Output(null);
+      }
+    }
+
+    if (wf3Error) {
+      setError(wf3Error.message);
+    } else {
+      const wf3Row = Array.isArray(wf3Rows) && wf3Rows.length > 0 ? wf3Rows[0] : null;
+      const extracted = wf3Row && isRecord(wf3Row.extracted_data) ? wf3Row.extracted_data : null;
+      const rulesEngine = extracted && isRecord(extracted.rules_engine) ? extracted.rules_engine : null;
+      setWf3Rules(rulesEngine as RulesEngineResult | null);
+    }
+
+    if (decisionError) {
+      setError(decisionError.message);
+    } else {
+      const decisionRow =
+        Array.isArray(decisionRows) && decisionRows.length > 0 ? (decisionRows[0] as IntakeDecisionRow) : null;
+      setDecision(decisionRow);
     }
 
     setLoading(false);
@@ -264,6 +339,15 @@ export default function IntakeReviewPage() {
   }, [payload]);
 
   const contradictions = useMemo(() => runConsistencyChecks(payload).warnings, [payload]);
+  const wf3Blocks = wf3Rules?.blocks ?? [];
+  const wf3Warnings = wf3Rules?.warnings ?? [];
+  const wf3Missing = wf3Rules?.required_fields_missing ?? [];
+  const hasBlocks = wf3Blocks.length > 0;
+
+  const wf4Extractions = wf4Output?.extractions?.extractions ?? [];
+  const wf4Inconsistencies: InconsistencyItem[] = wf4Output?.inconsistencies?.inconsistencies ?? [];
+  const wf4ReviewAttention: ReviewAttention | null = wf4Output?.review_attention?.review_attention ?? null;
+  const reviewReady = Boolean(wf3Rules) && !hasBlocks;
 
   const wf4Status = useMemo(() => {
     if (!wf4Run) {
@@ -290,22 +374,56 @@ export default function IntakeReviewPage() {
 
   const ensureLocked = async () => {
     if (!intake || intake.submitted_at) return;
+    throw new Error('Intake is not submitted.');
+  };
+
+  const handleAcknowledgeFlag = async (flagId: string) => {
+    setAckError(null);
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData.user) {
+      setAckError('Please sign in to acknowledge flags.');
+      return;
+    }
+
     const now = new Date().toISOString();
     const { error: updateError } = await supabase
-      .from('intakes')
-      .update({ status: 'submitted', submitted_at: now })
-      .eq('id', intake.id)
-      .eq('firm_id', intake.firm_id)
-      .is('submitted_at', null);
+      .from('ai_flags')
+      .update({
+        is_acknowledged: true,
+        acknowledged_by: userData.user.id,
+        acknowledged_at: now,
+      })
+      .eq('id', flagId)
+      .eq('firm_id', state.firmId);
 
     if (updateError) {
-      throw updateError;
+      setAckError(updateError.message);
+      return;
     }
-    setIntake({ ...intake, status: 'submitted', submitted_at: now });
+
+    setFlags((prev) =>
+      prev.map((flag) =>
+        flag.id === flagId
+          ? { ...flag, is_acknowledged: true, acknowledged_at: now }
+          : flag,
+      ),
+    );
   };
 
   const handleAccept = async () => {
     if (!intake) return;
+    if (hasBlocks) {
+      setActionError('Resolve WF3 blocks before accepting.');
+      return;
+    }
+    if (!wf3Rules) {
+      setActionError('WF3 rules output is unavailable.');
+      return;
+    }
+    if (decision) {
+      setActionError('This intake has already been decided.');
+      return;
+    }
     setActionError(null);
     setActionNotice(null);
     setActionStatus('accepting');
@@ -362,6 +480,26 @@ export default function IntakeReviewPage() {
         return;
       }
 
+      const decisionRes = await fetch('/api/myclient/intake/decide', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
+        body: JSON.stringify({
+          intakeId: intake.id,
+          decision: 'accepted',
+          caseId: data.caseId,
+        }),
+      });
+
+      if (!decisionRes.ok) {
+        const decisionData = await decisionRes.json().catch(() => ({}));
+        setActionError(decisionData.error || 'Unable to record intake decision.');
+        setActionStatus('idle');
+        return;
+      }
+
       setActionStatus('idle');
       router.push(`/myclient/cases/${data.caseId}`);
     } catch (err) {
@@ -372,12 +510,48 @@ export default function IntakeReviewPage() {
 
   const handleReject = async () => {
     if (!intake) return;
+    if (decision) {
+      setActionError('This intake has already been decided.');
+      return;
+    }
+    if (!rejectReason.trim()) {
+      setActionError('Rejection reason is required.');
+      return;
+    }
     setActionError(null);
     setActionNotice(null);
     setActionStatus('rejecting');
 
     try {
       await ensureLocked();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session?.access_token) {
+        setActionError(sessionError?.message || 'Please sign in to reject this intake.');
+        setActionStatus('idle');
+        return;
+      }
+
+      const decisionRes = await fetch('/api/myclient/intake/decide', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
+        body: JSON.stringify({
+          intakeId: intake.id,
+          decision: 'rejected',
+          reason: rejectReason.trim(),
+        }),
+      });
+
+      const decisionData = await decisionRes.json().catch(() => ({}));
+      if (!decisionRes.ok || !decisionData.ok) {
+        setActionError(decisionData.error || 'Unable to reject intake.');
+        setActionStatus('idle');
+        return;
+      }
+
+      setDecision(decisionData.decision ?? null);
       setActionNotice('Marked as rejected. No case was created.');
       setActionStatus('idle');
     } catch (err) {
@@ -404,7 +578,7 @@ export default function IntakeReviewPage() {
             <button
               type="button"
               onClick={handleReject}
-              disabled={!canEdit || actionStatus !== 'idle'}
+              disabled={!canEdit || actionStatus !== 'idle' || Boolean(decision)}
               className="rounded-lg border border-red-400/50 px-4 py-2 text-sm font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-60"
             >
               {actionStatus === 'rejecting' ? 'Rejecting…' : 'Reject case'}
@@ -412,7 +586,7 @@ export default function IntakeReviewPage() {
             <button
               type="button"
               onClick={handleAccept}
-              disabled={!canEdit || actionStatus !== 'idle'}
+              disabled={!canEdit || actionStatus !== 'idle' || !reviewReady || Boolean(decision)}
               className="rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--accent)] disabled:opacity-60"
             >
               {actionStatus === 'accepting' ? 'Accepting…' : 'Accept case'}
@@ -428,6 +602,11 @@ export default function IntakeReviewPage() {
         {actionNotice && (
           <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
             {actionNotice}
+          </div>
+        )}
+        {ackError && (
+          <div className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            {ackError}
           </div>
         )}
 
@@ -449,6 +628,21 @@ export default function IntakeReviewPage() {
 
         {intake && (
           <>
+            {hasBlocks && (
+              <div className="rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                Not Review-Ready (Rules Blocked). Resolve WF3 blocks before accepting.
+              </div>
+            )}
+            {!wf3Rules && (
+              <div className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+                WF3 rules output unavailable. Accept is disabled until rules are present.
+              </div>
+            )}
+            {decision && (
+              <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+                Intake decision recorded: {decision.decision}
+              </div>
+            )}
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-5">
                 <h3 className="text-sm font-semibold text-white">Intake status</h3>
@@ -530,6 +724,68 @@ export default function IntakeReviewPage() {
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-5">
+                  <h2 className="text-lg font-semibold text-white">WF3 Rules</h2>
+                  {!wf3Rules && (
+                    <p className="mt-3 text-sm text-[color:var(--muted)]">Rules output unavailable.</p>
+                  )}
+                  {wf3Rules && (
+                    <div className="mt-4 space-y-4 text-sm text-[color:var(--text-2)]">
+                      <div>
+                        <h3 className="text-sm font-semibold text-white">Blocks</h3>
+                        {wf3Blocks.length === 0 ? (
+                          <p className="mt-2 text-sm text-[color:var(--muted)]">No blocks.</p>
+                        ) : (
+                          <ul className="mt-2 space-y-2">
+                            {wf3Blocks.map((block) => (
+                              <li key={block.rule_id} className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-red-100">
+                                <div className="text-xs uppercase tracking-wide text-red-200">{block.rule_id}</div>
+                                <div className="mt-1">{block.message}</div>
+                                {Array.isArray(block.field_paths) && block.field_paths.length > 0 && (
+                                  <div className="mt-2 text-xs text-red-200/80">
+                                    {block.field_paths.join(', ')}
+                                  </div>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      <div>
+                        <h3 className="text-sm font-semibold text-white">Warnings</h3>
+                        {wf3Warnings.length === 0 ? (
+                          <p className="mt-2 text-sm text-[color:var(--muted)]">No warnings.</p>
+                        ) : (
+                          <ul className="mt-2 space-y-2">
+                            {wf3Warnings.map((warning) => (
+                              <li key={warning.rule_id} className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-amber-100">
+                                <div className="text-xs uppercase tracking-wide text-amber-200">{warning.rule_id}</div>
+                                <div className="mt-1">{warning.message}</div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      <div>
+                        <h3 className="text-sm font-semibold text-white">Missing Required Fields</h3>
+                        {wf3Missing.length === 0 ? (
+                          <p className="mt-2 text-sm text-[color:var(--muted)]">All required fields present.</p>
+                        ) : (
+                          <ul className="mt-2 space-y-2">
+                            {wf3Missing.map((path) => (
+                              <li key={path} className="rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2">
+                                {path}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-5">
                   <h2 className="text-lg font-semibold text-white">Documents</h2>
                   {documents.length === 0 ? (
                     <p className="mt-3 text-sm text-[color:var(--muted)]">No documents uploaded yet.</p>
@@ -537,20 +793,43 @@ export default function IntakeReviewPage() {
                     <div className="mt-3 space-y-3 text-sm text-[color:var(--text-2)]">
                       {documents.map((doc) => (
                         <div key={doc.id} className="rounded-xl border border-white/10 bg-[var(--surface-1)] p-4">
+                          {(() => {
+                            const wf4Classification =
+                              isRecord(doc.classification) && isRecord(doc.classification.wf4)
+                                ? doc.classification.wf4
+                                : null;
+                            const classificationType =
+                              wf4Classification && typeof wf4Classification.document_type === 'string'
+                                ? wf4Classification.document_type
+                                : null;
+                            const classificationConfidence =
+                              wf4Classification && typeof wf4Classification.confidence_level === 'string'
+                                ? wf4Classification.confidence_level
+                                : null;
+                            return (
+                              <>
                           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                              <div className="text-white">{doc.storage_object_path}</div>
+                              <div className="text-white">{filenameFromPath(doc.storage_object_path)}</div>
                               <div className="text-xs text-[color:var(--muted)]">{doc.document_type ?? 'Uncategorized'}</div>
                             </div>
                             <span className="text-xs text-[color:var(--muted-2)]">
                               {new Date(doc.created_at).toLocaleString()}
                             </span>
                           </div>
-                          {doc.classification && Object.keys(doc.classification).length > 0 && (
+                          <div className="mt-2 text-xs text-[color:var(--muted)]">
+                            {doc.uploaded_by_role ? `Uploaded by ${doc.uploaded_by_role}` : 'Uploaded'}
+                            {doc.mime_type ? ` • ${doc.mime_type}` : ''}
+                            {typeof doc.size_bytes === 'number' ? ` • ${Math.round(doc.size_bytes / 1024)} KB` : ''}
+                          </div>
+                          {classificationType && (
                             <div className="mt-3 text-xs text-[color:var(--muted)]">
-                              Classification: {JSON.stringify(doc.classification)}
+                              Classification: {classificationType} ({classificationConfidence ?? '—'})
                             </div>
                           )}
+                              </>
+                            );
+                          })()}
                         </div>
                       ))}
                     </div>
@@ -560,15 +839,78 @@ export default function IntakeReviewPage() {
 
               <div className="space-y-6">
                 <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-5">
+                  <h2 className="text-lg font-semibold text-white">WF4 AI Output</h2>
+                  {!wf4Output && (
+                    <p className="mt-3 text-sm text-[color:var(--muted)]">AI output unavailable.</p>
+                  )}
+                  {wf4Output && (
+                    <div className="mt-3 space-y-4 text-sm text-[color:var(--text-2)]">
+                      <div>
+                        <h3 className="text-sm font-semibold text-white">Extraction Summary</h3>
+                        {wf4Extractions.length === 0 ? (
+                          <p className="mt-2 text-sm text-[color:var(--muted)]">No extractions available.</p>
+                        ) : (
+                          <ul className="mt-2 space-y-2">
+                            {wf4Extractions.slice(0, 8).map((item) => (
+                              <li key={item.field_key} className="rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2">
+                                <div className="text-xs uppercase tracking-wide text-[color:var(--muted)]">{item.field_key}</div>
+                                <div className="mt-1 text-white">{item.value !== null && item.value !== undefined ? `${item.value}` : '—'}</div>
+                                <div className="text-xs text-[color:var(--muted)]">{item.confidence_level}</div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-white">AI Contradictions</h3>
+                        {wf4Inconsistencies.length === 0 ? (
+                          <p className="mt-2 text-sm text-[color:var(--muted)]">No contradictions reported.</p>
+                        ) : (
+                          <ul className="mt-2 space-y-2">
+                            {wf4Inconsistencies.map((item) => (
+                              <li key={item.inconsistency_key} className="rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2">
+                                <div className="text-xs uppercase tracking-wide text-[color:var(--muted)]">{item.severity}</div>
+                                <div className="mt-1 text-white">{item.summary}</div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                      {wf4ReviewAttention && (
+                        <div>
+                          <h3 className="text-sm font-semibold text-white">Reviewer Checklist</h3>
+                          <div className="mt-2 space-y-2">
+                            {wf4ReviewAttention.high_priority_items.map((item, index) => (
+                              <div key={`high-${index}`} className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-red-100">
+                                {item.item}
+                              </div>
+                            ))}
+                            {wf4ReviewAttention.medium_priority_items.map((item, index) => (
+                              <div key={`med-${index}`} className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-amber-100">
+                                {item.item}
+                              </div>
+                            ))}
+                            {wf4ReviewAttention.low_priority_items.map((item, index) => (
+                              <div key={`low-${index}`} className="rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2 text-[color:var(--text-2)]">
+                                {item.item}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-5">
                   <h2 className="text-lg font-semibold text-white">AI Risk Flags</h2>
                   {flags.length === 0 ? (
                     <p className="mt-3 text-sm text-[color:var(--muted)]">No AI flags generated yet.</p>
                   ) : (
                     <div className="mt-3 space-y-3 text-sm text-[color:var(--text-2)]">
                       {flags.map((flag) => {
-                        const evidenceLinks = Array.isArray(flag.details?.evidence_links)
-                          ? (flag.details?.evidence_links as Array<{ label?: string; url?: string } | string>)
-                          : [];
+                        const detailRecord = isRecord(flag.details) ? flag.details : {};
+                        const flagPayload = isRecord(detailRecord.flag) ? detailRecord.flag : null;
+                        const evidence = Array.isArray(flagPayload?.evidence) ? flagPayload?.evidence : [];
                         return (
                           <div key={flag.id} className="rounded-xl border border-white/10 bg-[var(--surface-1)] p-4">
                             <div className="flex items-center justify-between">
@@ -578,20 +920,31 @@ export default function IntakeReviewPage() {
                               </span>
                             </div>
                             <div className="mt-2 text-xs text-[color:var(--muted)]">{humanize(flag.flag_key)}</div>
-                            {evidenceLinks.length > 0 && (
+                            {evidence.length > 0 && (
                               <div className="mt-3 space-y-1 text-xs text-[color:var(--muted)]">
-                                {evidenceLinks.map((link, index) => {
-                                  const url = typeof link === 'string' ? link : link.url;
-                                  const label = typeof link === 'string' ? `Evidence ${index + 1}` : link.label || url || `Evidence ${index + 1}`;
-                                  if (!url) return null;
-                                  return (
-                                    <a key={`${flag.id}-${index}`} href={url} className="text-white underline underline-offset-4">
-                                      {label}
-                                    </a>
-                                  );
-                                })}
+                                {evidence.map((item, index) => (
+                                  <div key={`${flag.id}-evidence-${index}`} className="rounded border border-white/10 px-2 py-1">
+                                    {item.source_type}:{item.source_id} • {item.path_or_span}
+                                  </div>
+                                ))}
                               </div>
                             )}
+                            <div className="mt-3 flex items-center justify-between">
+                              <span className="text-xs text-[color:var(--muted)]">
+                                {flag.is_acknowledged
+                                  ? `Acknowledged ${flag.acknowledged_at ? new Date(flag.acknowledged_at).toLocaleString() : ''}`
+                                  : 'Not acknowledged'}
+                              </span>
+                              {!flag.is_acknowledged && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleAcknowledgeFlag(flag.id)}
+                                  className="rounded-lg border border-white/10 px-3 py-1 text-xs text-white hover:bg-white/10"
+                                >
+                                  Acknowledge
+                                </button>
+                              )}
+                            </div>
                           </div>
                         );
                       })}
@@ -600,7 +953,7 @@ export default function IntakeReviewPage() {
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-5">
-                  <h2 className="text-lg font-semibold text-white">Contradictions</h2>
+                  <h2 className="text-lg font-semibold text-white">WF2 Consistency Checks</h2>
                   {contradictions.length === 0 ? (
                     <p className="mt-3 text-sm text-[color:var(--muted)]">No contradictions detected.</p>
                   ) : (
@@ -613,6 +966,23 @@ export default function IntakeReviewPage() {
                     </ul>
                   )}
                 </div>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-5">
+              <h2 className="text-lg font-semibold text-white">Decision Notes</h2>
+              <p className="mt-2 text-sm text-[color:var(--muted)]">
+                Rejection requires a short reason. Accept uses the intake summary to create a case.
+              </p>
+              <div className="mt-4">
+                <label className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Rejection reason</label>
+                <textarea
+                  className="mt-2 w-full rounded-lg border border-white/10 bg-[var(--surface-1)] px-3 py-2 text-sm text-white"
+                  rows={3}
+                  value={rejectReason}
+                  onChange={(event) => setRejectReason(event.target.value)}
+                  placeholder="Why is this intake rejected?"
+                  disabled={Boolean(decision)}
+                />
               </div>
             </div>
           </>
