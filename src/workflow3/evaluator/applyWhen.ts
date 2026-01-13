@@ -36,16 +36,20 @@ export function appliesWhen(payload: unknown, applies: RuleAppliesWhen | undefin
       if (!presentValues.some((value) => value === condition.equals)) return false;
     }
 
-    if (typeof condition.gt === 'number' && !presentValues.some((value) => compareNumeric(value, 'gt', condition.gt))) {
+    const gt = condition.gt;
+    if (typeof gt === 'number' && !presentValues.some((value) => compareNumeric(value, 'gt', gt))) {
       return false;
     }
-    if (typeof condition.gte === 'number' && !presentValues.some((value) => compareNumeric(value, 'gte', condition.gte))) {
+    const gte = condition.gte;
+    if (typeof gte === 'number' && !presentValues.some((value) => compareNumeric(value, 'gte', gte))) {
       return false;
     }
-    if (typeof condition.lt === 'number' && !presentValues.some((value) => compareNumeric(value, 'lt', condition.lt))) {
+    const lt = condition.lt;
+    if (typeof lt === 'number' && !presentValues.some((value) => compareNumeric(value, 'lt', lt))) {
       return false;
     }
-    if (typeof condition.lte === 'number' && !presentValues.some((value) => compareNumeric(value, 'lte', condition.lte))) {
+    const lte = condition.lte;
+    if (typeof lte === 'number' && !presentValues.some((value) => compareNumeric(value, 'lte', lte))) {
       return false;
     }
 
