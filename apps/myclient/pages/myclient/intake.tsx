@@ -704,7 +704,7 @@ export default function IntakePage() {
                   const submittedLabel = item.submitted_at
                     ? `Submitted ${new Date(item.submitted_at).toLocaleDateString()}`
                     : 'Draft in progress';
-                  const decisionLabel = item.decision?.decision === 'accepted' ? 'Accepted' : 'Rejected';
+                  const decisionLabel = item.decision?.decision === 'accepted' ? 'Decision: Accepted' : 'Decision: Rejected';
                   const decidedAt = item.decision?.decided_at
                     ? `Decision ${new Date(item.decision.decided_at).toLocaleDateString()}`
                     : null;
