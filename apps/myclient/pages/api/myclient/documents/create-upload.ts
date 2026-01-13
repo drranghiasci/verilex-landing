@@ -1,40 +1,27 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
-import formidable, { type File as FormidableFile } from 'formidable';
-import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { canUploadDocument } from '@/lib/plans';
 import { isAllowedMimeType, MAX_UPLOAD_BYTES } from '../../../../../../lib/documents/uploadPolicy';
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
+type CreateUploadBody = {
+  caseId?: string;
+  filename?: string;
+  content_type?: string;
+  size_bytes?: number;
 };
 
 type ErrorResponse = { ok: false; error: string };
 type SuccessResponse = {
   ok: true;
-  document: { id: string; filename: string; created_at: string };
+  storage_path: string;
+  signed_url: string;
+  expires_in: number;
 };
 
-type UploadFields = {
-  caseId?: string | string[];
-};
-
-const MAX_FILE_SIZE = MAX_UPLOAD_BYTES;
 const UUID_RE = /^[0-9a-fA-F-]{36}$/;
 const DOCUMENTS_BUCKET = process.env.VERILEX_DOCUMENTS_BUCKET || 'case-documents';
-
-function getSingleField(value?: string | string[]) {
-  if (!value) return null;
-  return Array.isArray(value) ? value[0] : value;
-}
-
-function getSingleFile(file?: FormidableFile | FormidableFile[]) {
-  if (!file) return null;
-  return Array.isArray(file) ? file[0] : file;
-}
+const SIGNED_URL_TTL_SECONDS = 60 * 15;
 
 function sanitizeFilename(name: string) {
   const trimmed = name.replace(/[/\\]/g, '').trim();
@@ -69,46 +56,24 @@ export default async function handler(
     return res.status(500).json({ ok: false, error: 'Missing Supabase environment variables' });
   }
 
-  const form = formidable({
-    multiples: false,
-    maxFileSize: MAX_FILE_SIZE,
-  });
+  const body = (req.body ?? {}) as CreateUploadBody;
+  const caseId = typeof body.caseId === 'string' ? body.caseId.trim() : '';
+  const filename = typeof body.filename === 'string' ? body.filename.trim() : '';
 
-  let fields: UploadFields;
-  let files: { file?: FormidableFile | FormidableFile[] };
-  try {
-    [fields, files] = await new Promise((resolve, reject) => {
-      form.parse(req, (err, parsedFields, parsedFiles) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve([parsedFields as UploadFields, parsedFiles as { file?: FormidableFile | FormidableFile[] }]);
-      });
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unable to parse upload';
-    if (message.toLowerCase().includes('maxfile')) {
-      return res.status(413).json({ ok: false, error: 'File exceeds 25MB limit.' });
-    }
-    return res.status(400).json({ ok: false, error: message });
-  }
-
-  const caseId = getSingleField(fields.caseId);
-  if (!caseId || !UUID_RE.test(caseId)) {
+  if (!UUID_RE.test(caseId)) {
     return res.status(400).json({ ok: false, error: 'Invalid case id' });
   }
 
-  const uploadedFile = getSingleFile(files.file);
-  if (!uploadedFile) {
-    return res.status(400).json({ ok: false, error: 'File is required' });
+  if (!filename) {
+    return res.status(400).json({ ok: false, error: 'filename is required' });
   }
 
-  if (uploadedFile.size && uploadedFile.size > MAX_FILE_SIZE) {
-    return res.status(413).json({ ok: false, error: 'File exceeds 25MB limit.' });
-  }
-  if (!isAllowedMimeType(uploadedFile.mimetype || null)) {
+  if (!isAllowedMimeType(body.content_type || null)) {
     return res.status(415).json({ ok: false, error: 'Unsupported file type.' });
+  }
+
+  if (typeof body.size_bytes === 'number' && body.size_bytes > MAX_UPLOAD_BYTES) {
+    return res.status(413).json({ ok: false, error: 'File exceeds 25MB limit.' });
   }
 
   const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -164,17 +129,6 @@ export default async function handler(
   const plan = (firmRow?.plan as 'free' | 'pro' | 'enterprise' | undefined) ?? 'free';
   const limitCheck = canUploadDocument({ plan, currentDocumentCount: documentCount ?? 0 });
   if (!limitCheck.ok) {
-    try {
-      await adminClient.from('case_activity').insert({
-        firm_id: membership.firm_id,
-        actor_user_id: authData.user.id,
-        event_type: 'plan_limit_hit',
-        message: 'Document limit reached',
-        metadata: { kind: 'documents' },
-      });
-    } catch {
-      // best-effort logging
-    }
     return res.status(403).json({ ok: false, error: `${limitCheck.reason} Upgrade to Pro to upload more documents.` });
   }
 
@@ -193,51 +147,21 @@ export default async function handler(
     return res.status(404).json({ ok: false, error: 'Case not found' });
   }
 
-  const filename = sanitizeFilename(uploadedFile.originalFilename || 'document');
-  const storagePath = `${membership.firm_id}/cases/${caseId}/documents/${randomUUID()}-${filename}`;
+  const safeFilename = sanitizeFilename(filename);
+  const storagePath = `${membership.firm_id}/cases/${caseId}/documents/${randomUUID()}-${safeFilename}`;
 
-  const fileBuffer = await readFile(uploadedFile.filepath);
-  const contentType = uploadedFile.mimetype || 'application/octet-stream';
-
-  const { error: storageError } = await adminClient.storage
+  const { data: signedData, error: signedError } = await adminClient.storage
     .from(DOCUMENTS_BUCKET)
-    .upload(storagePath, fileBuffer, { contentType, upsert: false });
+    .createSignedUploadUrl(storagePath, SIGNED_URL_TTL_SECONDS);
 
-  if (storageError) {
-    return res.status(500).json({ ok: false, error: storageError.message });
+  if (signedError || !signedData?.signedUrl) {
+    return res.status(500).json({ ok: false, error: signedError?.message || 'Unable to create upload URL' });
   }
 
-  const { data: insertedDoc, error: insertError } = await adminClient
-    .from('case_documents')
-    .insert({
-      firm_id: membership.firm_id,
-      case_id: caseId,
-      storage_path: storagePath,
-      filename: uploadedFile.originalFilename || filename,
-      mime_type: uploadedFile.mimetype,
-      size_bytes: uploadedFile.size ?? null,
-      uploaded_by: authData.user.id,
-      uploaded_by_role: 'firm',
-    })
-    .select('id, filename, created_at')
-    .single();
-
-  if (insertError || !insertedDoc) {
-    return res.status(500).json({ ok: false, error: insertError?.message || 'Unable to save document' });
-  }
-
-  try {
-    await adminClient.from('case_activity').insert({
-      firm_id: membership.firm_id,
-      case_id: caseId,
-      actor_user_id: authData.user.id,
-      event_type: 'document_uploaded',
-      message: `Document uploaded: ${insertedDoc.filename}`,
-      metadata: { file_name: insertedDoc.filename },
-    });
-  } catch {
-    // best-effort logging
-  }
-
-  return res.status(200).json({ ok: true, document: insertedDoc });
+  return res.status(200).json({
+    ok: true,
+    storage_path: storagePath,
+    signed_url: signedData.signedUrl,
+    expires_in: SIGNED_URL_TTL_SECONDS,
+  });
 }

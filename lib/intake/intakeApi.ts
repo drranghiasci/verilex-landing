@@ -38,6 +38,9 @@ export type IntakeDocument = {
   storage_object_path: string;
   document_type?: string | null;
   classification?: Record<string, unknown>;
+  mime_type?: string | null;
+  size_bytes?: number | null;
+  uploaded_by_role?: string | null;
   created_at?: string;
 };
 
@@ -67,6 +70,8 @@ export type DocumentInput = {
   storage_object_path: string;
   document_type?: string;
   classification?: Record<string, unknown>;
+  content_type?: string;
+  size_bytes?: number;
 };
 
 export type CreateUploadResult = {
@@ -224,6 +229,7 @@ export async function createUpload(params: {
   intakeId: string;
   filename: string;
   contentType?: string;
+  size_bytes?: number;
 }): Promise<CreateUploadResult> {
   return requestJson<CreateUploadResult>('/api/intake/documents/create-upload', {
     method: 'POST',
@@ -235,6 +241,7 @@ export async function createUpload(params: {
       intakeId: params.intakeId,
       filename: params.filename,
       content_type: params.contentType,
+      size_bytes: params.size_bytes,
     }),
   });
 }
@@ -245,6 +252,8 @@ export async function confirmUpload(params: {
   storage_object_path: string;
   document_type?: string;
   classification?: Record<string, unknown>;
+  content_type?: string;
+  size_bytes?: number;
 }): Promise<ConfirmUploadResult> {
   return requestJson<ConfirmUploadResult>('/api/intake/documents/confirm', {
     method: 'POST',
@@ -257,6 +266,8 @@ export async function confirmUpload(params: {
       storage_object_path: params.storage_object_path,
       document_type: params.document_type,
       classification: params.classification,
+      content_type: params.content_type,
+      size_bytes: params.size_bytes,
     }),
   });
 }

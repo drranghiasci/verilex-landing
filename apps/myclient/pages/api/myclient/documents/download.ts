@@ -8,6 +8,7 @@ type ErrorResponse = { ok: false; error: string };
 type SuccessResponse = { ok: true; url: string };
 
 const UUID_RE = /^[0-9a-fA-F-]{36}$/;
+const DOCUMENTS_BUCKET = process.env.VERILEX_DOCUMENTS_BUCKET || 'case-documents';
 
 export default async function handler(
   req: NextApiRequest,
@@ -85,7 +86,7 @@ export default async function handler(
   }
 
   const { data: signedData, error: signedError } = await adminClient.storage
-    .from('case-documents')
+    .from(DOCUMENTS_BUCKET)
     .createSignedUrl(documentRow.storage_path, 600);
 
   if (signedError || !signedData?.signedUrl) {

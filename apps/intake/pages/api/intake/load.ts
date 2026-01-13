@@ -100,20 +100,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  const [messagesResult, documentsResult] = await Promise.all([
-    supabaseAdmin
-      .from('intake_messages')
-      .select('seq, source, channel, content, content_structured, created_at')
-      .eq('intake_id', data.id)
-      .eq('firm_id', tokenResult.payload.firm_id)
-      .order('seq', { ascending: true }),
-    supabaseAdmin
+  const locked = Boolean(data.submitted_at);
+
+  const messagesPromise = supabaseAdmin
+    .from('intake_messages')
+    .select('seq, source, channel, content, content_structured, created_at')
+    .eq('intake_id', data.id)
+    .eq('firm_id', tokenResult.payload.firm_id)
+    .order('seq', { ascending: true });
+
+  const documentsPromise = locked
+    ? Promise.resolve({ data: [] as Record<string, unknown>[], error: null })
+    : supabaseAdmin
       .from('intake_documents')
-      .select('storage_object_path, document_type, classification, created_at')
+      .select('storage_object_path, document_type, classification, created_at, mime_type, size_bytes, uploaded_by_role')
       .eq('intake_id', data.id)
       .eq('firm_id', tokenResult.payload.firm_id)
-      .order('created_at', { ascending: true }),
-  ]);
+      .order('created_at', { ascending: true });
+
+  const [messagesResult, documentsResult] = await Promise.all([messagesPromise, documentsPromise]);
 
   if (messagesResult.error) {
     sendError(res, 500, 'Unable to load intake messages', requestId);
@@ -126,7 +131,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const normalizedPayload = normalizePayloadToDocxV1(data.raw_payload ?? {});
-  const locked = Boolean(data.submitted_at);
 
   return res.status(200).json({
     ok: true,

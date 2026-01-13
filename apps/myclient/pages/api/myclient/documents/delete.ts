@@ -7,6 +7,7 @@ type ErrorResponse = { ok: false; error: string };
 type SuccessResponse = { ok: true };
 
 const UUID_RE = /^[0-9a-fA-F-]{36}$/;
+const DOCUMENTS_BUCKET = process.env.VERILEX_DOCUMENTS_BUCKET || 'case-documents';
 
 export default async function handler(
   req: NextApiRequest,
@@ -84,7 +85,7 @@ export default async function handler(
   }
 
   const { error: storageError } = await adminClient.storage
-    .from('case-documents')
+    .from(DOCUMENTS_BUCKET)
     .remove([doc.storage_path]);
 
   if (storageError) {

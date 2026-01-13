@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseAdmin } from '../../../../../../lib/server/supabaseAdmin';
 import { verifyIntakeToken } from '../../../../../../lib/server/intakeToken';
 import { normalizePayloadToDocxV1 } from '../../../../../../lib/intake/normalizePayload';
+import { isAllowedDocumentType, isAllowedMimeType, MAX_UPLOAD_BYTES } from '../../../../../../lib/documents/uploadPolicy';
 import {
   getRequestId,
   logRequestStart,
@@ -14,6 +15,8 @@ type ConfirmUploadBody = {
   intakeId?: string;
   storage_object_path?: string;
   document_type?: string;
+  content_type?: string;
+  size_bytes?: number;
   classification?: Record<string, unknown>;
 };
 
@@ -94,6 +97,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const documentType = typeof body.document_type === 'string' ? body.document_type.trim() : null;
+  if (!isAllowedDocumentType(documentType)) {
+    sendError(res, 400, 'document_type is invalid', requestId);
+    return;
+  }
+  if (!isAllowedMimeType(body.content_type)) {
+    sendError(res, 415, 'Unsupported file type', requestId);
+    return;
+  }
+  if (typeof body.size_bytes === 'number' && body.size_bytes > MAX_UPLOAD_BYTES) {
+    return res.status(413).json({ ok: false, error: 'File exceeds 25MB limit.', requestId });
+  }
   const classification = isPlainObject(body.classification) ? body.classification : {};
 
   const { data: inserted, error: insertError } = await supabaseAdmin
@@ -103,9 +117,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       intake_id: intakeId,
       storage_object_path: body.storage_object_path,
       document_type: documentType,
+      mime_type: typeof body.content_type === 'string' ? body.content_type : null,
+      size_bytes: typeof body.size_bytes === 'number' ? body.size_bytes : null,
+      uploaded_by_role: 'client',
       classification,
     })
-    .select('storage_object_path, document_type, classification, created_at')
+    .select('storage_object_path, document_type, classification, created_at, mime_type, size_bytes, uploaded_by_role')
     .single();
 
   if (insertError || !inserted) {

@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { supabaseAdmin } from '../../../../../../lib/server/supabaseAdmin';
 import { verifyIntakeToken } from '../../../../../../lib/server/intakeToken';
 import { createSignedUploadUrl } from '../../../../../../lib/server/storage';
+import { isAllowedMimeType, MAX_UPLOAD_BYTES } from '../../../../../../lib/documents/uploadPolicy';
 import {
   getRequestId,
   logRequestStart,
@@ -17,6 +18,7 @@ type CreateUploadBody = {
   intakeId?: string;
   filename?: string;
   content_type?: string;
+  size_bytes?: number;
 };
 
 function sanitizeFilename(name: string) {
@@ -74,6 +76,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (typeof body.filename !== 'string' || !body.filename.trim()) {
     sendError(res, 400, 'filename is required', requestId);
     return;
+  }
+
+  if (!isAllowedMimeType(body.content_type)) {
+    sendError(res, 415, 'Unsupported file type', requestId);
+    return;
+  }
+
+  if (typeof body.size_bytes === 'number' && body.size_bytes > MAX_UPLOAD_BYTES) {
+    return res.status(413).json({ ok: false, error: 'File exceeds 25MB limit.', requestId });
   }
 
   const { data: intake, error: intakeError } = await supabaseAdmin

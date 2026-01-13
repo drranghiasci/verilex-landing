@@ -27,11 +27,6 @@ function buildDocumentTypeOptions() {
   }));
 }
 
-function filenameFromPath(path: string) {
-  const parts = path.split('/');
-  return parts[parts.length - 1] ?? path;
-}
-
 export default function EvidenceDocumentsStep({
   documents,
   token,
@@ -62,6 +57,7 @@ export default function EvidenceDocumentsStep({
         intakeId,
         filename: file.name,
         contentType: file.type,
+        size_bytes: file.size,
       });
 
       const uploadResponse = await fetch(createResult.signed_url, {
@@ -81,6 +77,8 @@ export default function EvidenceDocumentsStep({
         intakeId,
         storage_object_path: createResult.storage_object_path,
         document_type: documentType || undefined,
+        content_type: file.type,
+        size_bytes: file.size,
       });
 
       setUploadSuccess('Document uploaded.');
@@ -147,15 +145,8 @@ export default function EvidenceDocumentsStep({
 
       {existingDocs.length > 0 && (
         <Card>
-          <h3>Uploaded documents</h3>
-          <ul className="list">
-            {existingDocs.map((doc, index) => (
-              <li key={`${doc.storage_object_path}-${index}`} className="list__row">
-                <span>{filenameFromPath(doc.storage_object_path)}</span>
-                {doc.document_type && <span className="muted">{doc.document_type}</span>}
-              </li>
-            ))}
-          </ul>
+          <h3>Documents received</h3>
+          <p className="muted">Uploads are linked to your intake and visible to the firm after submission.</p>
         </Card>
       )}
     </div>

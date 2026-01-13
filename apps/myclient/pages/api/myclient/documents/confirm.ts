@@ -1,46 +1,37 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
-import formidable, { type File as FormidableFile } from 'formidable';
-import { readFile } from 'node:fs/promises';
-import { randomUUID } from 'node:crypto';
 import { canUploadDocument } from '@/lib/plans';
-import { isAllowedMimeType, MAX_UPLOAD_BYTES } from '../../../../../../lib/documents/uploadPolicy';
+import {
+  CASE_DOCUMENT_TYPE_ALLOWLIST,
+  isAllowedDocumentType,
+  isAllowedMimeType,
+  MAX_UPLOAD_BYTES,
+} from '../../../../../../lib/documents/uploadPolicy';
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
+type ConfirmBody = {
+  caseId?: string;
+  storage_path?: string;
+  filename?: string;
+  mime_type?: string;
+  size_bytes?: number;
+  display_name?: string;
+  doc_type?: string;
+  tags?: string[];
 };
 
 type ErrorResponse = { ok: false; error: string };
 type SuccessResponse = {
   ok: true;
-  document: { id: string; filename: string; created_at: string };
+  document: {
+    id: string;
+    case_id: string;
+    storage_path: string;
+    filename: string;
+    created_at: string;
+  };
 };
 
-type UploadFields = {
-  caseId?: string | string[];
-};
-
-const MAX_FILE_SIZE = MAX_UPLOAD_BYTES;
 const UUID_RE = /^[0-9a-fA-F-]{36}$/;
-const DOCUMENTS_BUCKET = process.env.VERILEX_DOCUMENTS_BUCKET || 'case-documents';
-
-function getSingleField(value?: string | string[]) {
-  if (!value) return null;
-  return Array.isArray(value) ? value[0] : value;
-}
-
-function getSingleFile(file?: FormidableFile | FormidableFile[]) {
-  if (!file) return null;
-  return Array.isArray(file) ? file[0] : file;
-}
-
-function sanitizeFilename(name: string) {
-  const trimmed = name.replace(/[/\\]/g, '').trim();
-  const safe = trimmed.replace(/[^a-zA-Z0-9._-]/g, '_');
-  return safe.length > 0 ? safe : 'document';
-}
 
 export default async function handler(
   req: NextApiRequest,
@@ -69,46 +60,32 @@ export default async function handler(
     return res.status(500).json({ ok: false, error: 'Missing Supabase environment variables' });
   }
 
-  const form = formidable({
-    multiples: false,
-    maxFileSize: MAX_FILE_SIZE,
-  });
+  const body = (req.body ?? {}) as ConfirmBody;
+  const caseId = typeof body.caseId === 'string' ? body.caseId.trim() : '';
+  const storagePath = typeof body.storage_path === 'string' ? body.storage_path.trim() : '';
+  const filename = typeof body.filename === 'string' ? body.filename.trim() : '';
 
-  let fields: UploadFields;
-  let files: { file?: FormidableFile | FormidableFile[] };
-  try {
-    [fields, files] = await new Promise((resolve, reject) => {
-      form.parse(req, (err, parsedFields, parsedFiles) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve([parsedFields as UploadFields, parsedFiles as { file?: FormidableFile | FormidableFile[] }]);
-      });
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unable to parse upload';
-    if (message.toLowerCase().includes('maxfile')) {
-      return res.status(413).json({ ok: false, error: 'File exceeds 25MB limit.' });
-    }
-    return res.status(400).json({ ok: false, error: message });
-  }
-
-  const caseId = getSingleField(fields.caseId);
-  if (!caseId || !UUID_RE.test(caseId)) {
+  if (!UUID_RE.test(caseId)) {
     return res.status(400).json({ ok: false, error: 'Invalid case id' });
   }
-
-  const uploadedFile = getSingleFile(files.file);
-  if (!uploadedFile) {
-    return res.status(400).json({ ok: false, error: 'File is required' });
+  if (!storagePath) {
+    return res.status(400).json({ ok: false, error: 'storage_path is required' });
+  }
+  if (!filename) {
+    return res.status(400).json({ ok: false, error: 'filename is required' });
   }
 
-  if (uploadedFile.size && uploadedFile.size > MAX_FILE_SIZE) {
+  if (!isAllowedMimeType(body.mime_type || null)) {
+    return res.status(415).json({ ok: false, error: 'Unsupported file type.' });
+  }
+
+  if (typeof body.size_bytes === 'number' && body.size_bytes > MAX_UPLOAD_BYTES) {
     return res.status(413).json({ ok: false, error: 'File exceeds 25MB limit.' });
   }
-  if (!isAllowedMimeType(uploadedFile.mimetype || null)) {
-    return res.status(415).json({ ok: false, error: 'Unsupported file type.' });
+
+  const docType = typeof body.doc_type === 'string' ? body.doc_type.trim() : '';
+  if (!isAllowedDocumentType(docType || null, CASE_DOCUMENT_TYPE_ALLOWLIST)) {
+    return res.status(400).json({ ok: false, error: 'doc_type is invalid' });
   }
 
   const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -141,6 +118,26 @@ export default async function handler(
     return res.status(403).json({ ok: false, error: 'You do not have permission to upload documents.' });
   }
 
+  const { data: caseRows, error: caseError } = await adminClient
+    .from('cases')
+    .select('id, firm_id')
+    .eq('id', caseId)
+    .limit(1);
+
+  if (caseError) {
+    return res.status(500).json({ ok: false, error: caseError.message });
+  }
+
+  const caseRow = Array.isArray(caseRows) && caseRows.length > 0 ? caseRows[0] : null;
+  if (!caseRow || caseRow.firm_id !== membership.firm_id) {
+    return res.status(404).json({ ok: false, error: 'Case not found' });
+  }
+
+  const expectedPrefix = `${membership.firm_id}/cases/${caseId}/documents/`;
+  if (!storagePath.startsWith(expectedPrefix)) {
+    return res.status(400).json({ ok: false, error: 'storage_path is invalid' });
+  }
+
   const { data: firmRow, error: firmError } = await adminClient
     .from('firms')
     .select('plan')
@@ -164,48 +161,12 @@ export default async function handler(
   const plan = (firmRow?.plan as 'free' | 'pro' | 'enterprise' | undefined) ?? 'free';
   const limitCheck = canUploadDocument({ plan, currentDocumentCount: documentCount ?? 0 });
   if (!limitCheck.ok) {
-    try {
-      await adminClient.from('case_activity').insert({
-        firm_id: membership.firm_id,
-        actor_user_id: authData.user.id,
-        event_type: 'plan_limit_hit',
-        message: 'Document limit reached',
-        metadata: { kind: 'documents' },
-      });
-    } catch {
-      // best-effort logging
-    }
     return res.status(403).json({ ok: false, error: `${limitCheck.reason} Upgrade to Pro to upload more documents.` });
   }
 
-  const { data: caseRows, error: caseError } = await adminClient
-    .from('cases')
-    .select('id, firm_id')
-    .eq('id', caseId)
-    .limit(1);
-
-  if (caseError) {
-    return res.status(500).json({ ok: false, error: caseError.message });
-  }
-
-  const caseRow = Array.isArray(caseRows) && caseRows.length > 0 ? caseRows[0] : null;
-  if (!caseRow || caseRow.firm_id !== membership.firm_id) {
-    return res.status(404).json({ ok: false, error: 'Case not found' });
-  }
-
-  const filename = sanitizeFilename(uploadedFile.originalFilename || 'document');
-  const storagePath = `${membership.firm_id}/cases/${caseId}/documents/${randomUUID()}-${filename}`;
-
-  const fileBuffer = await readFile(uploadedFile.filepath);
-  const contentType = uploadedFile.mimetype || 'application/octet-stream';
-
-  const { error: storageError } = await adminClient.storage
-    .from(DOCUMENTS_BUCKET)
-    .upload(storagePath, fileBuffer, { contentType, upsert: false });
-
-  if (storageError) {
-    return res.status(500).json({ ok: false, error: storageError.message });
-  }
+  const tags = Array.isArray(body.tags)
+    ? body.tags.filter((tag) => typeof tag === 'string' && tag.trim().length > 0)
+    : [];
 
   const { data: insertedDoc, error: insertError } = await adminClient
     .from('case_documents')
@@ -213,13 +174,16 @@ export default async function handler(
       firm_id: membership.firm_id,
       case_id: caseId,
       storage_path: storagePath,
-      filename: uploadedFile.originalFilename || filename,
-      mime_type: uploadedFile.mimetype,
-      size_bytes: uploadedFile.size ?? null,
+      filename,
+      mime_type: body.mime_type ?? null,
+      size_bytes: typeof body.size_bytes === 'number' ? body.size_bytes : null,
       uploaded_by: authData.user.id,
       uploaded_by_role: 'firm',
+      display_name: typeof body.display_name === 'string' ? body.display_name.trim() : null,
+      doc_type: docType || 'other',
+      tags,
     })
-    .select('id, filename, created_at')
+    .select('id, case_id, storage_path, filename, created_at')
     .single();
 
   if (insertError || !insertedDoc) {
