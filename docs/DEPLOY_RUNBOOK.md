@@ -18,3 +18,4 @@
 - Landing app: set Vercel Root Directory to `apps/landing`
 - MyClient app: set Vercel Root Directory to `apps/myclient`
 - Verify MyClient env vars are set in Vercel before deploy
+
