@@ -232,6 +232,17 @@ export default function IntakeFlow({
     }
   }, [currentStepIndex, step?.id, visibleSteps]);
 
+  // Auto-Advance Effect
+  useEffect(() => {
+    if (hasMissingRequired || isLocked || loading) return;
+    if (missingFields.length === 0 && currentStepIndex < visibleSteps.length - 1) {
+      const timer = setTimeout(() => {
+        handleSaveStep();
+      }, 1500); // 1.5s delay for user to read "Complete"
+      return () => clearTimeout(timer);
+    }
+  }, [missingFields.length, hasMissingRequired, isLocked, loading, currentStepIndex, visibleSteps.length]);
+
   useEffect(() => {
     if (mode !== 'resume' || !token || hasLoaded) return;
     setUiError(null);
@@ -265,6 +276,8 @@ export default function IntakeFlow({
     }
     if (currentStepIndex < visibleSteps.length - 1) {
       setCurrentStepIndex((prev) => Math.min(prev + 1, visibleSteps.length - 1));
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 

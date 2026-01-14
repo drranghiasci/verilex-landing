@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Textarea from '../ui/Textarea';
@@ -120,6 +120,14 @@ export default function GuidedChatPanel({
       setStatuses((prev) => ({ ...prev, [promptId]: 'error' }));
     }
   };
+
+  const transcriptRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (transcriptRef.current) {
+      transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
+    }
+  }, [transcript.length]);
 
   return (
     <aside className="chat-panel">
@@ -244,15 +252,33 @@ export default function GuidedChatPanel({
         {transcript.length === 0 ? (
           <p className="muted">No transcript messages yet.</p>
         ) : (
-          <div className="chat-panel__transcript">
-            {transcript.map((message, index) => (
-              <div
-                key={`${message.channel}-${index}`}
-                className={`chat-panel__bubble ${message.source === 'client' ? 'is-client' : ''}`}
-              >
-                {message.content}
-              </div>
-            ))}
+          <div className="chat-panel__transcript" ref={transcriptRef}>
+            {transcript.map((message, index) => {
+              const isClient = message.source === 'client';
+              return (
+                <div
+                  key={`${message.channel}-${index}`}
+                  className={`chat-panel__bubble ${isClient ? 'is-client' : ''}`}
+                >
+                  <div className="chat-panel__avatar">
+                    {isClient ? (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                    ) : (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" />
+                        <rect x="5" y="9" width="14" height="10" rx="2" />
+                        <path d="M9 21v2" />
+                        <path d="M15 21v2" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="chat-panel__content">{message.content}</div>
+                </div>
+              );
+            })}
           </div>
         )}
       </Card>
