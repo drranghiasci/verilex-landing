@@ -111,7 +111,7 @@ type JsonSchema = {
 const EVIDENCE_POINTER_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['source_type', 'source_id', 'path_or_span'],
+  required: ['source_type', 'source_id', 'path_or_span', 'snippet'],
   properties: {
     source_type: {
       type: 'string',
@@ -119,19 +119,19 @@ const EVIDENCE_POINTER_SCHEMA = {
     },
     source_id: { type: 'string' },
     path_or_span: { type: 'string' },
-    snippet: { type: 'string' },
+    snippet: { type: ['string', 'null'] },
   },
 };
 
 const CASE_NARRATIVE_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['parties_summary', 'conflict_summary', 'goals_summary'],
+  required: ['parties_summary', 'conflict_summary', 'goals_summary', 'timeline_overview'],
   properties: {
     parties_summary: { type: 'string' },
     conflict_summary: { type: 'string' },
     goals_summary: { type: 'string' },
-    timeline_overview: { type: 'string' },
+    timeline_overview: { type: ['string', 'null'] },
   },
 };
 
@@ -169,6 +169,7 @@ const JSON_SCHEMAS: Record<string, JsonSchema> = {
               'confidence_level',
               'confidence_rationale_code',
               'evidence',
+              'notes_for_reviewer',
             ],
             properties: {
               field_key: { type: 'string' },
@@ -181,7 +182,7 @@ const JSON_SCHEMAS: Record<string, JsonSchema> = {
                 type: 'array',
                 items: EVIDENCE_POINTER_SCHEMA,
               },
-              notes_for_reviewer: { type: 'string' },
+              notes_for_reviewer: { type: ['string', 'null'] },
             },
           },
         },
@@ -218,6 +219,7 @@ const JSON_SCHEMAS: Record<string, JsonSchema> = {
               'confidence_level',
               'evidence',
               'why_it_matters_for_review',
+              'notes_for_reviewer',
             ],
             properties: {
               flag_key: { type: 'string' },
@@ -226,7 +228,7 @@ const JSON_SCHEMAS: Record<string, JsonSchema> = {
               confidence_level: { type: 'string' },
               evidence: { type: 'array', items: EVIDENCE_POINTER_SCHEMA },
               why_it_matters_for_review: { type: 'string' },
-              notes_for_reviewer: { type: 'string' },
+              notes_for_reviewer: { type: ['string', 'null'] },
             },
           },
         },
@@ -252,6 +254,7 @@ const JSON_SCHEMAS: Record<string, JsonSchema> = {
               'confidence_level',
               'evidence',
               'why_it_matters_for_review',
+              'notes_for_reviewer',
             ],
             properties: {
               flag_key: { type: 'string' },
@@ -260,7 +263,7 @@ const JSON_SCHEMAS: Record<string, JsonSchema> = {
               confidence_level: { type: 'string' },
               evidence: { type: 'array', items: EVIDENCE_POINTER_SCHEMA },
               why_it_matters_for_review: { type: 'string' },
-              notes_for_reviewer: { type: 'string' },
+              notes_for_reviewer: { type: ['string', 'null'] },
             },
           },
         },
@@ -286,6 +289,7 @@ const JSON_SCHEMAS: Record<string, JsonSchema> = {
               'confidence_level',
               'evidence',
               'why_it_matters_for_review',
+              'notes_for_reviewer',
             ],
             properties: {
               flag_key: { type: 'string' },
@@ -294,7 +298,7 @@ const JSON_SCHEMAS: Record<string, JsonSchema> = {
               confidence_level: { type: 'string' },
               evidence: { type: 'array', items: EVIDENCE_POINTER_SCHEMA },
               why_it_matters_for_review: { type: 'string' },
-              notes_for_reviewer: { type: 'string' },
+              notes_for_reviewer: { type: ['string', 'null'] },
             },
           },
         },
@@ -320,6 +324,7 @@ const JSON_SCHEMAS: Record<string, JsonSchema> = {
               'severity',
               'confidence_score',
               'evidence',
+              'notes_for_reviewer',
             ],
             properties: {
               inconsistency_key: { type: 'string' },
@@ -328,7 +333,7 @@ const JSON_SCHEMAS: Record<string, JsonSchema> = {
               severity: { type: 'string' },
               confidence_score: { type: 'number' },
               evidence: { type: 'array', items: EVIDENCE_POINTER_SCHEMA },
-              notes_for_reviewer: { type: 'string' },
+              notes_for_reviewer: { type: ['string', 'null'] },
             },
           },
         },
@@ -353,6 +358,7 @@ const JSON_SCHEMAS: Record<string, JsonSchema> = {
               'match_type',
               'confidence_score',
               'evidence',
+              'notes_for_reviewer',
             ],
             properties: {
               raw_mention: { type: 'string' },
@@ -360,7 +366,7 @@ const JSON_SCHEMAS: Record<string, JsonSchema> = {
               match_type: { type: 'string' },
               confidence_score: { type: 'number' },
               evidence: { type: 'array', items: EVIDENCE_POINTER_SCHEMA },
-              notes_for_reviewer: { type: 'string' },
+              notes_for_reviewer: { type: ['string', 'null'] },
             },
           },
         },
@@ -394,6 +400,7 @@ const JSON_SCHEMAS: Record<string, JsonSchema> = {
               'confidence_score',
               'confidence_level',
               'evidence',
+              'notes_for_reviewer',
             ],
             properties: {
               document_id: { type: 'string' },
@@ -401,7 +408,7 @@ const JSON_SCHEMAS: Record<string, JsonSchema> = {
               confidence_score: { type: 'number' },
               confidence_level: { type: 'string' },
               evidence: { type: 'array', items: EVIDENCE_POINTER_SCHEMA },
-              notes_for_reviewer: { type: 'string' },
+              notes_for_reviewer: { type: ['string', 'null'] },
             },
           },
         },
