@@ -13,6 +13,7 @@ type SuccessResponse = {
     ok: true;
     runId: string;
     status: string;
+    debug?: any;
 };
 
 const UUID_RE = /^[0-9a-fA-F-]{36}$/;
@@ -121,7 +122,8 @@ export default async function handler(
         return res.status(200).json({
             ok: true,
             runId: result.runLog.wf4_run_id,
-            status: result.runLog.status
+            status: result.runLog.status,
+            debug: result.runLog,
         });
 
     } catch (error) {

@@ -489,6 +489,7 @@ export default function IntakeReviewPage() {
       });
 
       const data = await res.json().catch(() => ({}));
+      console.log('WF4 Rerun Response:', data);
       if (!res.ok || !data.ok) {
         setWf4RerunError(data.error || 'Unable to re-run AI pipeline.');
         setWf4RerunStatus('idle');
