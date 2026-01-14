@@ -43,10 +43,18 @@ function parsePricingEnv(): Record<string, ModelPricing> {
   }
 }
 
-function getOpenAiClientCtor() {
+type OpenAiCtor = new (args: any) => {
+  chat: { completions: { create: (...args: any[]) => any } };
+};
+
+function getOpenAiClientCtor(): OpenAiCtor {
   try {
-    const mod = require('openai') as { default?: new (args: any) => any };
-    return mod.default ?? mod;
+    const mod = require('openai') as { default?: OpenAiCtor } | OpenAiCtor;
+    const ctor = (mod as { default?: OpenAiCtor }).default ?? (mod as OpenAiCtor);
+    if (typeof ctor !== 'function') {
+      throw new Error('Invalid OpenAI export');
+    }
+    return ctor;
   } catch (error) {
     throw new Error('Missing openai dependency; install it in the app workspace.');
   }
