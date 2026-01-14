@@ -17,10 +17,12 @@
   "devDependencies": {
     "@playwright/test": "^1.49.0",
     "@supabase/supabase-js": "^2.90.1",
+    "@types/dotenv": "^6.1.1",
     "supabase": "^2.20.12"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.2",
+    "dotenv": "^17.2.3",
     "openai": "^6.16.0"
   }
 }
