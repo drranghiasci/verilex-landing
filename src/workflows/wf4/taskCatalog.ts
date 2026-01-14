@@ -14,18 +14,20 @@ function resolveRepoRoot(): string {
   return cwd;
 }
 
-export const WF4_TASK_CATALOG_PATH = path.join(
-  resolveRepoRoot(),
-  'docs',
-  'workflow 4',
-  'workflow-04-ai-task-catalog.json',
-);
+function getTaskCatalogPath(): string {
+  return path.join(
+    resolveRepoRoot(),
+    'docs',
+    'workflow 4',
+    'workflow-04-ai-task-catalog.json',
+  );
+}
 
 let cachedCatalog: Wf4TaskCatalog | null = null;
 let cachedPath: string | null = null;
 
-export function loadWf4TaskCatalog(catalogPath = WF4_TASK_CATALOG_PATH): Wf4TaskCatalog {
-  const resolvedPath = path.resolve(catalogPath);
+export function loadWf4TaskCatalog(catalogPath?: string): Wf4TaskCatalog {
+  const resolvedPath = path.resolve(catalogPath ?? getTaskCatalogPath());
   if (cachedCatalog && cachedPath === resolvedPath) {
     return cachedCatalog;
   }
