@@ -17,9 +17,7 @@ function resolveRepoRoot(): string {
 export const WF4_TASK_CATALOG_PATH = path.join(
   resolveRepoRoot(),
   'docs',
-  'architecture',
-  'Phase-1',
-  'Workflow-04',
+  'workflow 4',
   'workflow-04-ai-task-catalog.json',
 );
 
