@@ -114,20 +114,20 @@ async function loadIntakeSnapshot(intakeId: string): Promise<IntakeSnapshot> {
     free_text_fields: {},
     messages: (messages ?? []).map(
       (message: { id: string; source: string; content: string; created_at: string }) => ({
-      message_id: message.id,
-      role: message.source,
-      content: message.content,
-      created_at: message.created_at,
-    }),
+        message_id: message.id,
+        role: message.source,
+        content: message.content,
+        created_at: message.created_at,
+      }),
     ),
     documents: (documents ?? []).map(
       (doc: { id: string; storage_object_path: string | null; document_type: string | null; created_at: string }) => ({
-      document_id: doc.id,
-      filename: doc.storage_object_path ?? null,
-      mimetype: doc.document_type ?? null,
-      text_extract: null,
-      created_at: doc.created_at,
-    }),
+        document_id: doc.id,
+        filename: doc.storage_object_path ?? null,
+        mimetype: doc.document_type ?? null,
+        text_extract: null,
+        created_at: doc.created_at,
+      }),
     ),
     created_at: intake.created_at,
     firm_id: intake.firm_id,
@@ -716,6 +716,17 @@ export async function runWf4(
     let error: string | undefined;
 
     try {
+
+      console.log(`[WF4] Running task: ${taskId} with prompt: ${promptId}`);
+      if (taskId === 'wf4.review_attention.summary.v1') {
+        console.log(`[WF4] Review Attention Input Keys:`, Object.keys(taskInput));
+        if ('wf4_outputs' in taskInput) {
+          const prev = (taskInput as any).wf4_outputs;
+          console.log(`[WF4] Prev Output Keys:`, Object.keys(prev || {}));
+          if (prev.extractions?.extractions) console.log('Extractions count:', prev.extractions.extractions.length);
+          if (prev.flags?.flags) console.log('Flags count:', prev.flags.flags.length);
+        }
+      }
       const rawResult = await runTask(provider, promptId, taskInput);
       if (!rawResult.ok) {
         throw new Error(rawResult.error);
@@ -746,6 +757,10 @@ export async function runWf4(
       if (!validation.ok) {
         throw new Error(validation.error);
       }
+
+
+
+      console.log(`[WF4] Task ${taskId} Success. Output Keys:`, Object.keys((validation.value as object) || {}));
 
       taskOutputs[taskId] = {
         task_id: taskId,
@@ -793,7 +808,9 @@ export async function runWf4(
         runOutput.case_narrative = (validation.value as any).case_narrative;
       }
       if (taskId === 'wf4.review_attention.summary.v1') {
-        runOutput.review_attention = validation.value as { review_attention: ReviewAttention };
+        const attn = validation.value as { review_attention: ReviewAttention };
+        runOutput.review_attention = attn;
+        console.log(`[WF4] Review Attention Items: High=${attn.review_attention?.high_priority_items?.length}`);
       }
     } catch (taskError) {
       failedCount += 1;
