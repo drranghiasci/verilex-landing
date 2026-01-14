@@ -708,6 +708,7 @@ export async function runWf4(
 
   let failedCount = 0;
 
+  console.log('[WF4] Task Catalog Length:', taskCatalog.tasks?.length);
   for (const task of taskCatalog.tasks) {
     const taskId = task.task_id;
     const promptId = WF4_TASK_PROMPT_MAP[taskId] ?? taskId;
