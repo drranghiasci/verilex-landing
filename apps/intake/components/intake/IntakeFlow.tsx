@@ -32,6 +32,8 @@ import IntakeReview from './IntakeReview';
 import IntakeLayout from './IntakeLayout';
 import { X } from 'lucide-react'; // Import the new component
 
+import { getFriendlyStepLabel } from './progressConfig';
+
 const fieldToSectionId = new Map<string, string>();
 for (const section of intakeSections) {
   for (const field of section.fields) {
@@ -87,10 +89,50 @@ export default function IntakeFlow({
 
   const matterType = payload.matter_type;
   const enabledSectionIds = useMemo(() => getEnabledSectionIds(payload), [payload]);
-  const visibleSteps = useMemo(
-    () => intakeSteps.filter((stepItem) => enabledSectionIds.has(stepItem.id)),
-    [enabledSectionIds],
-  );
+
+  const visibleSteps = useMemo(() => {
+    const rawIds = Array.from(enabledSectionIds);
+    // Explicit Order for display
+    const outputOrder = [
+      'matter_metadata',
+      'client_identity',
+      'opposing_party',
+      'marriage_details',
+      'separation_grounds',
+      'child_object',
+      'children_custody',
+      'asset_object',
+      'debt_object',
+      'income_support',
+      'domestic_violence_risk',
+      'jurisdiction_venue',
+      'prior_legal_actions',
+      'desired_outcomes',
+      'evidence_documents'
+    ];
+
+    const sorted = rawIds.sort((a, b) => {
+      const idxA = outputOrder.indexOf(a);
+      const idxB = outputOrder.indexOf(b);
+      return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
+    });
+
+    sorted.push('final_review');
+
+    return sorted.map((id, index) => ({
+      id,
+      label: getFriendlyStepLabel(id),
+      isCompleted: index < currentStepIndex,
+      isActive: index === currentStepIndex,
+    }));
+  }, [enabledSectionIds, currentStepIndex]);
+
+  // Calculate total percentage for SideNav
+  const totalCompletion = useMemo(() => {
+    if (!visibleSteps.length) return 0;
+    return Math.round((currentStepIndex / visibleSteps.length) * 100);
+  }, [currentStepIndex, visibleSteps.length]);
+
   const stepIndexById = useMemo(() => {
     const map = new Map<string, number>();
     visibleSteps.forEach((stepItem, index) => {
@@ -175,12 +217,7 @@ export default function IntakeFlow({
     });
   }, [matterType, validationSummary]);
 
-  // Calculate total percentage for SideNav
-  const totalCompletion = useMemo(() => {
-    if (!visibleSteps.length) return 0;
-    // Simple step completion math:
-    return Math.round((currentStepIndex / visibleSteps.length) * 100);
-  }, [currentStepIndex, visibleSteps.length]);
+
 
   useEffect(() => {
     if (!initialToken) return;
@@ -532,20 +569,22 @@ export default function IntakeFlow({
     );
   }
 
-  // Calculate total percentage for SideNav
 
 
   return (
     <IntakeLayout
       firmName={firm?.firm_name}
-      steps={visibleSteps.map((s, i) => ({
-        id: s.id,
-        label: s.title,
-        isCompleted: i < currentStepIndex,
-        isActive: i === currentStepIndex
-      }))}
+      steps={visibleSteps}
       currentStepIndex={currentStepIndex}
       completionPercentage={totalCompletion}
+      sidebar={
+        <IntakeSidebar
+          open={true} // Always open
+          payload={payload}
+          firmName={firm?.firm_name}
+          onToggle={() => { }}
+        />
+      }
     >
       <div className="flex h-full relative">
         {/* Main Chat Area */}
@@ -630,35 +669,7 @@ export default function IntakeFlow({
           </div>
         </div>
 
-        {/* Right Sidebar (Read Only) */}
-        <AnimatePresence>
-          {sidebarOpen && (
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 350, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="border-l border-border bg-surface-1 overflow-hidden relative z-20 hidden lg:block"
-            >
-              <div className="h-full w-[350px] flex flex-col">
-                <div className="flex items-center justify-between p-4 border-b border-border">
-                  <h2 className="font-semibold text-sm">Case Details</h2>
-                  <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-surface-2 rounded text-text-2">
-                    <X size={16} />
-                  </button>
-                </div>
-                <div className="flex-1 overflow-y-auto">
-                  <IntakeSidebar
-                    open={sidebarOpen}
-                    payload={payload}
-                    firmName={firm?.firm_name}
-                    onToggle={() => setSidebarOpen(!sidebarOpen)}
-                  />
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
       </div>
       <ErrorBanner message={displayError} requestId={requestId} />
       {isLocked && <LockedConfirmation submittedAt={submittedAt} />}
