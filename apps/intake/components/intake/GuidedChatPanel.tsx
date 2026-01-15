@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '../ui/Button';
 import Textarea from '../ui/Textarea';
@@ -13,9 +14,12 @@ type GuidedChatPanelProps = {
   library: PromptLibrary;
   missingFields: string[];
   messages: IntakeMessage[];
+  token: string | undefined;
+  intakeId?: string | null;
   disabled?: boolean;
-  onSendMessage: (prompt: string, response: string) => Promise<{ ok: boolean; locked?: boolean }>;
+  onSaveMessages: (messages: IntakeMessage[]) => Promise<void>;
   onJumpToField: (fieldKey: string) => void;
+  onRefresh?: () => void;
 };
 
 function parseYesNo(response: string): boolean | null {
@@ -66,13 +70,18 @@ export default function GuidedChatPanel({
   library,
   missingFields,
   messages,
+  token,
+  intakeId,
   disabled,
-  onSendMessage,
+  onSaveMessages,
   onJumpToField,
+  onRefresh,
 }: GuidedChatPanelProps) {
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [statuses, setStatuses] = useState<Record<string, ChatStatus>>({});
+  const [isAiTyping, setIsAiTyping] = useState(false);
 
+  // Filter messages to chat channel only (though props usually only pass chat)
   const transcript = useMemo(() => messages.filter((message) => message.channel === 'chat'), [messages]);
   const section = library.sections[sectionId];
   const transcriptRef = useRef<HTMLDivElement>(null);
@@ -104,12 +113,6 @@ export default function GuidedChatPanel({
   // First missing prompt is the active one
   const activePrompt = !narrativeResponse ? null : requiredPrompts[0];
 
-  // Calculate actions (reveals) from *past* answers that are still relevant?
-  // For simplicity, we only check the active prompt's reveals if it was just answered? 
-  // But wait, if they are answered, they are in the transcript.
-  // We want to show buttons if a *recent* answer triggered them.
-  // Let's iterate all required prompts that HAVE answers, and collect their reveals.
-  // Actually, reveals are usually navigation jumps. 
   const activeReveals = useMemo(() => {
     const reveals: string[] = [];
     Object.values(section.fieldPrompts).forEach(prompt => {
@@ -120,25 +123,62 @@ export default function GuidedChatPanel({
         reveals.push(...paths);
       }
     });
-    // Also narrative might have reveals? (Unlikely in schema, but possible)
     return Array.from(new Set(reveals));
   }, [section, transcript]);
 
   const handleSend = async (promptId: string, promptText: string, text: string) => {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed || !token) return;
+
+    // 1. Optimistic: Add User Message
     setStatuses((prev) => ({ ...prev, [promptId]: 'saving' }));
+    setInputs((prev) => ({ ...prev, [promptId]: '' }));
 
-    const result = await onSendMessage(promptText, trimmed);
+    const userMsg: IntakeMessage = { source: 'client', channel: 'chat', content: trimmed };
+    await onSaveMessages([userMsg]);
 
-    if (result.ok) {
-      setInputs((prev) => ({ ...prev, [promptId]: '' }));
+    setIsAiTyping(true);
+
+    try {
+      // 2. Call AI API
+      const response = await fetch('/api/intake/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          message: trimmed,
+          history: messages.map(m => ({ source: m.source, content: m.content })),
+          sectionId,
+        }),
+      });
+
+      if (!response.ok) throw new Error('AI request failed');
+      const data = await response.json();
+
+      // 3. Add AI Response
+      if (data.response) {
+        const aiMsg: IntakeMessage = {
+          source: 'system',
+          channel: 'chat',
+          content: data.response,
+          content_structured: data.documentRequest ? { documentRequest: data.documentRequest } : undefined
+        };
+        await onSaveMessages([aiMsg]);
+      }
+
+      // 4. Refresh payload if updates occurred
+      if (data.updates && Object.keys(data.updates).length > 0) {
+        onRefresh?.();
+      }
+
       setStatuses((prev) => ({ ...prev, [promptId]: 'saved' }));
-      setTimeout(() => {
-        setStatuses((prev) => ({ ...prev, [promptId]: 'idle' }));
-      }, 1000);
-    } else {
+      setTimeout(() => setStatuses((prev) => ({ ...prev, [promptId]: 'idle' })), 1000);
+
+    } catch (err) {
+      console.error(err);
       setStatuses((prev) => ({ ...prev, [promptId]: 'error' }));
+    } finally {
+      setIsAiTyping(false);
     }
   };
 
@@ -147,8 +187,17 @@ export default function GuidedChatPanel({
       <div className="transcript-container" ref={transcriptRef}>
         {/* Render History */}
         {transcript.map((msg, i) => (
-          <ChatMessage key={i} message={msg} isLatest={i === transcript.length - 1} />
+          <ChatMessage
+            key={i}
+            message={msg}
+            isLatest={i === transcript.length - 1}
+            token={token}
+            intakeId={intakeId}
+          />
         ))}
+        {isAiTyping && (
+          <div className="typing-indicator muted">Verilex AI is checking...</div>
+        )}
 
         {/* Render Active Turn */}
         <div className="active-turn">
@@ -166,14 +215,14 @@ export default function GuidedChatPanel({
                   placeholder="Type your response..."
                   value={inputs[narrative.id] ?? ''}
                   onChange={(e) => setInputs(p => ({ ...p, [narrative.id]: e.target.value }))}
-                  disabled={disabled}
+                  disabled={disabled || isAiTyping}
                   unstyled
                 />
                 <div className="input-actions">
                   <Button
                     variant="primary"
                     onClick={() => handleSend(narrative.id, narrative.prompt, inputs[narrative.id] ?? '')}
-                    disabled={disabled || !inputs[narrative.id]?.trim()}
+                    disabled={disabled || isAiTyping || !inputs[narrative.id]?.trim()}
                   >
                     Send
                   </Button>
@@ -196,14 +245,14 @@ export default function GuidedChatPanel({
                   placeholder="Type your response..."
                   value={inputs[activePrompt.fieldKey] ?? ''}
                   onChange={(e) => setInputs(p => ({ ...p, [activePrompt.fieldKey]: e.target.value }))}
-                  disabled={disabled}
+                  disabled={disabled || isAiTyping}
                   unstyled
                 />
                 <div className="input-actions">
                   <Button
                     variant="primary"
                     onClick={() => handleSend(activePrompt.fieldKey, activePrompt.prompt, inputs[activePrompt.fieldKey] ?? '')}
-                    disabled={disabled || !inputs[activePrompt.fieldKey]?.trim()}
+                    disabled={disabled || isAiTyping || !inputs[activePrompt.fieldKey]?.trim()}
                   >
                     Send
                   </Button>
@@ -256,6 +305,13 @@ export default function GuidedChatPanel({
           flex-direction: column;
         }
 
+        .typing-indicator {
+          padding: 12px 0;
+          margin-left: 44px; /* Align with text */
+          font-size: 14px;
+          animation: pulse 1.5s infinite;
+        }
+
         .active-turn {
           margin-top: 24px;
           animation: slideUp 0.4s ease-out;
@@ -302,6 +358,11 @@ export default function GuidedChatPanel({
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+           0% { opacity: 0.5; }
+           50% { opacity: 1; }
+           100% { opacity: 0.5; }
         }
       `}</style>
     </div>

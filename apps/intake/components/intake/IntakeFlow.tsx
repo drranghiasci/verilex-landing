@@ -425,13 +425,22 @@ export default function IntakeFlow({
 
       <main className="intake-main">
         <div className="chat-container">
+
           <GuidedChatPanel
             sectionId={step?.id}
             library={GUIDED_PROMPT_LIBRARY}
             missingFields={missingFields}
             disabled={isLocked || loading}
             messages={messages}
-            onSendMessage={handleAppendChatMessage}
+            token={token}
+            intakeId={intakeId}
+            onSaveMessages={async (newMessages) => {
+              if (isLocked) return;
+              setUiError(null);
+              queueMessages(newMessages);
+              await flushPending();
+            }}
+            onRefresh={() => load(token!)} // Force reload to get updated payload
             onJumpToField={(fieldKey) => {
               setSidebarOpen(true);
             }}

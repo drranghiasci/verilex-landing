@@ -1,45 +1,61 @@
 
 import { type IntakeMessage } from '../../../../../lib/intake/intakeApi';
+import DocumentRequestCard from './DocumentRequestCard';
 
 type ChatMessageProps = {
-    message: IntakeMessage;
-    isLatest?: boolean;
+  message: IntakeMessage;
+  isLatest?: boolean;
+  token?: string;
+  intakeId?: string | null;
 };
 
-export default function ChatMessage({ message, isLatest }: ChatMessageProps) {
-    const isClient = message.source === 'client';
-    const isSystem = message.source === 'system';
+export default function ChatMessage({ message, isLatest, token, intakeId }: ChatMessageProps) {
+  const isClient = message.source === 'client';
+  const isSystem = message.source === 'system';
 
-    return (
-        <div className={`message ${isClient ? 'is-client' : 'is-ai'} ${isLatest ? 'is-latest' : ''}`}>
-            <div className="message__avatar">
-                {isClient ? (
-                    <div className="avatar-icon client">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                            <circle cx="12" cy="7" r="4" />
-                        </svg>
-                    </div>
-                ) : (
-                    <div className="avatar-icon ai">
-                        {/* Minimal Sparkle/AI icon */}
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-                        </svg>
-                    </div>
-                )}
-            </div>
+  // Check for structured document request
+  const docRequest = message.content_structured?.documentRequest as { type: string; reason: string } | undefined;
 
-            <div className="message__content">
-                <div className="sender-name">{isClient ? 'You' : 'Verilex AI'}</div>
-                <div className="text-content">
-                    {message.content.split('\n').map((line, i) => (
-                        <p key={i}>{line}</p>
-                    ))}
-                </div>
-            </div>
+  return (
+    <div className={`message ${isClient ? 'is-client' : 'is-ai'} ${isLatest ? 'is-latest' : ''}`}>
+      <div className="message__avatar">
+        {isClient ? (
+          <div className="avatar-icon client">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+        ) : (
+          <div className="avatar-icon ai">
+            {/* Minimal Sparkle/AI icon */}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+            </svg>
+          </div>
+        )}
+      </div>
 
-            <style jsx>{`
+      <div className="message__content">
+        <div className="sender-name">{isClient ? 'You' : 'Verilex AI'}</div>
+        <div className="text-content">
+          {message.content.split('\n').map((line, i) => (
+            <p key={i}>{line}</p>
+          ))}
+        </div>
+        {docRequest && token && (
+          <div style={{ marginTop: '12px' }}>
+            <DocumentRequestCard
+              token={token}
+              intakeId={intakeId ?? null}
+              documentType={docRequest.type}
+              reason={docRequest.reason}
+            />
+          </div>
+        )}
+      </div>
+
+      <style jsx>{`
         .message {
           display: flex;
           gap: 16px;
@@ -115,6 +131,6 @@ export default function ChatMessage({ message, isLatest }: ChatMessageProps) {
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }
