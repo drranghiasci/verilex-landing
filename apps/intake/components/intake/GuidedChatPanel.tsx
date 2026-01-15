@@ -50,11 +50,41 @@ export default function GuidedChatPanel({
   // Initial Seeding: If chat is empty, AI should speak first
   useEffect(() => {
     if (transcript.length === 0 && section?.narrativePrompt && token) {
-      // We simulate an initial AI message if none exists
-      // But we don't want to double-send if the user reloads.
-      // We can just rely on the UI rendering an "intro" message if transcript is empty?
-      // Or better: effectively "start" the conversation.
-      // For now, let's just Render it as a ephemeral message if transcript empty.
+      // Trigger the AI to start the convo
+      // We send a hidden system message to the API to "kickstart" it
+      // But we can just call handleSend with a special flag or just empty?
+      // Actually, let's just use the API directly to avoid UI flicker
+      const kickstart = async () => {
+        setIsAiTyping(true);
+        try {
+          // We send an empty message or a special "start" signal
+          // The system prompt logic will see missing fields and generate the first question
+          const response = await fetch('/api/intake/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              token,
+              message: 'START_CONVERSATION', // Special signal if we want, or just "Hello"
+              history: [], // Empty history
+              sectionId,
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.response) {
+              const aiMsg: IntakeMessage = { source: 'system', channel: 'chat', content: data.response };
+              await onSaveMessages([aiMsg]);
+            }
+          }
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setIsAiTyping(false);
+        }
+      };
+
+      void kickstart();
     }
   }, [transcript.length, section, token]);
 
