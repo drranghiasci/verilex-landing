@@ -48,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // 3. Prepare Context
         const payload = intake.raw_payload ?? {};
-        const enabledSectionIds = getEnabledSectionIds(intake.matter_type); // Use data from DB
+        const enabledSectionIds = getEnabledSectionIds(payload);
 
 
 
@@ -239,11 +239,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
         }
 
+
+        const safetyTrigger = finalResponse?.includes('WARNING: 911') || false;
+
         return res.status(200).json({
             ok: true,
             response: finalResponse,
             updates: updates,
-            documentRequest // Return this to frontend
+            documentRequest, // Return this to frontend
+            safetyTrigger
         });
 
     } catch (error: any) {

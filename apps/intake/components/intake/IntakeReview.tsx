@@ -1,0 +1,219 @@
+import { useState } from 'react';
+import { IntakeRecord } from '../../../../lib/intake/intakeApi';
+import { SchemaDef } from '../../../../lib/intake/schema/types';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+
+type IntakeReviewProps = {
+    intake: IntakeRecord;
+    schema: SchemaDef;
+    onSubmit: (questions: string) => Promise<void>;
+    disabled?: boolean;
+};
+
+export default function IntakeReview({ intake, schema, onSubmit, disabled }: IntakeReviewProps) {
+    const [questions, setQuestions] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleSubmit = async () => {
+        setSubmitting(true);
+        setError(null);
+        try {
+            await onSubmit(questions);
+        } catch (err: any) {
+            console.error(err);
+            setError(err.message || 'Submission failed');
+            setSubmitting(false);
+        }
+    };
+
+    // Helper to render payload values
+    const renderValue = (val: any) => {
+        if (typeof val === 'boolean') return val ? 'Yes' : 'No';
+        if (!val) return '—';
+        if (typeof val === 'object') return JSON.stringify(val);
+        return String(val);
+    };
+
+    const payload = intake.raw_payload || {};
+
+    return (
+        <div className="review-container">
+            <div className="review-header">
+                <h1>Review Your Case File</h1>
+                <p>Please review the information we've collected. When you're ready, submit your file to the firm.</p>
+            </div>
+
+            <div className="review-sections">
+                {schema.sections
+                    .filter(s => s.id !== 'final_review') // Don't show the review section itself
+                    .map(section => {
+                        // Check if section is relevant (simplified logic for now)
+                        // In reality, we could use the same visibility logic as proper step indicators
+                        return (
+                            <Card key={section.id} className="review-section-card">
+                                <h3>{section.title}</h3>
+                                <div className="field-grid">
+                                    {section.fields.filter(f => !f.isSystem).map(field => {
+                                        const val = payload[field.key];
+                                        return (
+                                            <div key={field.key} className="field-row">
+                                                <span className="field-label">{field.key.replace(/_/g, ' ')}</span>
+                                                <span className="field-value">{renderValue(val)}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </Card>
+                        );
+                    })}
+            </div>
+
+            <div className="final-actions">
+                <Card className="questions-card">
+                    <h3>Final Questions?</h3>
+                    <p className="helper-text">Is there anything else you'd like the attorney to know?</p>
+                    <textarea
+                        className="questions-input"
+                        rows={4}
+                        placeholder="Type any questions or additional notes here..."
+                        value={questions}
+                        onChange={(e) => setQuestions(e.target.value)}
+                        disabled={disabled || submitting}
+                    />
+                </Card>
+
+                {error && <div className="error-banner">{error}</div>}
+
+                <Button
+                    variant="primary"
+                    className="submit-btn"
+                    onClick={handleSubmit}
+                    disabled={disabled || submitting}
+                >
+                    {submitting ? 'Submitting...' : 'Submit Case File'}
+                </Button>
+            </div>
+
+            <style jsx>{`
+                .review-container {
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding: 20px;
+                    padding-bottom: 100px;
+                }
+                .review-header {
+                    text-align: center;
+                    margin-bottom: 32px;
+                }
+                .review-header h1 {
+                    font-size: 24px;
+                    margin-bottom: 8px;
+                    color: var(--text-0);
+                }
+                .review-header p {
+                    color: var(--text-2);
+                }
+
+                .review-sections {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 24px;
+                    margin-bottom: 32px;
+                }
+
+                .review-section-card :global(.card) { 
+                    padding: 20px; 
+                }
+
+                .review-section-card h3 {
+                    font-size: 14px;
+                    text-transform: uppercase;
+                    color: var(--text-2);
+                    border-bottom: 1px solid var(--border);
+                    padding-bottom: 12px;
+                    margin-bottom: 16px;
+                }
+
+                .field-grid {
+                    display: grid;
+                    grid-template-columns: 1fr;
+                    gap: 12px;
+                }
+
+                .field-row {
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 14px;
+                    border-bottom: 1px solid var(--border-subtle);
+                    padding-bottom: 8px;
+                }
+                .field-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+                .field-label {
+                    color: var(--text-2);
+                    text-transform: capitalize;
+                }
+                .field-value {
+                    color: var(--text-0);
+                    font-weight: 500;
+                    text-align: right;
+                    max-width: 60%;
+                }
+
+                .final-actions {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px;
+                }
+
+                .questions-card :global(.card) {
+                    padding: 20px;
+                }
+                
+                .questions-card h3 {
+                    font-size: 16px;
+                    margin-bottom: 4px;
+                }
+                
+                .helper-text {
+                    font-size: 13px;
+                    color: var(--text-2);
+                    margin-bottom: 12px;
+                }
+
+                .questions-input {
+                    width: 100%;
+                    background: var(--surface-2);
+                    border: 1px solid var(--border);
+                    border-radius: 8px;
+                    padding: 12px;
+                    color: var(--text-0);
+                    font-family: inherit;
+                    font-size: 15px;
+                    resize: vertical;
+                }
+                .questions-input:focus {
+                    outline: none;
+                    border-color: var(--accent);
+                }
+
+                .submit-btn {
+                    width: 100%;
+                    padding: 16px;
+                    font-size: 18px;
+                    font-weight: 600;
+                }
+
+                .error-banner {
+                    padding: 12px;
+                    background: rgba(239, 68, 68, 0.1);
+                    color: var(--error);
+                    border-radius: 8px;
+                    text-align: center;
+                }
+            `}</style>
+        </div>
+    );
+}

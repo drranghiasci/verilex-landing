@@ -1,7 +1,6 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '../ui/Button';
-import Textarea from '../ui/Textarea';
 import ChatMessage from './chat/ChatMessage';
 import type { IntakeMessage } from '../../../../lib/intake/intakeApi';
 import type { PromptLibrary } from '../../../../lib/intake/guidedChat/types';
@@ -15,6 +14,7 @@ type GuidedChatPanelProps = {
   messages: IntakeMessage[];
   token: string | undefined;
   intakeId?: string | null;
+  firmName?: string;
   disabled?: boolean;
   onSaveMessages: (messages: IntakeMessage[]) => Promise<void>;
   onJumpToField: (fieldKey: string) => void;
@@ -27,6 +27,7 @@ export default function GuidedChatPanel({
   messages,
   token,
   intakeId,
+  firmName,
   disabled,
   onSaveMessages,
   onRefresh,
@@ -98,15 +99,21 @@ export default function GuidedChatPanel({
     }
   }, [transcript.length, section, token]);
 
-  const handleSend = async () => {
-    const trimmed = inputText.trim();
+  const handleSend = async (overrideMessage?: string) => {
+    // If event object is passed by onClick (common react pattern), ignore it
+    const msg = typeof overrideMessage === 'string' ? overrideMessage : inputText;
+    const trimmed = msg.trim();
+
     if (!trimmed || !token) return;
 
     setStatus('saving');
     setInputText('');
 
-    // 1. Optimistic: Add User Message
-    const userMsg: IntakeMessage = { source: 'client', channel: 'chat', content: trimmed };
+    // 1. Optimistic: Add User Message (Hide RESUME_INTAKE from UI if we want, but showing it is fine)
+    // If RESUME_INTAKE, maybe we show "Resuming..." or just the text
+    const displayContent = trimmed === 'RESUME_INTAKE' ? 'Resuming...' : trimmed;
+
+    const userMsg: IntakeMessage = { source: 'client', channel: 'chat', content: displayContent };
     await onSaveMessages([userMsg]);
 
     setIsAiTyping(true);
@@ -130,8 +137,22 @@ export default function GuidedChatPanel({
       }
       const data = await response.json();
 
-      // 3. Add AI Response
-      if (data.response) {
+      // Check Safety Trigger
+      if (data.safetyTrigger) {
+        // We can handle this by showing a special message or routing
+        // For now, let's inject a system message
+        const safetyMsg: IntakeMessage = {
+          source: 'system',
+          channel: 'chat',
+          content: '⚠️ **WARNING: IMMEDIATE SAFETY CONCERN DETECTED.**\n\nPlease call **911** immediately if you are in danger.\n\nThis intake session is paused.'
+        };
+        await onSaveMessages([safetyMsg]);
+        // Disable further input? We rely on 'disabled' prop, but we can't change it here easily without parent state.
+        // But the AI likely stopped asking questions, so user is blocked anyway.
+      }
+
+      // 3. Add AI Response (if any)
+      if (data.response && !data.safetyTrigger) {
         const aiMsg: IntakeMessage = {
           source: 'system',
           channel: 'chat',
@@ -152,7 +173,6 @@ export default function GuidedChatPanel({
     } catch (err: any) {
       console.error(err);
       setStatus('error');
-      // Ideally we toast or show a message. For now, let's inject a system error message so they see it.
       const errorMsg: IntakeMessage = {
         source: 'system',
         channel: 'chat',
@@ -171,12 +191,21 @@ export default function GuidedChatPanel({
     }
   };
 
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (el) {
+      el.style.height = 'auto';
+      el.style.height = `${Math.min(el.scrollHeight, 200)}px`; // Max height 200px
+    }
+  }, [inputText]);
+
   return (
     <div className="chat-stream">
       <div className="transcript-container" ref={transcriptRef}>
-
-
-
         {/* Render History */}
         {transcript.map((msg, i) => (
           <ChatMessage
@@ -185,6 +214,7 @@ export default function GuidedChatPanel({
             isLatest={i === transcript.length - 1}
             token={token}
             intakeId={intakeId}
+            firmName={firmName}
           />
         ))}
 
@@ -199,7 +229,8 @@ export default function GuidedChatPanel({
 
       <div className="input-area">
         <div className="input-wrapper">
-          <Textarea
+          <textarea
+            ref={textareaRef}
             className="chat-input"
             rows={1}
             placeholder="Type your response..."
@@ -207,11 +238,10 @@ export default function GuidedChatPanel({
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={disabled || isAiTyping}
-            unstyled
           />
           <Button
             variant="primary"
-            onClick={handleSend}
+            onClick={() => handleSend()}
             disabled={disabled || isAiTyping || !inputText.trim()}
             className="send-btn"
           >
@@ -220,6 +250,14 @@ export default function GuidedChatPanel({
               <polygon points="22 2 15 22 11 13 2 9 22 2" />
             </svg>
           </Button>
+        </div>
+        <div className="resume-container">
+          <button
+            className="resume-link"
+            onClick={() => handleSend('RESUME_INTAKE')}
+          >
+            Stuck? Resume Intake
+          </button>
         </div>
       </div>
 
@@ -231,6 +269,20 @@ export default function GuidedChatPanel({
           width: 100%;
           overflow: hidden;
         }
+
+        .resume-container {
+            text-align: center;
+            margin-top: 8px;
+        }
+        .resume-link {
+            background: none;
+            border: none;
+            color: var(--text-2);
+            font-size: 11px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .resume-link:hover { color: var(--text-1); }
 
         .transcript-container {
           flex: 1;
@@ -311,7 +363,6 @@ export default function GuidedChatPanel({
             margin-bottom: 2px; 
             flex-shrink: 0;
         }
-
       `}</style>
     </div>
   );

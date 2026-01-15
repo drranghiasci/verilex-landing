@@ -102,7 +102,7 @@ export default function DocumentRequestCard({
                 <div className="doc-card__header">
                     <span className="icon">📄</span>
                     <div>
-                        <strong>AI Suggestion: Upload Document</strong>
+                        <strong>Upload Requested</strong>
                         <p className="reason">{reason}</p>
                     </div>
                 </div>

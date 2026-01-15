@@ -14,11 +14,17 @@ export type StartIntakeResponse = {
 
 export type IntakeRecord = {
   id: string;
-  status: 'draft' | 'submitted';
+  status: 'draft' | 'in_progress' | 'ready_for_review' | 'submitted';
   submitted_at: string | null;
+  intake_started_at?: string | null;
   raw_payload: Record<string, unknown>;
   matter_type?: string | null;
   urgency_level?: string | null;
+  has_children?: boolean | null;
+  children_count?: number | null;
+  opposing_employment_status?: string | null;
+  opposing_income_annual_estimate?: number | null;
+  opposing_employer?: string | null;
   intake_channel?: string | null;
   language_preference?: string | null;
   updated_at?: string | null;

@@ -36,6 +36,18 @@ export const GA_DIVORCE_CUSTODY_V1: SchemaDef = {
           enumValues: ['english', 'spanish', 'other', 'unknown', 'prefer_not_to_say'],
         },
         {
+          key: 'has_children',
+          type: 'boolean',
+          required: true,
+          notes: 'Determines if children sections are shown',
+        },
+        {
+          key: 'children_count',
+          type: 'number',
+          required: false,
+          notes: 'Required if has_children is true',
+        },
+        {
           key: 'date_of_intake',
           type: 'date',
           required: true,
@@ -101,9 +113,11 @@ export const GA_DIVORCE_CUSTODY_V1: SchemaDef = {
             'student',
             'retired',
             'disabled',
+            'disabled',
             'unknown',
           ],
         },
+        { key: 'opposing_employer', type: 'text', required: false },
       ],
     },
     {
@@ -248,6 +262,7 @@ export const GA_DIVORCE_CUSTODY_V1: SchemaDef = {
           isSystem: true,
           notes: 'system-only',
         },
+        { key: 'opposing_income_annual_estimate', type: 'number', required: false },
         { key: 'alimony_requested', type: 'boolean', required: false },
       ],
     },
@@ -393,6 +408,18 @@ export const GA_DIVORCE_CUSTODY_V1: SchemaDef = {
           required: false,
           isSystem: true,
           notes: 'system-only',
+        },
+      ],
+    },
+    {
+      id: 'final_review',
+      title: 'FINAL REVIEW',
+      fields: [
+        {
+          key: 'questions_for_firm',
+          type: 'text',
+          required: false,
+          notes: 'Final questions from client before submission',
         },
       ],
     },

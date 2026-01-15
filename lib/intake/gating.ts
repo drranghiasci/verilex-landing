@@ -50,20 +50,55 @@ function normalizeMatterType(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
-export function getEnabledSectionIds(matterType: unknown): Set<string> {
-  const normalized = normalizeMatterType(matterType);
-  if (!normalized) {
+export function getEnabledSectionIds(payload: Payload): Set<string> {
+  const matterType = normalizeMatterType(payload.matter_type);
+  const hasChildren = payload.has_children;
+
+  // Base sections that are truly always present
+  const enabled = new Set(['matter_metadata', 'client_identity']);
+
+  if (!matterType) {
+    // If we don't know matter type yet, maybe show minimal or everything?
+    // Let's stick to base for now until matter_type is selected
     return new Set(ALWAYS_SECTIONS);
   }
 
-  const enabled = new Set<string>(ALWAYS_SECTIONS);
+  // Divorce Logic
+  if (matterType === 'divorce') {
+    enabled.add('marriage_details');
+    enabled.add('separation_grounds');
+    enabled.add('asset_object');
+    enabled.add('debt_object');
+    enabled.add('income_support'); // Alimony is standard in divorce unless waived, but logic is fine
+    enabled.add('opposing_party');
+    enabled.add('jurisdiction_venue');
+    enabled.add('prior_legal_actions');
+    enabled.add('desired_outcomes');
+    enabled.add('evidence_documents');
+    enabled.add('domestic_violence_risk');
+  } else {
+    // Custody / Modification / Legitimation
+    enabled.add('opposing_party');
+    enabled.add('jurisdiction_venue');
+    enabled.add('prior_legal_actions');
+    enabled.add('desired_outcomes');
+    enabled.add('evidence_documents');
+    enabled.add('domestic_violence_risk');
 
-  if (normalized === 'divorce') {
-    DIVORCE_ONLY_SECTIONS.forEach((sectionId) => enabled.add(sectionId));
+    // Support usually relevant
+    if (SUPPORT_RELEVANT_MATTER_TYPES.has(matterType)) {
+      enabled.add('income_support');
+    }
   }
 
-  if (normalized && SUPPORT_RELEVANT_MATTER_TYPES.has(normalized)) {
-    enabled.add('income_support');
+  // Children Logic
+  // If has_children is explicitly FALSE, we skip child sections
+  // If has_children is TRUE or NULL (not asked yet), we show them
+  // BUT: If matter_type is 'custody' or 'legitimation', children are implied?
+  // Let's respect the flag if present.
+  if (hasChildren !== false) {
+    enabled.add('child_object');
+    enabled.add('children_custody');
   }
 
   return enabled;

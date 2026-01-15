@@ -6,7 +6,7 @@ export default function IntakeResumePage() {
   const router = useRouter();
   const firmSlug = typeof router.query.firm_slug === 'string' ? router.query.firm_slug : 'intake';
   const token = typeof router.query.token === 'string' ? router.query.token : undefined;
-  const [status, setStatus] = useState<'draft' | 'submitted' | null>(null);
+  const [status, setStatus] = useState<'draft' | 'in_progress' | 'ready_for_review' | 'submitted' | null>(null);
 
   return (
     <IntakeFlow

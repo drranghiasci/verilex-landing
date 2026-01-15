@@ -28,6 +28,7 @@ import {
 import { GUIDED_PROMPT_LIBRARY } from '../../../../lib/intake/guidedChat/promptLibrary';
 import { missingFieldsForSection } from '../../../../lib/intake/guidedChat/missingFields';
 import { globalStyles } from './styles';
+import IntakeReview from './IntakeReview'; // Import the new component
 
 const fieldToSectionId = new Map<string, string>();
 for (const section of intakeSections) {
@@ -40,7 +41,7 @@ type IntakeFlowProps = {
   firmSlug: string;
   mode: 'new' | 'resume';
   initialToken?: string;
-  onStatusChange?: (status: 'draft' | 'submitted' | null) => void;
+  onStatusChange?: (status: 'draft' | 'in_progress' | 'ready_for_review' | 'submitted' | null) => void;
   onFirmResolved?: (firm: ResolveFirmResponse | null) => void;
 };
 
@@ -83,7 +84,7 @@ export default function IntakeFlow({
   });
 
   const matterType = payload.matter_type;
-  const enabledSectionIds = useMemo(() => getEnabledSectionIds(matterType), [matterType]);
+  const enabledSectionIds = useMemo(() => getEnabledSectionIds(payload), [payload]);
   const visibleSteps = useMemo(
     () => intakeSteps.filter((stepItem) => enabledSectionIds.has(stepItem.id)),
     [enabledSectionIds],
@@ -404,6 +405,92 @@ export default function IntakeFlow({
     );
   }
 
+  // 7. Render
+  // If not started yet
+  if (!intakeId) {
+    // This case is actually handled above by renderAccessGate and the early return
+    // But if we want to use IntakeLanding (prettier start screen), we can do it here
+    // However, the current logic above (lines 398-406) renders renderAccessGate()
+    // Let's stick to the existing pattern or if you want to replace it:
+
+    // We already return above if !intakeId. 
+    // So this block is actually unreachable if strict. 
+    // But let's assume we want to handle the "landing" state here if we remove the above block.
+    // For now, let's remove this unreachable/broken block to fix the lints
+    // and just use the existing renderAccessGate logic which works.
+    return null;
+  }
+
+  // If Submitted
+  if (intake?.status === 'submitted') {
+    return (
+      <div className="flow-container">
+        <IntakeHeader
+          currentStepIndex={stepsInfo.length}
+          firmName={firm?.firm_name}
+          steps={stepsInfo}
+        />
+        <div className="success-screen">
+          <h1>Reference ID: {intake.id.slice(0, 8)}</h1>
+          <h2>Case File Submitted</h2>
+          <p>Your information has been securely transmitted to {firm?.firm_name}. They will review your file and contact you shortly.</p>
+          <p className="note">You may close this window.</p>
+        </div>
+        <style jsx>{`
+                  .flow-container { height: 100vh; display: flex; flex-direction: column; background: var(--bg); }
+                  .success-screen {
+                      flex: 1;
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      justify-content: center;
+                      text-align: center;
+                      padding: 24px;
+                  }
+                  .success-screen h1 { font-family: var(--font-mono); font-size: 14px; color: var(--text-2); margin-bottom: 24px; letter-spacing: 0.05em; }
+                  .success-screen h2 { font-size: 28px; margin-bottom: 16px; color: var(--text-0); }
+                  .success-screen p { font-size: 16px; color: var(--text-1); max-width: 480px; line-height: 1.6; margin-bottom: 12px; }
+                  .note { font-size: 13px; color: var(--text-2); margin-top: 32px; }
+              `}</style>
+      </div>
+    );
+  }
+
+  // If Ready for Review
+  if (intake?.status === 'ready_for_review') {
+    return (
+      <div className="flow-container">
+        <IntakeHeader
+          currentStepIndex={stepsInfo.length} // Show as completed
+          firmName={firm?.firm_name}
+          steps={stepsInfo}
+        />
+        <main className="flow-main">
+          <IntakeReview
+            intake={intake}
+            schema={GA_DIVORCE_CUSTODY_V1}
+            onSubmit={async (questions) => {
+              const res = await fetch('/api/intake/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token, questions })
+              });
+              if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.details || 'Submission failed');
+              }
+              await load(token!);
+            }}
+          />
+        </main>
+        <style jsx>{`
+                  .flow-container { height: 100vh; display: flex; flex-direction: column; background: var(--bg); }
+                  .flow-main { flex: 1; overflow-y: auto; background: var(--surface-1); }
+              `}</style>
+      </div>
+    );
+  }
+
   // Loading state for resume
   if (mode === 'resume' && !hasLoaded) {
     return (
@@ -435,6 +522,7 @@ export default function IntakeFlow({
             messages={messages}
             token={token}
             intakeId={intakeId}
+            firmName={firm?.firm_name}
             onSaveMessages={async (newMessages) => {
               if (isLocked) return;
               setUiError(null);
@@ -465,6 +553,38 @@ export default function IntakeFlow({
           background: var(--bg);
           display: flex;
           flex-direction: column;
+        }
+
+        .sidebar-toggle-mobile {
+          position: fixed;
+          bottom: 24px;
+          right: 24px;
+          z-index: 100;
+          background: var(--primary);
+          color: white;
+          border: none;
+          border-radius: 24px;
+          padding: 12px 24px;
+          font-size: 16px;
+          cursor: pointer;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+          display: none; /* Hidden by default, shown on mobile */
+        }
+
+        @media (max-width: 768px) {
+          .sidebar-toggle-mobile {
+            display: block;
+          }
+        }
+
+        .flow-container {
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          width: 100vw;
+          overflow: hidden;
+          background: var(--bg);
+          position: relative;
         }
 
         .intake-main {

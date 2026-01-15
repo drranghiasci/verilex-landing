@@ -82,6 +82,7 @@ type SubmitBody = {
   intakeId?: string;
   patch?: Record<string, unknown>;
   token?: string;
+  questions?: string;
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -163,10 +164,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const maxRetries = Number(process.env.OPENAI_MAX_RETRIES ?? '2');
         const provider = process.env.OPENAI_API_KEY && intake.firm_id
           ? createWf4OpenAiProvider({
-              firmId: intake.firm_id,
-              monthlyBudgetUsd: Number.isFinite(monthlyBudgetUsd) ? monthlyBudgetUsd : 100,
-              retries: Number.isFinite(maxRetries) ? maxRetries : 2,
-            })
+            firmId: intake.firm_id,
+            monthlyBudgetUsd: Number.isFinite(monthlyBudgetUsd) ? monthlyBudgetUsd : 100,
+            retries: Number.isFinite(maxRetries) ? maxRetries : 2,
+          })
           : undefined;
         await runWf4(
           { intakeId: intake.id, wf3RunId: wf3Result.extraction_id },
@@ -177,6 +178,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
     return res.status(200).json({ ok: true, locked: true, submitted_at: intake.submitted_at });
+  }
+
+  // Handle final questions (Fix Pack v1)
+  if (typeof body.questions === 'string' && body.questions.trim().length > 0) {
+    const { error: qError } = await supabaseAdmin
+      .from('intake_questions_for_firm')
+      .insert({
+        intake_id: intakeId,
+        question_text: body.questions.trim(),
+        is_resolved: false
+      });
+
+    if (qError) {
+      console.error(`[submit] failed to save questions intake_id=${intakeId}`, qError);
+      // We log but proceed with submission
+    }
   }
 
   const updateRow: Record<string, unknown> = {
@@ -240,10 +257,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const maxRetries = Number(process.env.OPENAI_MAX_RETRIES ?? '2');
       const provider = process.env.OPENAI_API_KEY && tokenResult.payload.firm_id
         ? createWf4OpenAiProvider({
-            firmId: tokenResult.payload.firm_id,
-            monthlyBudgetUsd: Number.isFinite(monthlyBudgetUsd) ? monthlyBudgetUsd : 100,
-            retries: Number.isFinite(maxRetries) ? maxRetries : 2,
-          })
+          firmId: tokenResult.payload.firm_id,
+          monthlyBudgetUsd: Number.isFinite(monthlyBudgetUsd) ? monthlyBudgetUsd : 100,
+          retries: Number.isFinite(maxRetries) ? maxRetries : 2,
+        })
         : undefined;
       await runWf4(
         { intakeId, wf3RunId: wf3Result.extraction_id },

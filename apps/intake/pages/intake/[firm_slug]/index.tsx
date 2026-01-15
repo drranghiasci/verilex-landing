@@ -8,7 +8,7 @@ export default function IntakeStartPage() {
   const firmSlug = typeof router.query.firm_slug === 'string' ? router.query.firm_slug : 'intake';
   const initialToken = typeof router.query.token === 'string' ? router.query.token : undefined;
   const [resumeToken, setResumeToken] = useState<string | null>(null);
-  const [status, setStatus] = useState<'draft' | 'submitted' | null>(null);
+  const [status, setStatus] = useState<'draft' | 'in_progress' | 'ready_for_review' | 'submitted' | null>(null);
 
   useEffect(() => {
     if (!router.isReady || typeof window === 'undefined') return;

@@ -7,11 +7,13 @@ type ChatMessageProps = {
   isLatest?: boolean;
   token?: string;
   intakeId?: string | null;
+  firmName?: string;
 };
 
-export default function ChatMessage({ message, isLatest, token, intakeId }: ChatMessageProps) {
+export default function ChatMessage({ message, isLatest, token, intakeId, firmName }: ChatMessageProps) {
   const isClient = message.source === 'client';
   const isSystem = message.source === 'system';
+  const assistantName = firmName || 'The Firm';
 
   // Check for structured document request
   const docRequest = message.content_structured?.documentRequest as { type: string; reason: string } | undefined;
@@ -37,7 +39,7 @@ export default function ChatMessage({ message, isLatest, token, intakeId }: Chat
       </div>
 
       <div className="message__content">
-        <div className="sender-name">{isClient ? 'You' : 'Verilex AI'}</div>
+        <div className="sender-name">{isClient ? 'You' : assistantName}</div>
         <div className="text-content">
           {message.content.split('\n').map((line, i) => (
             <p key={i}>{line}</p>
