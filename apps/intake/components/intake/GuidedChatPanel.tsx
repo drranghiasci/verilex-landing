@@ -155,13 +155,7 @@ export default function GuidedChatPanel({
     <div className="chat-stream">
       <div className="transcript-container" ref={transcriptRef}>
 
-        {/* If transcript is empty, show the initial section prompt ephemerally */}
-        {transcript.length === 0 && section?.narrativePrompt && (
-          <ChatMessage
-            message={{ source: 'system', channel: 'chat', content: section.narrativePrompt.prompt }}
-            isLatest={false}
-          />
-        )}
+
 
         {/* Render History */}
         {transcript.map((msg, i) => (
