@@ -1,7 +1,7 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseAdmin } from '../../../../../lib/server/supabaseAdmin';
-import { openai } from '../../../../../lib/server/openai';
+import { getOpenAIClient } from '../../../../../lib/server/openai';
 import { transformSchemaToSystemPrompt } from '../../../../../lib/intake/ai/systemPrompt';
 import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schema/gaDivorceCustodyV1';
 import { validateIntakePayload } from '../../../../../lib/intake/validation';
@@ -118,13 +118,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // 5. Call OpenAI
-        const completion = await openai.chat.completions.create({
-            model: 'gpt-4o',
-            messages,
-            tools,
-            tool_choice: 'auto',
-            temperature: 0.2, // Low temp for accurate extraction
-        });
+        let completion;
+        try {
+            const client = getOpenAIClient();
+            completion = await client.chat.completions.create({
+                model: 'gpt-4o',
+                messages,
+                tools,
+                tool_choice: 'auto',
+                temperature: 0.2, // Low temp for accurate extraction
+            });
+        } catch (openaiErr: any) {
+            console.error('OpenAI Initialization or Call Failed:', openaiErr);
+            return res.status(502).json({
+                error: 'AI Service Unavailable',
+                details: openaiErr.message
+            });
+        }
 
         const choice = completion.choices[0];
         const responseMessage = choice.message;
@@ -181,7 +191,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         content: JSON.stringify({ success: true, updated: Object.keys(updates), docRequestTriggered: !!documentRequest }),
                     }
                 ];
-                const secondCompletion = await openai.chat.completions.create({
+                const client = getOpenAIClient();
+                const secondCompletion = await client.chat.completions.create({
                     model: 'gpt-4o',
                     messages: secondTurnMessages,
                     temperature: 0.4,

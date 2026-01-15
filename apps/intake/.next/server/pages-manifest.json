@@ -1,8 +1,8 @@
 {
   "/_document": "pages/_document.js",
+  "/api/intake/documents/confirm": "pages/api/intake/documents/confirm.js",
   "/api/intake/chat": "pages/api/intake/chat.js",
   "/api/intake/counties": "pages/api/intake/counties.js",
-  "/api/intake/documents/confirm": "pages/api/intake/documents/confirm.js",
   "/api/intake/documents/create-upload": "pages/api/intake/documents/create-upload.js",
   "/api/intake/load": "pages/api/intake/load.js",
   "/api/intake/resolve-firm": "pages/api/intake/resolve-firm.js",

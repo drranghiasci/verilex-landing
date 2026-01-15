@@ -77,8 +77,15 @@ export default function GuidedChatPanel({
               await onSaveMessages([aiMsg]);
             }
           }
-        } catch (e) {
+        } catch (e: any) {
           console.error(e);
+          // If kickstart fails, we should let them know
+          const errorMsg: IntakeMessage = {
+            source: 'system',
+            channel: 'chat',
+            content: `⚠️ **Startup Error**: Failed to initialize AI conversation. (${e.message})`
+          };
+          await onSaveMessages([errorMsg]);
         } finally {
           setIsAiTyping(false);
         }
@@ -136,9 +143,16 @@ export default function GuidedChatPanel({
       setStatus('saved');
       setTimeout(() => setStatus('idle'), 1000);
 
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       setStatus('error');
+      // Ideally we toast or show a message. For now, let's inject a system error message so they see it.
+      const errorMsg: IntakeMessage = {
+        source: 'system',
+        channel: 'chat',
+        content: `⚠️ **Connection Error**: ${err.message || 'Unable to reach AI'}. Please try refreshing or checking your connection.`
+      };
+      await onSaveMessages([errorMsg]);
     } finally {
       setIsAiTyping(false);
     }
