@@ -107,8 +107,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 role: msg.source === 'client' ? 'user' : 'assistant',
                 content: msg.content,
             })),
-            { role: 'user', content: message },
         ];
+
+        // Only add the user message if it's NOT the special start signal
+        if (message !== 'START_CONVERSATION') {
+            messages.push({ role: 'user', content: message });
+        } else {
+            // Optional: Add a nudge system message to ensure greeting
+            messages.push({ role: 'system', content: ' The user has opened the chat. Please provide your Phase 1 Greeting.' });
+        }
 
         // 5. Call OpenAI
         const completion = await openai.chat.completions.create({

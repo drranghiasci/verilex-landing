@@ -3,53 +3,57 @@ import { useMemo } from 'react';
 import { globalStyles } from './styles';
 
 type IntakeSidebarProps = {
-    open: boolean;
-    payload: Record<string, any>;
-    firmName?: string;
-    onToggle: () => void;
+  open: boolean;
+  payload: Record<string, any>;
+  firmName?: string;
+  onToggle: () => void;
 };
 
 export default function IntakeSidebar({ open, payload, firmName, onToggle }: IntakeSidebarProps) {
-    // Simple flat list of fields for now. 
-    // In a real implementation, we would derive this from the schema.
-    const fields = useMemo(() => {
-        return Object.entries(payload).filter(([key, value]) => {
-            // Filter out internal fields
-            if (key.startsWith('_')) return false;
-            if (!value) return false;
-            return true;
-        });
-    }, [payload]);
+  // Simple flat list of fields for now. 
+  // In a real implementation, we would derive this from the schema.
+  const fields = useMemo(() => {
+    return Object.entries(payload).filter(([key, value]) => {
+      // Filter out internal fields
+      if (key.startsWith('_')) return false;
+      if (!value) return false;
+      return true;
+    });
+  }, [payload]);
 
-    return (
-        <>
-            <aside className={`sidebar ${open ? 'open' : 'closed'}`}>
-                <div className="sidebar-header">
-                    <h3>Case Summary</h3>
-                    <button onClick={onToggle} className="toggle-btn">
-                        {open ? '→' : '←'}
-                    </button>
+  return (
+    <>
+      <aside className={`sidebar ${open ? 'open' : 'closed'}`}>
+        <div className="sidebar-header">
+          <h3>Case Summary</h3>
+          <button onClick={onToggle} className="toggle-btn">
+            {open ? '→' : '←'}
+          </button>
+        </div>
+
+        <div className="sidebar-content">
+          {fields.length === 0 ? (
+            <div className="empty-state">
+              <p>No information collected yet.</p>
+            </div>
+          ) : (
+            <div className="field-list">
+              {fields.map(([key, value]) => (
+                <div key={key} className="field-item">
+                  <div className="field-label">{key.replace(/_/g, ' ')}</div>
+                  <div className="field-value">{String(value)}</div>
                 </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-                <div className="sidebar-content">
-                    {fields.length === 0 ? (
-                        <div className="empty-state">
-                            <p>No information collected yet.</p>
-                        </div>
-                    ) : (
-                        <div className="field-list">
-                            {fields.map(([key, value]) => (
-                                <div key={key} className="field-item">
-                                    <div className="field-label">{key.replace(/_/g, ' ')}</div>
-                                    <div className="field-value">{String(value)}</div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </aside>
+        <div className="sidebar-footer">
+          <span>AI-Generated • Read Only</span>
+        </div>
+      </aside>
 
-            <style jsx>{`
+      <style jsx>{`
         .sidebar {
           position: fixed;
           right: 0;
@@ -75,6 +79,18 @@ export default function IntakeSidebar({ open, payload, firmName, onToggle }: Int
           display: flex;
           justify-content: space-between;
           align-items: center;
+          background: rgba(0,0,0,0.2); /* Slightly darker header */
+        }
+        
+        .sidebar-footer {
+            padding: 12px;
+            text-align: center;
+            font-size: 10px;
+            color: var(--text-2);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-top: 1px solid var(--border);
+            background: rgba(0,0,0,0.1);
         }
 
         .sidebar-header h3 {
@@ -104,6 +120,8 @@ export default function IntakeSidebar({ open, payload, firmName, onToggle }: Int
           flex: 1;
           overflow-y: auto;
           padding: 20px;
+          /* Visual "disabled" look */
+          background: rgba(0, 0, 0, 0.05); 
         }
 
         .empty-state {
@@ -111,12 +129,14 @@ export default function IntakeSidebar({ open, payload, firmName, onToggle }: Int
           font-size: 13px;
           text-align: center;
           margin-top: 40px;
+          opacity: 0.7;
         }
 
         .field-list {
           display: flex;
           flex-direction: column;
           gap: 16px;
+          opacity: 0.85; /* Slight fade */
         }
 
         .field-item {
@@ -136,8 +156,9 @@ export default function IntakeSidebar({ open, payload, firmName, onToggle }: Int
           font-size: 14px;
           color: var(--text-1);
           word-break: break-word;
+          font-family: var(--font-mono); /* Technical look */
         }
       `}</style>
-        </>
-    );
+    </>
+  );
 }
