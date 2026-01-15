@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseAdmin } from '../../../../../lib/server/supabaseAdmin';
 import { getOpenAIClient } from '../../../../../lib/server/openai';
+import { verifyIntakeToken } from '../../../../../lib/server/intakeToken';
 import { transformSchemaToSystemPrompt } from '../../../../../lib/intake/ai/systemPrompt';
 import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schema/gaDivorceCustodyV1';
 import { validateIntakePayload } from '../../../../../lib/intake/validation';
@@ -19,25 +20,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: 'Missing token' });
     }
 
+    // 1. Verify Token
+    const tokenResult = verifyIntakeToken(token);
+    if (!tokenResult.ok) {
+        return res.status(401).json({ error: 'Invalid or expired token', details: tokenResult.error });
+    }
+    const { intake_id, firm_id } = tokenResult.payload;
+
     try {
-        // 1. Load Intake
+        // 2. Load Intake
         const { data: intake, error: loadError } = await supabaseAdmin
-            .from('intake_drafts')
-            .select('*')
-            .eq('token', token)
+            .from('intakes')
+            .select('id, status, submitted_at, raw_payload, matter_type, locked') // Select locked if it exists, or derive it
+            .eq('id', intake_id)
+            .eq('firm_id', firm_id)
             .single();
 
         if (loadError || !intake) {
-            return res.status(404).json({ error: 'Intake not found' });
+            return res.status(404).json({ error: 'Intake not found', details: loadError?.message });
         }
 
-        if (intake.locked || intake.status === 'submitted') {
+        const isLocked = intake.status === 'submitted' || !!intake.submitted_at; // derives locked state if no column
+
+        if (isLocked) {
             return res.status(403).json({ error: 'Intake is locked' });
         }
 
-        // 2. Prepare Context
-        const payload = intake.payload ?? {};
-        const enabledSectionIds = getEnabledSectionIds(payload.matter_type);
+        // 3. Prepare Context
+        const payload = intake.raw_payload ?? {};
+        const enabledSectionIds = getEnabledSectionIds(intake.matter_type); // Use data from DB
+
 
 
         // Calculate missing fields for System Prompt
@@ -173,9 +185,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             if (Object.keys(updates).length > 0) {
                 const newPayload = { ...payload, ...updates };
                 await supabaseAdmin
-                    .from('intake_drafts')
-                    .update({ payload: newPayload, updated_at: new Date().toISOString() })
-                    .eq('token', token);
+                    .from('intakes')
+                    .update({ raw_payload: newPayload, updated_at: new Date().toISOString() })
+                    .eq('id', intake_id)
+                    .eq('firm_id', firm_id);
             }
 
             // For document requests, we usually want the AI to also say something like "I can help with that..."
