@@ -106,12 +106,22 @@ export function getEnabledSectionIds(payload: Payload): Set<string> {
 
 export function getSectionTitleForMatterType(sectionId: string, matterType: unknown): string {
   const normalized = normalizeMatterType(matterType);
+
+  // 1. Try specific matter type override
   if (normalized && normalized in SECTION_TITLE_OVERRIDES) {
     const overrides = SECTION_TITLE_OVERRIDES[normalized as keyof typeof SECTION_TITLE_OVERRIDES];
-    if (overrides && overrides[sectionId as keyof typeof overrides]) {
-      return overrides[sectionId as keyof typeof overrides];
+    if (overrides && overrides[sectionId]) {
+      return overrides[sectionId];
     }
   }
+
+  // 2. Try default override
+  const defaults = SECTION_TITLE_OVERRIDES['default'];
+  if (defaults && defaults[sectionId]) {
+    return defaults[sectionId];
+  }
+
+  // 3. Fallback to schema title
   const fallback = GA_DIVORCE_CUSTODY_V1.sections.find((section) => section.id === sectionId);
   return fallback?.title ?? sectionId;
 }

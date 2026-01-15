@@ -238,14 +238,16 @@ export default function IntakeFlow({
 
   // Auto-Advance Effect
   useEffect(() => {
-    if (hasMissingRequired || isLocked || loading) return;
-    if (missingFields.length === 0 && currentStepIndex < visibleSteps.length - 1) {
+    // blocked by global missing requirements? No, only check current step.
+    if (isLocked || loading) return;
+    // Allow advancing if NO missing fields, even on the last step (to trigger Review transition)
+    if (missingFields.length === 0) {
       const timer = setTimeout(() => {
         handleSaveStep();
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [missingFields.length, hasMissingRequired, isLocked, loading, currentStepIndex, visibleSteps.length]);
+  }, [missingFields.length, isLocked, loading, currentStepIndex, visibleSteps.length]);
 
   useEffect(() => {
     if (mode !== 'resume' || !token || hasLoaded) return;
@@ -278,10 +280,28 @@ export default function IntakeFlow({
       setUiError('Intake is locked.');
       return;
     }
-    if (currentStepIndex < visibleSteps.length - 1) {
-      setCurrentStepIndex((prev) => Math.min(prev + 1, visibleSteps.length - 1));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Check if we are at the last step
+    if (currentStepIndex === visibleSteps.length - 1) {
+      // We are done. Transition to Review.
+      try {
+        const res = await fetch('/api/intake/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, status: 'ready_for_review' })
+        });
+        if (!res.ok) throw new Error('Failed to update status');
+        await load(token!); // Reload (triggers view change)
+      } catch (err) {
+        console.error(err);
+        setUiError('Unable to proceed to review.');
+      }
+      return;
     }
+
+    // Otherwise, advance
+    setCurrentStepIndex((prev) => Math.min(prev + 1, visibleSteps.length - 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleAppendChatMessage = async (prompt: string, response: string) => {

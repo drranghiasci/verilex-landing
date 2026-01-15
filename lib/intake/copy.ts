@@ -31,10 +31,34 @@ export const SAFETY_BANNER_COPY = {
   },
 };
 
-export const SECTION_TITLE_OVERRIDES = {
-  legitimation: {
-    opposing_party: 'OPPOSING PARTY (OTHER PARENT)',
+export const SECTION_TITLE_OVERRIDES: Record<string, Record<string, string>> = {
+  default: {
+    matter_metadata: 'Basics',
+    client_identity: 'About You',
+    opposing_party: 'Other Party',
+    marriage_details: 'Marriage',
+    separation_grounds: 'Separation',
+    child_object: 'Children',
+    children_custody: 'Custody',
+    asset_object: 'Assets',
+    income_support: 'Income & Support',
+    debt_object: 'Debts',
+    domestic_violence_risk: 'Safety',
+    jurisdiction_venue: 'Jurisdiction',
+    prior_legal_actions: 'Prior Cases',
+    desired_outcomes: 'Goals',
+    evidence_documents: 'Documents',
+    final_review: 'Review',
   },
+  legitimation: {
+    opposing_party: 'Other Parent',
+    marriage_details: 'Relationship',
+    children_custody: 'Custody & Visitation',
+  },
+  custody: {
+    opposing_party: 'Other Parent',
+    marriage_details: 'Relationship',
+  }
 };
 
 export const SECTION_CONTEXT_COPY = {

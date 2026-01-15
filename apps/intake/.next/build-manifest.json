@@ -5,8 +5,8 @@
   "devFiles": [],
   "ampDevFiles": [],
   "lowPriorityFiles": [
-    "static/ncj6JvFZ_aG5tDRwg5EWW/_buildManifest.js",
-    "static/ncj6JvFZ_aG5tDRwg5EWW/_ssgManifest.js"
+    "static/jXg55_4MKZgGqnLBnr3ag/_buildManifest.js",
+    "static/jXg55_4MKZgGqnLBnr3ag/_ssgManifest.js"
   ],
   "rootMainFiles": [],
   "rootMainFilesTree": {},
@@ -27,14 +27,14 @@
       "static/chunks/webpack-8cac0b4b405cede1.js",
       "static/chunks/framework-ea3d558b313aa702.js",
       "static/chunks/main-c5f7681b85bf20ae.js",
-      "static/chunks/131-bdc9529653541c48.js",
+      "static/chunks/131-c3e30c37f92d93ff.js",
       "static/chunks/pages/intake/[firm_slug]-f7f7966143858149.js"
     ],
     "/intake/[firm_slug]/resume/[token]": [
       "static/chunks/webpack-8cac0b4b405cede1.js",
       "static/chunks/framework-ea3d558b313aa702.js",
       "static/chunks/main-c5f7681b85bf20ae.js",
-      "static/chunks/131-bdc9529653541c48.js",
+      "static/chunks/131-c3e30c37f92d93ff.js",
       "static/chunks/pages/intake/[firm_slug]/resume/[token]-af408f4d590f47ae.js"
     ]
   },
