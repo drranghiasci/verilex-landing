@@ -76,15 +76,22 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage 
                     box-shadow: 10px 0 30px rgba(0,0,0,0.5);
                 }
 
-                /* Vertical Track */
+                /* Vertical Track - Visible only when expanded */
                 .track {
                     position: absolute;
-                    left: 35px; /* Center of 72px */
+                    left: 28px; /* Adjusted for alignment */
                     top: 0;
                     bottom: 0;
                     width: 2px;
                     background: var(--border);
                     z-index: 0;
+                    opacity: 0; /* Hidden by default (collapsed) */
+                    transition: opacity 0.3s ease;
+                }
+
+                .side-nav.expanded .track {
+                    opacity: 1; /* Show when expanded */
+                    left: 35px; /* Re-center when expanded */
                 }
 
                 .progress-fill {
@@ -102,7 +109,7 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage 
                     z-index: 1;
                     display: flex;
                     flex-direction: column;
-                    gap: 32px; /* More breathing room */
+                    gap: 32px;
                     padding-top: 60px;
                 }
 
@@ -110,11 +117,12 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage 
                     display: flex;
                     align-items: center;
                     height: 32px;
-                    padding-left: 20px; /* Center align with track */
+                    padding-left: 20px;
                     opacity: 0.5;
                     transition: all 0.3s;
                     cursor: default;
                     white-space: nowrap;
+                    overflow: hidden; /* Prevent spill */
                 }
 
                 .step-item.active {
@@ -139,20 +147,24 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage 
                     transition: all 0.3s;
                     position: relative;
                     z-index: 2;
+                    flex-shrink: 0; /* PREVENT SQUISHING */
+                }
+
+                /* Center marker in collapsed state */
+                .side-nav:not(.expanded) .step-item {
+                    justify-content: center;
+                    padding-left: 0;
                 }
 
                 .step-item.active .step-marker {
                     border-color: var(--accent-light);
                     color: white;
                     background: var(--accent);
-                    
-                    /* PULSING GLOW EFFECT */
                     box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2), 0 0 20px var(--accent-glow);
                     transform: scale(1.15);
                 }
 
                 .step-item.completed .step-marker {
-                    background: var(--success); /* Green for done? or Accent? stick to Accent */
                     background: var(--accent-light);
                     border-color: var(--accent-light);
                     color: white;

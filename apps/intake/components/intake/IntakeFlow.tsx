@@ -316,7 +316,9 @@ export default function IntakeFlow({
     if (!intakeId || isLocked || loading) return;
 
     // 1. Auto-fill System Fields if missing
-    // These are required by schema but never asked by AI -> caused Sticky Step 1.
+    if (!payload.matter_type) {
+      updateField('matter_type', 'divorce'); // Valid default
+    }
     if (!payload.date_of_intake) {
       updateField('date_of_intake', new Date().toISOString().split('T')[0]);
     }
@@ -571,6 +573,16 @@ export default function IntakeFlow({
 
 
 
+  // Debug Missing Fields
+  useEffect(() => {
+    if (visibleSteps.length > 0) {
+      const step1 = visibleSteps[0];
+      const missing = missingFieldsForSection(payload, GA_DIVORCE_CUSTODY_V1, step1.id);
+      console.log('[DEBUG] Step 1 Missing Fields:', missing);
+      console.log('[DEBUG] Current Payload:', payload);
+    }
+  }, [payload, visibleSteps]);
+
   return (
     <IntakeLayout
       firmName={firm?.firm_name}
@@ -579,16 +591,27 @@ export default function IntakeFlow({
       completionPercentage={totalCompletion}
       sidebar={
         <IntakeSidebar
-          open={true} // Always open
+          open={sidebarOpen}
           payload={payload}
           firmName={firm?.firm_name}
-          onToggle={() => { }}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
         />
       }
     >
       <div className="flex h-full relative">
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col relative min-w-0 bg-bg">
+          {/* Mobile Toggle for Sidebar */}
+          {!sidebarOpen && (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="absolute top-4 right-4 z-40 p-2 bg-surface-1 border border-border rounded-lg shadow-sm hover:bg-surface-2 transition-colors lg:hidden"
+            >
+              <span className="sr-only">Open Case Details</span>
+              {/* Icon placeholder - usually Info or Sidebar icon */}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><line x1="15" x2="15" y1="3" y2="21" /></svg>
+            </button>
+          )}
           <AnimatePresence mode="wait">
             {/* REVIEW SCREEN */}
             {status === 'ready_for_review' || status === 'submitted' ? (

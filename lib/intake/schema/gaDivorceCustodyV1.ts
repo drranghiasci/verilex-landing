@@ -38,7 +38,7 @@ export const GA_DIVORCE_CUSTODY_V1: SchemaDef = {
         {
           key: 'has_children',
           type: 'boolean',
-          required: true,
+          required: false,
           notes: 'Determines if children sections are shown',
         },
         {
