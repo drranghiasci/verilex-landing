@@ -9,10 +9,11 @@ type IntakeSidebarProps = {
   onToggle: () => void;
 };
 
-export default function IntakeSidebar({ open, payload, firmName, onToggle }: IntakeSidebarProps) {
+export default function IntakeSidebar({ open, payload = {}, firmName, onToggle }: IntakeSidebarProps) {
   // Simple flat list of fields for now. 
   // In a real implementation, we would derive this from the schema.
   const fields = useMemo(() => {
+    if (!payload) return [];
     return Object.entries(payload).filter(([key, value]) => {
       // Filter out internal fields
       if (key.startsWith('_')) return false;

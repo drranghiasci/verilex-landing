@@ -589,6 +589,7 @@ export default function IntakeFlow({
       steps={visibleSteps}
       currentStepIndex={currentStepIndex}
       completionPercentage={totalCompletion}
+      sidebarOpen={sidebarOpen}
       sidebar={
         <IntakeSidebar
           open={sidebarOpen}

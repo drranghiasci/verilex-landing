@@ -10,6 +10,7 @@ type StepInfo = {
 };
 
 
+
 type IntakeLayoutProps = {
     children: ReactNode;
     firmName?: string;
@@ -17,6 +18,7 @@ type IntakeLayoutProps = {
     currentStepIndex: number;
     completionPercentage: number;
     sidebar?: ReactNode; // New prop for the right sidebar
+    sidebarOpen?: boolean;
 };
 
 export default function IntakeLayout({
@@ -25,7 +27,8 @@ export default function IntakeLayout({
     steps,
     currentStepIndex,
     completionPercentage,
-    sidebar
+    sidebar,
+    sidebarOpen = true // Default to true if not passed
 }: IntakeLayoutProps) {
     return (
         <div className="layout-roots">
@@ -65,9 +68,9 @@ export default function IntakeLayout({
                     display: flex;
                     flex-direction: column;
                     position: relative;
-                    /* Create space for right sidebar if present */
-                    margin-right: ${sidebar ? '320px' : '0'}; 
-                    transition: margin-right 0.3s ease;
+                    /* Create space for right sidebar if present AND open */
+                    margin-right: ${sidebar && sidebarOpen ? '320px' : '0'}; 
+                    transition: margin-right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
                 }
 
                 .right-sidebar {
@@ -76,10 +79,14 @@ export default function IntakeLayout({
                     top: 0;
                     bottom: 0;
                     width: 320px;
-                    background: rgba(10, 10, 15, 0.4);
-                    backdrop-filter: blur(10px);
-                    border-left: 1px solid var(--border);
+                    /* We don't set background here, let the child (IntakeSidebar) handle it */
                     z-index: 40;
+                    pointer-events: none; /* Let clicks pass through if empty/transparent */
+                }
+                
+                /* Allow clicks on children */
+                .right-sidebar > * {
+                    pointer-events: auto;
                 }
 
                 .content-area {
@@ -106,12 +113,10 @@ export default function IntakeLayout({
                 }
 
                 @media (max-width: 1024px) {
-                    .right-sidebar {
-                        display: none; /* Hide on smaller screens for now */
-                    }
                     .main-content {
-                        margin-right: 0;
+                        margin-right: 0 !important; /* Always 0 on mobile */
                     }
+                    /* We don't hide .right-sidebar because IntakeSidebar manages its own off-canvas state */
                 }
             `}</style>
         </div>
