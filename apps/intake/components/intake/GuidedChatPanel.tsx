@@ -1,9 +1,9 @@
-
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Button from '../ui/Button';
+import { ArrowUp } from 'lucide-react';
 import ChatMessage from './chat/ChatMessage';
+import VoiceInput from './chat/VoiceInput';
 import type { IntakeMessage } from '../../../../lib/intake/intakeApi';
-import type { PromptLibrary } from '../../../../lib/intake/guidedChat/types';
+import { PromptLibrary } from '../../../../lib/intake/guidedChat/promptLibrary';
 
 type ChatStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -48,22 +48,16 @@ export default function GuidedChatPanel({
   // Initial Seeding: If chat is empty, AI should speak first
   useEffect(() => {
     if (transcript.length === 0 && section?.narrativePrompt && token) {
-      // Trigger the AI to start the convo
-      // We send a hidden system message to the API to "kickstart" it
-      // But we can just call handleSend with a special flag or just empty?
-      // Actually, let's just use the API directly to avoid UI flicker
       const kickstart = async () => {
         setIsAiTyping(true);
         try {
-          // We send an empty message or a special "start" signal
-          // The system prompt logic will see missing fields and generate the first question
           const response = await fetch('/api/intake/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               token,
-              message: 'START_CONVERSATION', // Special signal if we want, or just "Hello"
-              history: [], // Empty history
+              message: 'START_CONVERSATION',
+              history: [],
               sectionId,
             }),
           });
@@ -80,7 +74,6 @@ export default function GuidedChatPanel({
           }
         } catch (e: any) {
           console.error(e);
-          // If kickstart fails, we should let them know
           const errorMsg: IntakeMessage = {
             source: 'system',
             channel: 'chat',
@@ -97,7 +90,6 @@ export default function GuidedChatPanel({
   }, [transcript.length, section, token]);
 
   const handleSend = async (overrideMessage?: string) => {
-    // If event object is passed by onClick (common react pattern), ignore it
     const msg = typeof overrideMessage === 'string' ? overrideMessage : inputText;
     const trimmed = msg.trim();
 
@@ -106,8 +98,6 @@ export default function GuidedChatPanel({
     setStatus('saving');
     setInputText('');
 
-    // 1. Optimistic: Add User Message (Hide RESUME_INTAKE from UI if we want, but showing it is fine)
-    // If RESUME_INTAKE, maybe we show "Resuming..." or just the text
     const displayContent = trimmed === 'RESUME_INTAKE' ? 'Resuming...' : trimmed;
 
     const userMsg: IntakeMessage = { source: 'client', channel: 'chat', content: displayContent };
@@ -116,7 +106,6 @@ export default function GuidedChatPanel({
     setIsAiTyping(true);
 
     try {
-      // 2. Call AI API
       const response = await fetch('/api/intake/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -134,21 +123,15 @@ export default function GuidedChatPanel({
       }
       const data = await response.json();
 
-      // Check Safety Trigger
       if (data.safetyTrigger) {
-        // We can handle this by showing a special message or routing
-        // For now, let's inject a system message
         const safetyMsg: IntakeMessage = {
           source: 'system',
           channel: 'chat',
           content: '⚠️ **WARNING: IMMEDIATE SAFETY CONCERN DETECTED.**\n\nPlease call **911** immediately if you are in danger.\n\nThis intake session is paused.'
         };
         await onSaveMessages([safetyMsg]);
-        // Disable further input? We rely on 'disabled' prop, but we can't change it here easily without parent state.
-        // But the AI likely stopped asking questions, so user is blocked anyway.
       }
 
-      // 3. Add AI Response (if any)
       if (data.response && !data.safetyTrigger) {
         const aiMsg: IntakeMessage = {
           source: 'system',
@@ -159,7 +142,6 @@ export default function GuidedChatPanel({
         await onSaveMessages([aiMsg]);
       }
 
-      // 4. Refresh payload if updates occurred
       if (data.updates && Object.keys(data.updates).length > 0) {
         onRefresh?.();
       }
@@ -188,22 +170,19 @@ export default function GuidedChatPanel({
     }
   };
 
-
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current;
     if (el) {
       el.style.height = 'auto';
-      el.style.height = `${Math.min(el.scrollHeight, 200)}px`; // Max height 200px
+      el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
     }
   }, [inputText]);
 
   return (
     <div className="chat-stream">
       <div className="transcript-container">
-        {/* Render History */}
         {transcript.map((msg, i) => (
           <ChatMessage
             key={i}
@@ -227,27 +206,35 @@ export default function GuidedChatPanel({
 
       <div className="input-area">
         <div className="input-wrapper">
-          <textarea
-            ref={textareaRef}
-            className="chat-input"
-            rows={1}
-            placeholder="Type your response..."
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={disabled || isAiTyping}
-          />
-          <Button
-            variant="primary"
-            onClick={() => handleSend()}
-            disabled={disabled || isAiTyping || !inputText.trim()}
-            className="send-btn"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 19V5" />
-              <path d="M5 12l7-7 7 7" />
-            </svg>
-          </Button>
+          <div className="relative w-full">
+            <textarea
+              ref={textareaRef}
+              className="chat-input"
+              rows={1}
+              placeholder={isAiTyping ? 'Intake paused for safety.' : 'Type your answer...'}
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={disabled || isAiTyping}
+            />
+            <div className="absolute right-2 bottom-2 flex items-center gap-1">
+              <VoiceInput
+                onTextReady={(text) => {
+                  const newValue = inputText ? `${inputText} ${text}` : text;
+                  setInputText(newValue);
+                  textareaRef.current?.focus();
+                }}
+                disabled={disabled || isAiTyping}
+              />
+              <button
+                onClick={() => handleSend()}
+                disabled={!inputText.trim() || disabled || isAiTyping}
+                className="send-btn"
+              >
+                <ArrowUp size={20} />
+              </button>
+            </div>
+          </div>
         </div>
         <div className="resume-container">
           <button
@@ -291,7 +278,7 @@ export default function GuidedChatPanel({
         }
 
         .typing-indicator {
-          padding: 16px 0 16px 52px; /* avatar width offset */
+          padding: 16px 0 16px 52px;
           display: flex;
           gap: 4px;
         }
@@ -333,12 +320,12 @@ export default function GuidedChatPanel({
         }
 
         .chat-input {
-          flex: 1;
+          width: 100%;
           background: transparent;
           border: none;
           color: var(--text-0);
           font-size: 15px;
-          padding: 8px 0;
+          padding: 8px 48px 8px 0; /* right padding for buttons */
           font-family: inherit;
           resize: none;
           min-height: 24px;
@@ -347,19 +334,30 @@ export default function GuidedChatPanel({
 
         .chat-input:focus {
           outline: none;
-        }
+      }
         
         .send-btn {
-            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            border: none;
             width: 32px;
             height: 32px;
             padding: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-left: 8px;
-            margin-bottom: 2px; 
             flex-shrink: 0;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .send-btn:hover:not(:disabled) {
+           filter: brightness(1.1);
+        }
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--surface-3); /* disabled state grey */
         }
       `}</style>
     </div>

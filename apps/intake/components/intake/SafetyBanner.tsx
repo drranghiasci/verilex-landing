@@ -3,18 +3,20 @@ import Button from '../ui/Button';
 import type { SafetyBanner as SafetyBannerType } from '../../../../lib/intake/gating';
 
 type SafetyBannerProps = {
-  banner: SafetyBannerType;
+  title: string;
+  lines: string[];
+  variant?: 'info' | 'error' | 'success';
   onDismiss: () => void;
 };
 
-export default function SafetyBanner({ banner, onDismiss }: SafetyBannerProps) {
+export default function SafetyBanner({ title, lines, variant = 'error', onDismiss }: SafetyBannerProps) {
   return (
-    <Alert variant={banner.variant}>
+    <Alert variant={variant}>
       <div className="safety">
         <div className="safety__content">
-          <h3 className="safety__title">{banner.title}</h3>
-          {banner.lines.map((line, index) => (
-            <p key={`${banner.key}-${index}`} className="safety__line">
+          <h3 className="safety__title">{title}</h3>
+          {lines.map((line, index) => (
+            <p key={`${index}`} className="safety__line">
               {line}
             </p>
           ))}

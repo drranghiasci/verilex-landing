@@ -2,6 +2,7 @@ import { GA_DIVORCE_CUSTODY_V1 } from '../schema/gaDivorceCustodyV1';
 import type { SchemaDef } from '../schema/types';
 import { generatePromptsFromSchema } from './generatePromptsFromSchema';
 import type { PromptLibrary } from './types';
+export type { PromptLibrary };
 
 export function assertPromptCoverage(schema: SchemaDef, library: PromptLibrary) {
   const missing: string[] = [];

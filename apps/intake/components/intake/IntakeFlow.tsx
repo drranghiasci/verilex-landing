@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
+import { AnimatePresence, motion } from 'framer-motion';
 import { intakeSteps } from './steps';
 import WarningsPanel from './WarningsPanel';
 import ReviewSubmitStep from './steps/ReviewSubmitStep';
@@ -7,7 +8,6 @@ import LockedConfirmation from './LockedConfirmation';
 import ErrorBanner from './ErrorBanner';
 import GuidedChatPanel from './GuidedChatPanel';
 import SafetyBanner from './SafetyBanner';
-import IntakeHeader from './IntakeHeader';
 import IntakeSidebar from './IntakeSidebar';
 import { useIntakeSession } from './useIntakeSession';
 import Button from '../ui/Button';
@@ -28,7 +28,9 @@ import {
 import { GUIDED_PROMPT_LIBRARY } from '../../../../lib/intake/guidedChat/promptLibrary';
 import { missingFieldsForSection } from '../../../../lib/intake/guidedChat/missingFields';
 import { globalStyles } from './styles';
-import IntakeReview from './IntakeReview'; // Import the new component
+import IntakeReview from './IntakeReview';
+import IntakeLayout from './IntakeLayout';
+import { X } from 'lucide-react'; // Import the new component
 
 const fieldToSectionId = new Map<string, string>();
 for (const section of intakeSections) {
@@ -269,9 +271,16 @@ export default function IntakeFlow({
   useEffect(() => {
     if (!intakeId || isLocked || loading) return;
 
-    // 1. Auto-fill Date if missing
+    // 1. Auto-fill System Fields if missing
+    // These are required by schema but never asked by AI -> caused Sticky Step 1.
     if (!payload.date_of_intake) {
       updateField('date_of_intake', new Date().toISOString().split('T')[0]);
+    }
+    if (!payload.urgency_level) {
+      updateField('urgency_level', 'routine');
+    }
+    if (!payload.intake_channel) {
+      updateField('intake_channel', 'web');
     }
 
     // 2. Force Sync UI to first incomplete step
@@ -472,10 +481,11 @@ export default function IntakeFlow({
   if (intake?.status === 'submitted') {
     return (
       <div className="flow-container">
-        <IntakeHeader
-          currentStepIndex={stepsInfo.length}
+        <IntakeSidebar
+          open={sidebarOpen}
+          payload={payload}
           firmName={firm?.firm_name}
-          steps={stepsInfo}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
         />
         <div className="success-screen">
           <h1>Reference ID: {intake.id.slice(0, 8)}</h1>
@@ -503,40 +513,7 @@ export default function IntakeFlow({
     );
   }
 
-  // If Ready for Review
-  if (intake?.status === 'ready_for_review') {
-    return (
-      <div className="flow-container">
-        <IntakeHeader
-          currentStepIndex={stepsInfo.length} // Show as completed
-          firmName={firm?.firm_name}
-          steps={stepsInfo}
-        />
-        <main className="flow-main">
-          <IntakeReview
-            intake={intake}
-            schema={GA_DIVORCE_CUSTODY_V1}
-            onSubmit={async (questions) => {
-              const res = await fetch('/api/intake/submit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token, questions })
-              });
-              if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.details || 'Submission failed');
-              }
-              await load(token!);
-            }}
-          />
-        </main>
-        <style jsx>{`
-                  .flow-container { height: 100vh; display: flex; flex-direction: column; background: var(--bg); }
-                  .flow-main { flex: 1; overflow-y: auto; background: var(--surface-1); }
-              `}</style>
-      </div>
-    );
-  }
+
 
   // Loading state for resume
   if (mode === 'resume' && !hasLoaded) {
@@ -548,117 +525,142 @@ export default function IntakeFlow({
     );
   }
 
+  // Calculate total percentage for SideNav
+  const totalCompletion = useMemo(() => {
+    if (!visibleSteps.length) return 0;
+    const completedSteps = visibleSteps.filter((step, i) => i < currentStepIndex).length;
+    if (!visibleSteps.length) return 0;
+    // Simple step completion math:
+    return Math.round((currentStepIndex / visibleSteps.length) * 100);
+  }, [currentStepIndex, visibleSteps.length]);
+
   return (
-    <div className="intake-layout">
-      <style jsx global>{globalStyles}</style>
-      <IntakeHeader
-        firmName={firm?.firm_name}
-        steps={stepsInfo}
-        currentStepIndex={currentStepIndex}
-        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-      />
+    <IntakeLayout
+      firmName={firm?.firm_name}
+      steps={visibleSteps.map((s, i) => ({
+        id: s.id,
+        label: s.title,
+        isCompleted: i < currentStepIndex,
+        isActive: i === currentStepIndex
+      }))}
+      currentStepIndex={currentStepIndex}
+      completionPercentage={totalCompletion}
+    >
+      <div className="flex h-full relative">
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col relative min-w-0 bg-bg">
+          <AnimatePresence mode="wait">
+            {/* REVIEW SCREEN */}
+            {status === 'ready_for_review' || status === 'submitted' ? (
+              <motion.div
+                key="review"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="absolute inset-0 z-10 bg-bg overflow-y-auto"
+              >
+                <IntakeReview
+                  intake={intake!}
+                  schema={GA_DIVORCE_CUSTODY_V1}
+                  onSubmit={async (q) => {
+                    // Adapting to IntakeReview which returns questions string
+                    // But we need to call submit API? 
+                    // IntakeReview expects onSubmit to be async (questions) => void.
+                    // We can define a local wrapper or use the one we have?
+                    // Existing 'handleSubmit' is argumentless and submits the WHOLE payload.
+                    // IntakeReview seems to want to submit final questions.
 
-      <main className="intake-main">
-        <div className="chat-container">
+                    // Let's us inline implementation for now to match Review's expectation:
+                    const res = await fetch('/api/intake/submit', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ token, questions: q })
+                    });
+                    if (!res.ok) throw new Error('Submission failed');
+                    await load(token!);
+                  }}
+                />
+              </motion.div>
+            ) : (
+              /* CHAT SCREEN */
+              <motion.div
+                key="chat"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col h-full"
+              >
+                <GuidedChatPanel
+                  messages={messages}
+                  onSaveMessages={async (newMessages) => {
+                    if (isLocked) return;
+                    setUiError(null);
+                    queueMessages(newMessages);
+                    await flushPending();
+                  }}
+                  onJumpToField={(k) => setSidebarOpen(true)}
+                  sectionId={step?.id}
+                  library={GUIDED_PROMPT_LIBRARY}
+                  missingFields={missingFields}
+                  token={token}
+                  intakeId={intakeId}
+                  firmName={firm?.firm_name}
+                  disabled={isLocked || loading}
+                  onRefresh={() => load(token!)}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          <GuidedChatPanel
-            sectionId={step?.id}
-            library={GUIDED_PROMPT_LIBRARY}
-            missingFields={missingFields}
-            disabled={isLocked || loading}
-            messages={messages}
-            token={token}
-            intakeId={intakeId}
-            firmName={firm?.firm_name}
-            onSaveMessages={async (newMessages) => {
-              if (isLocked) return;
-              setUiError(null);
-              queueMessages(newMessages);
-              await flushPending();
-            }}
-            onRefresh={() => load(token!)} // Force reload to get updated payload
-            onJumpToField={(fieldKey) => {
-              setSidebarOpen(true);
-            }}
-          />
+          {/* Overlays */}
+          <div className="absolute top-4 left-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+            {activeBanners.map((banner) => (
+              <div key={banner.key} className="pointer-events-auto">
+                <SafetyBanner
+                  title={banner.title}
+                  lines={banner.lines}
+                  variant={banner.variant as any}
+                  onDismiss={() => {
+                    setDismissedBanners((prev) => ({ ...prev, [banner.key]: true }));
+                  }}
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
-        <IntakeSidebar
-          open={sidebarOpen}
-          payload={payload}
-          firmName={firm?.firm_name}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
-        />
-      </main>
-
+        {/* Right Sidebar (Read Only) */}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 350, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="border-l border-border bg-surface-1 overflow-hidden relative z-20 hidden lg:block"
+            >
+              <div className="h-full w-[350px] flex flex-col">
+                <div className="flex items-center justify-between p-4 border-b border-border">
+                  <h2 className="font-semibold text-sm">Case Details</h2>
+                  <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-surface-2 rounded text-text-2">
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  <IntakeSidebar
+                    open={sidebarOpen}
+                    payload={payload}
+                    firmName={firm?.firm_name}
+                    onToggle={() => setSidebarOpen(!sidebarOpen)}
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
       <ErrorBanner message={displayError} requestId={requestId} />
       {isLocked && <LockedConfirmation submittedAt={submittedAt} />}
-
-      <style jsx>{`
-        .intake-layout {
-          min-height: 100vh;
-          background: var(--bg);
-          display: flex;
-          flex-direction: column;
-        }
-
-        .sidebar-toggle-mobile {
-          position: fixed;
-          bottom: 24px;
-          right: 24px;
-          z-index: 100;
-          background: var(--primary);
-          color: white;
-          border: none;
-          border-radius: 24px;
-          padding: 12px 24px;
-          font-size: 16px;
-          cursor: pointer;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-          display: none; /* Hidden by default, shown on mobile */
-        }
-
-        @media (max-width: 768px) {
-          .sidebar-toggle-mobile {
-            display: block;
-          }
-        }
-
-        .flow-container {
-          display: flex;
-          flex-direction: column;
-          height: 100vh;
-          width: 100vw;
-          overflow: hidden;
-          background: var(--bg);
-          position: relative;
-        }
-
-        .intake-main {
-          flex: 1;
-          display: flex;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .chat-container {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          max-width: 900px;
-          margin: 0 auto;
-          width: 100%;
-          padding: 24px;
-        }
-
-        .flow-loading {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
-          color: var(--text-2);
-        }
-      `}</style>
-    </div>
+    </IntakeLayout>
   );
 }
