@@ -58,8 +58,9 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage 
                     left: 0;
                     top: 0;
                     bottom: 0;
-                    width: 64px; /* Collapsed width */
-                    background: var(--bg-surface, #111);
+                    width: 72px; /* Slightly wider */
+                    background: rgba(5, 5, 10, 0.6);
+                    backdrop-filter: blur(20px);
                     border-right: 1px solid var(--border);
                     z-index: 50;
                     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -70,16 +71,15 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage 
                 }
 
                 .side-nav.expanded {
-                    width: 240px; /* Expanded width */
-                    background: rgba(10, 10, 10, 0.95);
-                    backdrop-filter: blur(10px);
-                    box-shadow: 10px 0 30px rgba(0,0,0,0.3);
+                    width: 260px;
+                    background: rgba(10, 10, 15, 0.95);
+                    box-shadow: 10px 0 30px rgba(0,0,0,0.5);
                 }
 
                 /* Vertical Track */
                 .track {
                     position: absolute;
-                    left: 31px; /* Center of 64px is 32px, minus 1px width/2 */
+                    left: 35px; /* Center of 72px */
                     top: 0;
                     bottom: 0;
                     width: 2px;
@@ -92,7 +92,8 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage 
                     top: 0;
                     left: 0;
                     width: 100%;
-                    background: var(--primary, #3b82f6);
+                    background: linear-gradient(to bottom, var(--accent), var(--accent-light));
+                    box-shadow: 0 0 10px var(--accent-glow);
                     transition: height 0.5s ease;
                 }
 
@@ -101,18 +102,18 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage 
                     z-index: 1;
                     display: flex;
                     flex-direction: column;
-                    gap: 24px;
-                    padding-top: 40px; /* Offset from top */
+                    gap: 32px; /* More breathing room */
+                    padding-top: 60px;
                 }
 
                 .step-item {
                     display: flex;
                     align-items: center;
                     height: 32px;
-                    padding-left: 16px; /* (64 - 32)/2 */
-                    opacity: 0.6;
-                    transition: all 0.2s;
-                    cursor: default; /* Read only for now */
+                    padding-left: 20px; /* Center align with track */
+                    opacity: 0.5;
+                    transition: all 0.3s;
+                    cursor: default;
                     white-space: nowrap;
                 }
 
@@ -135,21 +136,25 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage 
                     font-size: 12px;
                     font-weight: 700;
                     color: var(--text-2);
-                    transition: all 0.2s;
+                    transition: all 0.3s;
                     position: relative;
                     z-index: 2;
                 }
 
                 .step-item.active .step-marker {
-                    border-color: var(--primary, #3b82f6);
-                    color: var(--primary, #3b82f6);
-                    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-                    transform: scale(1.1);
+                    border-color: var(--accent-light);
+                    color: white;
+                    background: var(--accent);
+                    
+                    /* PULSING GLOW EFFECT */
+                    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2), 0 0 20px var(--accent-glow);
+                    transform: scale(1.15);
                 }
 
                 .step-item.completed .step-marker {
-                    background: var(--primary, #3b82f6);
-                    border-color: var(--primary, #3b82f6);
+                    background: var(--success); /* Green for done? or Accent? stick to Accent */
+                    background: var(--accent-light);
+                    border-color: var(--accent-light);
                     color: white;
                 }
 
@@ -160,12 +165,18 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage 
                     opacity: 0;
                     transform: translateX(-10px);
                     transition: all 0.2s;
+                    color: var(--text-1);
                 }
 
                 .side-nav.expanded .step-label {
                     opacity: 1;
                     transform: translateX(0);
-                    transition-delay: 0.1s;
+                    transition-delay: 0.05s;
+                }
+                
+                .step-item.active .step-label {
+                    color: var(--text-0);
+                    font-weight: 600;
                 }
             `}</style>
         </aside>

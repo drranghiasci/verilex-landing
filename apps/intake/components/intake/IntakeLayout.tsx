@@ -39,7 +39,7 @@ export default function IntakeLayout({ children, firmName, steps, currentStepInd
                 .layout-roots {
                     display: flex;
                     height: 100vh;
-                    background: var(--bg);
+
                     color: var(--text-0);
                     font-family: var(--font-sans);
                 }
