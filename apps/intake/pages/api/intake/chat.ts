@@ -193,16 +193,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             // For document requests, we usually want the AI to also say something like "I can help with that..."
             // If finalResponse is null, generate a confirmation message. 
+            // If finalResponse is null, generate a confirmation message. 
             if (!finalResponse) {
-                // Second turn
+                // Second turn: We must provide a tool output for EVERY tool call
+                const toolMessages = responseMessage.tool_calls.map((tc: any) => {
+                    const callName = tc.function.name;
+                    // For update_intake_field, we can return success
+                    if (callName === 'update_intake_field') {
+                        // We could try to return specific field success, but generic is fine for now
+                        return {
+                            role: 'tool',
+                            tool_call_id: tc.id,
+                            content: JSON.stringify({ success: true, updated: Object.keys(updates) }),
+                        };
+                    }
+                    // For request_document_upload
+                    if (callName === 'request_document_upload') {
+                        return {
+                            role: 'tool',
+                            tool_call_id: tc.id,
+                            content: JSON.stringify({ success: true, docRequestTriggered: true }),
+                        };
+                    }
+
+                    // Fallback
+                    return {
+                        role: 'tool',
+                        tool_call_id: tc.id,
+                        content: JSON.stringify({ success: true }),
+                    };
+                });
+
                 const secondTurnMessages: ChatCompletionMessageParam[] = [
                     ...messages,
                     responseMessage,
-                    {
-                        role: 'tool',
-                        tool_call_id: responseMessage.tool_calls[0].id,
-                        content: JSON.stringify({ success: true, updated: Object.keys(updates), docRequestTriggered: !!documentRequest }),
-                    }
+                    ...toolMessages as any[] // Cast primarily for strict checks, but structure matches
                 ];
                 const client = getOpenAIClient();
                 const secondCompletion = await client.chat.completions.create({
