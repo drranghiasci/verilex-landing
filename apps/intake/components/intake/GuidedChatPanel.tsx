@@ -76,6 +76,9 @@ export default function GuidedChatPanel({
               const aiMsg: IntakeMessage = { source: 'system', channel: 'chat', content: data.response };
               await onSaveMessages([aiMsg]);
             }
+          } else {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.details || errorData.error || 'Startup failed');
           }
         } catch (e: any) {
           console.error(e);
@@ -121,7 +124,10 @@ export default function GuidedChatPanel({
         }),
       });
 
-      if (!response.ok) throw new Error('AI request failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.details || errorData.error || 'AI request failed');
+      }
       const data = await response.json();
 
       // 3. Add AI Response
