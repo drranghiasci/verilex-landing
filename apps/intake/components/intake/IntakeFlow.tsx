@@ -175,6 +175,13 @@ export default function IntakeFlow({
     });
   }, [matterType, validationSummary]);
 
+  // Calculate total percentage for SideNav
+  const totalCompletion = useMemo(() => {
+    if (!visibleSteps.length) return 0;
+    // Simple step completion math:
+    return Math.round((currentStepIndex / visibleSteps.length) * 100);
+  }, [currentStepIndex, visibleSteps.length]);
+
   useEffect(() => {
     if (!initialToken) return;
     if (initialToken !== token) {
@@ -526,13 +533,7 @@ export default function IntakeFlow({
   }
 
   // Calculate total percentage for SideNav
-  const totalCompletion = useMemo(() => {
-    if (!visibleSteps.length) return 0;
-    const completedSteps = visibleSteps.filter((step, i) => i < currentStepIndex).length;
-    if (!visibleSteps.length) return 0;
-    // Simple step completion math:
-    return Math.round((currentStepIndex / visibleSteps.length) * 100);
-  }, [currentStepIndex, visibleSteps.length]);
+
 
   return (
     <IntakeLayout
