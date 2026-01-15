@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // 2. Load Intake
         const { data: intake, error: loadError } = await supabaseAdmin
             .from('intakes')
-            .select('id, status, submitted_at, raw_payload, matter_type, locked') // Select locked if it exists, or derive it
+            .select('id, status, submitted_at, raw_payload, matter_type') // Select locked if it exists, or derive it
             .eq('id', intake_id)
             .eq('firm_id', firm_id)
             .single();
