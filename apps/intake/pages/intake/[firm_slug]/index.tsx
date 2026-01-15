@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import IntakeFlow from '../../../components/intake/IntakeFlow';
-import IntakeShell from '../../../components/intake/IntakeShell';
-import type { ResolveFirmResponse } from '../../../../../lib/intake/intakeApi';
+import IntakeLanding from '../../../components/intake/IntakeLanding';
 
 export default function IntakeStartPage() {
   const router = useRouter();
@@ -10,8 +9,6 @@ export default function IntakeStartPage() {
   const initialToken = typeof router.query.token === 'string' ? router.query.token : undefined;
   const [resumeToken, setResumeToken] = useState<string | null>(null);
   const [status, setStatus] = useState<'draft' | 'submitted' | null>(null);
-  const [firmName, setFirmName] = useState<string | null>(null);
-  const [branding, setBranding] = useState<ResolveFirmResponse['branding'] | null>(null);
 
   useEffect(() => {
     if (!router.isReady || typeof window === 'undefined') return;
@@ -29,18 +26,29 @@ export default function IntakeStartPage() {
   const resolvedToken = initialToken ?? resumeToken ?? undefined;
   const mode: 'new' | 'resume' = resolvedToken ? 'resume' : 'new';
 
-  return (
-    <IntakeShell title="Verilex Intake" status={status} firmName={firmName} branding={branding}>
-      <IntakeFlow
+  // Landing Page Mode (No token)
+  if (mode === 'new') {
+    return (
+      <IntakeLanding
         firmSlug={firmSlug}
-        mode={mode}
-        initialToken={resolvedToken}
-        onStatusChange={setStatus}
-        onFirmResolved={(firm) => {
-          setFirmName(firm?.firm_name ?? null);
-          setBranding(firm?.branding ?? null);
+        firmName={undefined}
+        onStart={(token) => {
+          const storageKey = `intake:token:${firmSlug}`;
+          window.localStorage.setItem(storageKey, token);
+          setResumeToken(token);
         }}
       />
-    </IntakeShell>
+    );
+  }
+
+  // Intake Experience Mode (Active token)
+  return (
+    <IntakeFlow
+      firmSlug={firmSlug}
+      mode={mode}
+      initialToken={resolvedToken}
+      onStatusChange={setStatus}
+    />
   );
 }
+

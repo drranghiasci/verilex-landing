@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Textarea from '../ui/Textarea';
+import ChatMessage from './chat/ChatMessage';
 import type { IntakeMessage } from '../../../../lib/intake/intakeApi';
 import type { FieldPrompt, PromptLibrary } from '../../../../lib/intake/guidedChat/types';
 import { formatLabel } from '../../../../lib/intake/validation';
@@ -72,216 +72,238 @@ export default function GuidedChatPanel({
 }: GuidedChatPanelProps) {
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [statuses, setStatuses] = useState<Record<string, ChatStatus>>({});
-  const [reveals, setReveals] = useState<Record<string, string[]>>({});
 
   const transcript = useMemo(() => messages.filter((message) => message.channel === 'chat'), [messages]);
   const section = library.sections[sectionId];
-
-  if (!section) {
-    return (
-      <aside className="chat-panel">
-        <Card className="chat-panel__card">
-          <div className="chat-panel__header">
-            <h3>Guided chat</h3>
-          </div>
-          <p className="muted">No guided prompts are available for this section.</p>
-        </Card>
-      </aside>
-    );
-  }
-
-  const narrative = section.narrativePrompt;
-  const narrativeResponse = findPromptResponse(narrative.prompt, transcript);
-  const narrativeValue = inputs[narrative.id] ?? '';
-
-  const requiredPrompts = missingFields
-    .map((fieldKey) => section.fieldPrompts[fieldKey])
-    .filter((prompt): prompt is FieldPrompt => Boolean(prompt))
-    .filter((prompt) => prompt.askIfMissing);
-
-  const sendPrompt = async (promptId: string, promptText: string, responseText: string, prompt?: FieldPrompt) => {
-    const trimmed = responseText.trim();
-    if (!trimmed) return;
-    setStatuses((prev) => ({ ...prev, [promptId]: 'saving' }));
-    const result = await onSendMessage(promptText, trimmed);
-    if (result.ok) {
-      setInputs((prev) => ({ ...prev, [promptId]: '' }));
-      setStatuses((prev) => ({ ...prev, [promptId]: 'saved' }));
-      if (prompt) {
-        const revealPaths = resolveRevealPaths(prompt, trimmed);
-        if (revealPaths.length > 0) {
-          setReveals((prev) => ({ ...prev, [promptId]: revealPaths }));
-        }
-      }
-      setTimeout(() => {
-        setStatuses((prev) => ({ ...prev, [promptId]: 'idle' }));
-      }, 1200);
-    } else {
-      setStatuses((prev) => ({ ...prev, [promptId]: 'error' }));
-    }
-  };
-
   const transcriptRef = useRef<HTMLDivElement>(null);
 
+  // Scroll to bottom on new message
   useEffect(() => {
     if (transcriptRef.current) {
       transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
     }
   }, [transcript.length]);
 
+  if (!section) {
+    return (
+      <div className="chat-area empty">
+        <p className="muted">No guided conversation available.</p>
+      </div>
+    );
+  }
+
+  // Logic: Determine Active Question (Narrative vs Next Required)
+  const narrative = section.narrativePrompt;
+  const narrativeResponse = findPromptResponse(narrative.prompt, transcript);
+
+  const requiredPrompts = missingFields
+    .map((fieldKey) => section.fieldPrompts[fieldKey])
+    .filter((prompt): prompt is FieldPrompt => Boolean(prompt))
+    .filter((prompt) => prompt.askIfMissing);
+
+  // First missing prompt is the active one
+  const activePrompt = !narrativeResponse ? null : requiredPrompts[0];
+
+  // Calculate actions (reveals) from *past* answers that are still relevant?
+  // For simplicity, we only check the active prompt's reveals if it was just answered? 
+  // But wait, if they are answered, they are in the transcript.
+  // We want to show buttons if a *recent* answer triggered them.
+  // Let's iterate all required prompts that HAVE answers, and collect their reveals.
+  // Actually, reveals are usually navigation jumps. 
+  const activeReveals = useMemo(() => {
+    const reveals: string[] = [];
+    Object.values(section.fieldPrompts).forEach(prompt => {
+      if (!prompt) return;
+      const resp = findPromptResponse(prompt.prompt, transcript);
+      if (resp) {
+        const paths = resolveRevealPaths(prompt, resp);
+        reveals.push(...paths);
+      }
+    });
+    // Also narrative might have reveals? (Unlikely in schema, but possible)
+    return Array.from(new Set(reveals));
+  }, [section, transcript]);
+
+  const handleSend = async (promptId: string, promptText: string, text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setStatuses((prev) => ({ ...prev, [promptId]: 'saving' }));
+
+    const result = await onSendMessage(promptText, trimmed);
+
+    if (result.ok) {
+      setInputs((prev) => ({ ...prev, [promptId]: '' }));
+      setStatuses((prev) => ({ ...prev, [promptId]: 'saved' }));
+      setTimeout(() => {
+        setStatuses((prev) => ({ ...prev, [promptId]: 'idle' }));
+      }, 1000);
+    } else {
+      setStatuses((prev) => ({ ...prev, [promptId]: 'error' }));
+    }
+  };
+
   return (
-    <aside className="chat-panel">
-      <Card className="chat-panel__card">
-        <div className="chat-panel__header">
-          <div>
-            <h3>Guided questions</h3>
-            <p className="muted">Your answers are saved verbatim in the transcript.</p>
-          </div>
-          <span className="pill">Chat saved</span>
-        </div>
+    <div className="chat-stream">
+      <div className="transcript-container" ref={transcriptRef}>
+        {/* Render History */}
+        {transcript.map((msg, i) => (
+          <ChatMessage key={i} message={msg} isLatest={i === transcript.length - 1} />
+        ))}
 
-        <div className="chat-panel__questions">
+        {/* Render Active Turn */}
+        <div className="active-turn">
+          {/* If Narrative Not Answered */}
           {!narrativeResponse && (
-            <div className="chat-panel__question">
-              <div className="chat__prompt">{narrative.prompt}</div>
-              {narrative.helperText && <div className="chat__helper muted">{narrative.helperText}</div>}
-              <Textarea
-                className="chat__input"
-                rows={3}
-                placeholder="Share here (optional)..."
-                value={narrativeValue}
-                onChange={(event) =>
-                  setInputs((prev) => ({ ...prev, [narrative.id]: event.target.value }))
-                }
-                disabled={Boolean(disabled)}
-                unstyled
+            <div className="prompt-block">
+              <ChatMessage
+                message={{ source: 'system', channel: 'chat', content: narrative.prompt }}
+                isLatest={true}
               />
-              <div className="chat__actions">
-                <Button
-                  variant="primary"
-                  onClick={() => sendPrompt(narrative.id, narrative.prompt, narrativeValue)}
-                  disabled={Boolean(disabled) || narrativeValue.trim().length === 0}
-                >
-                  Add to transcript
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {requiredPrompts.length > 0 && (
-            <div className="chat-panel__question">
-              <div className="chat__prompt">
-                To keep things moving, I have a few quick questions to complete this section.
-              </div>
-            </div>
-          )}
-
-          {requiredPrompts.length === 0 && (
-            <div className="chat-panel__question">
-              <div className="chat__prompt">All required fields in this section are complete.</div>
-            </div>
-          )}
-
-          {requiredPrompts.map((prompt) => {
-            const promptId = prompt.fieldKey;
-            const existingResponse = findPromptResponse(prompt.prompt, transcript);
-            const responseValue = inputs[promptId] ?? '';
-            const status = statuses[promptId] ?? 'idle';
-            const revealPaths =
-              reveals[promptId] ?? resolveRevealPaths(prompt, existingResponse);
-
-            return (
-              <div key={promptId} className="chat-panel__question">
-                <div className="chat__prompt">{prompt.prompt}</div>
-                {prompt.helperText && <div className="chat__helper muted">{prompt.helperText}</div>}
-                {existingResponse ? (
-                  <>
-                    <div className="chat__response">Answered: {existingResponse}</div>
-                    {revealPaths.length > 0 && (
-                      <div className="chat__actions">
-                        {revealPaths.map((fieldKey) => (
-                          <Button
-                            key={fieldKey}
-                            variant="secondary"
-                            onClick={() => onJumpToField(fieldKey)}
-                            disabled={Boolean(disabled)}
-                          >
-                            Open {formatLabel(fieldKey)}
-                          </Button>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <Textarea
-                      className="chat__input"
-                      rows={3}
-                      placeholder="Type your response..."
-                      value={responseValue}
-                      onChange={(event) =>
-                        setInputs((prev) => ({ ...prev, [promptId]: event.target.value }))
-                      }
-                      disabled={Boolean(disabled)}
-                      unstyled
-                    />
-                    <div className="chat__actions">
-                      <Button
-                        variant="primary"
-                        onClick={() => sendPrompt(promptId, prompt.prompt, responseValue, prompt)}
-                        disabled={Boolean(disabled) || status === 'saving' || responseValue.trim().length === 0}
-                      >
-                        {status === 'saving' ? 'Saving...' : 'Add to transcript'}
-                      </Button>
-                      {status === 'saved' && <span className="chat__status">Saved</span>}
-                      {status === 'error' && <span className="chat__status error">Failed to save</span>}
-                    </div>
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-
-      <Card className="chat-panel__card">
-        <div className="chat-panel__header">
-          <h3>Transcript</h3>
-          <span className="pill">{transcript.length} messages</span>
-        </div>
-        {transcript.length === 0 ? (
-          <p className="muted">No transcript messages yet.</p>
-        ) : (
-          <div className="chat-panel__transcript" ref={transcriptRef}>
-            {transcript.map((message, index) => {
-              const isClient = message.source === 'client';
-              return (
-                <div
-                  key={`${message.channel}-${index}`}
-                  className={`chat-panel__bubble ${isClient ? 'is-client' : ''}`}
-                >
-                  <div className="chat-panel__avatar">
-                    {isClient ? (
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                        <circle cx="12" cy="7" r="4" />
-                      </svg>
-                    ) : (
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" />
-                        <rect x="5" y="9" width="14" height="10" rx="2" />
-                        <path d="M9 21v2" />
-                        <path d="M15 21v2" />
-                      </svg>
-                    )}
-                  </div>
-                  <div className="chat-panel__content">{message.content}</div>
+              <div className="input-wrapper">
+                <Textarea
+                  className="chat-input"
+                  rows={2}
+                  placeholder="Type your response..."
+                  value={inputs[narrative.id] ?? ''}
+                  onChange={(e) => setInputs(p => ({ ...p, [narrative.id]: e.target.value }))}
+                  disabled={disabled}
+                  unstyled
+                />
+                <div className="input-actions">
+                  <Button
+                    variant="primary"
+                    onClick={() => handleSend(narrative.id, narrative.prompt, inputs[narrative.id] ?? '')}
+                    disabled={disabled || !inputs[narrative.id]?.trim()}
+                  >
+                    Send
+                  </Button>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </Card>
-    </aside>
+              </div>
+            </div>
+          )}
+
+          {/* If Narrative Answered, Show Next Required Prompt */}
+          {narrativeResponse && activePrompt && (
+            <div className="prompt-block">
+              <ChatMessage
+                message={{ source: 'system', channel: 'chat', content: activePrompt.prompt }}
+                isLatest={true}
+              />
+              <div className="input-wrapper">
+                <Textarea
+                  className="chat-input"
+                  rows={2}
+                  placeholder="Type your response..."
+                  value={inputs[activePrompt.fieldKey] ?? ''}
+                  onChange={(e) => setInputs(p => ({ ...p, [activePrompt.fieldKey]: e.target.value }))}
+                  disabled={disabled}
+                  unstyled
+                />
+                <div className="input-actions">
+                  <Button
+                    variant="primary"
+                    onClick={() => handleSend(activePrompt.fieldKey, activePrompt.prompt, inputs[activePrompt.fieldKey] ?? '')}
+                    disabled={disabled || !inputs[activePrompt.fieldKey]?.trim()}
+                  >
+                    Send
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* If All Complete */}
+          {narrativeResponse && !activePrompt && (
+            <ChatMessage
+              message={{ source: 'system', channel: 'chat', content: "All set for this section. Proceeding..." }}
+              isLatest={true}
+            />
+          )}
+
+          {/* Suggested Actions (Reveals) */}
+          {activeReveals.length > 0 && (
+            <div className="suggested-actions">
+              {activeReveals.map(fieldKey => (
+                <Button
+                  key={fieldKey}
+                  variant="secondary"
+                  onClick={() => onJumpToField(fieldKey)}
+                  disabled={disabled}
+                  className="action-pill"
+                >
+                  Edit {formatLabel(fieldKey)}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <style jsx>{`
+        .chat-stream {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          width: 100%;
+          overflow: hidden; /* Main main scroll via container */
+        }
+
+        .transcript-container {
+          flex: 1;
+          overflow-y: auto;
+          padding-bottom: 40px;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .active-turn {
+          margin-top: 24px;
+          animation: slideUp 0.4s ease-out;
+        }
+
+        .input-wrapper {
+          margin-left: 44px; /* Align with text, offset by avatar (28+16) */
+          margin-top: 16px;
+          position: relative;
+        }
+
+        .chat-input {
+          width: 100%;
+          background: transparent;
+          border: none;
+          border-bottom: 1px solid var(--border);
+          color: var(--text-0);
+          font-size: 16px;
+          padding: 8px 0;
+          font-family: inherit;
+          resize: none;
+          transition: border-color 0.2s;
+        }
+
+        .chat-input:focus {
+          outline: none;
+          border-color: var(--text-1);
+        }
+
+        .input-actions {
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 12px;
+        }
+
+        .suggested-actions {
+          margin-top: 24px;
+          margin-left: 44px;
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    </div>
   );
 }

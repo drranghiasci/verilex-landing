@@ -1,37 +1,41 @@
 {
   "polyfillFiles": [
-    "static/chunks/polyfills.js"
+    "static/chunks/polyfills-42372ed130431b0a.js"
   ],
-  "devFiles": [
-    "static/chunks/react-refresh.js"
-  ],
+  "devFiles": [],
   "ampDevFiles": [],
   "lowPriorityFiles": [
-    "static/development/_buildManifest.js",
-    "static/development/_ssgManifest.js"
+    "static/ppGuo8mXJFG0aBKyGV8rJ/_buildManifest.js",
+    "static/ppGuo8mXJFG0aBKyGV8rJ/_ssgManifest.js"
   ],
   "rootMainFiles": [],
   "rootMainFilesTree": {},
   "pages": {
     "/_app": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/_app.js"
+      "static/chunks/webpack-8cac0b4b405cede1.js",
+      "static/chunks/framework-ea3d558b313aa702.js",
+      "static/chunks/main-c5f7681b85bf20ae.js",
+      "static/chunks/pages/_app-6a4a911bdff9b319.js"
     ],
     "/_error": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/_error.js"
+      "static/chunks/webpack-8cac0b4b405cede1.js",
+      "static/chunks/framework-ea3d558b313aa702.js",
+      "static/chunks/main-c5f7681b85bf20ae.js",
+      "static/chunks/pages/_error-c80369959139eaeb.js"
     ],
     "/intake/[firm_slug]": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/intake/[firm_slug].js"
+      "static/chunks/webpack-8cac0b4b405cede1.js",
+      "static/chunks/framework-ea3d558b313aa702.js",
+      "static/chunks/main-c5f7681b85bf20ae.js",
+      "static/chunks/655-64449d709b777c81.js",
+      "static/chunks/pages/intake/[firm_slug]-5d2e632a1363cfce.js"
     ],
     "/intake/[firm_slug]/resume/[token]": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/intake/[firm_slug]/resume/[token].js"
+      "static/chunks/webpack-8cac0b4b405cede1.js",
+      "static/chunks/framework-ea3d558b313aa702.js",
+      "static/chunks/main-c5f7681b85bf20ae.js",
+      "static/chunks/655-64449d709b777c81.js",
+      "static/chunks/pages/intake/[firm_slug]/resume/[token]-7c5225f0dbe700d3.js"
     ]
   },
   "ampFirstPages": []

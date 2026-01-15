@@ -7,6 +7,8 @@ import LockedConfirmation from './LockedConfirmation';
 import ErrorBanner from './ErrorBanner';
 import GuidedChatPanel from './GuidedChatPanel';
 import SafetyBanner from './SafetyBanner';
+import IntakeHeader from './IntakeHeader';
+import IntakeSidebar from './IntakeSidebar';
 import { useIntakeSession } from './useIntakeSession';
 import Button from '../ui/Button';
 import Alert from '../ui/Alert';
@@ -25,6 +27,7 @@ import {
 } from '../../../../lib/intake/gating';
 import { GUIDED_PROMPT_LIBRARY } from '../../../../lib/intake/guidedChat/promptLibrary';
 import { missingFieldsForSection } from '../../../../lib/intake/guidedChat/missingFields';
+import { globalStyles } from './styles';
 
 const fieldToSectionId = new Map<string, string>();
 for (const section of intakeSections) {
@@ -238,7 +241,7 @@ export default function IntakeFlow({
     if (missingFields.length === 0 && currentStepIndex < visibleSteps.length - 1) {
       const timer = setTimeout(() => {
         handleSaveStep();
-      }, 1500); // 1.5s delay for user to read "Complete"
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [missingFields.length, hasMissingRequired, isLocked, loading, currentStepIndex, visibleSteps.length]);
@@ -276,7 +279,6 @@ export default function IntakeFlow({
     }
     if (currentStepIndex < visibleSteps.length - 1) {
       setCurrentStepIndex((prev) => Math.min(prev + 1, visibleSteps.length - 1));
-      // Scroll to top
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -380,222 +382,106 @@ export default function IntakeFlow({
         </Card>
       );
     }
-
     return null;
   };
 
+  // New Layout Logic
   const displayError = uiError ?? error?.message ?? null;
   const requestId = error?.requestId ?? null;
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const stepsInfo = visibleSteps.map((s) => ({
+    id: s.id,
+    label: getSectionTitleForMatterType(s.id, matterType),
+  }));
 
   if (!intakeId) {
     return (
       <div className="flow">
+        <style jsx global>{globalStyles}</style>
         <ErrorBanner message={displayError} requestId={requestId} />
         {renderAccessGate()}
       </div>
     );
   }
 
+  // Loading state for resume
   if (mode === 'resume' && !hasLoaded) {
     return (
-      <div className="flow">
-        <ErrorBanner message={displayError} requestId={requestId} />
-        <Card>
-          <h2>Loading intake...</h2>
-          <p className="muted">We are pulling your saved intake data.</p>
-        </Card>
+      <div className="flow-loading">
+        <style jsx global>{globalStyles}</style>
+        <p>Loading intake...</p>
       </div>
     );
   }
-
-  if (!step) {
-    return (
-      <div className="flow">
-        <ErrorBanner message={displayError} requestId={requestId} />
-        <Card>
-          <h2>No intake sections available</h2>
-          <p className="muted">Please refresh or contact support.</p>
-        </Card>
-      </div>
-    );
-  }
-
-  const StepComponent = step.Component;
-  const handleJumpToSection = (sectionId: string) => {
-    const targetIndex = stepIndexById.get(sectionId);
-    if (targetIndex === undefined) return;
-    setCurrentStepIndex(targetIndex);
-  };
-
-  const handleStartNew = () => {
-    if (!firmSlug) return;
-    setUiError(null);
-    void router.push(`/intake/${firmSlug}?new=1`);
-  };
 
   return (
-    <div className="flow">
-      <ErrorBanner message={displayError} requestId={requestId} />
-      {isLocked && <LockedConfirmation submittedAt={submittedAt} />}
+    <div className="intake-layout">
+      <style jsx global>{globalStyles}</style>
+      <IntakeHeader
+        firmName={firm?.firm_name}
+        steps={stepsInfo}
+        currentStepIndex={currentStepIndex}
+      />
 
-      <div className="flow__header">
-        <div>
-          <h1>Georgia Divorce &amp; Custody Intake</h1>
-          <p className="muted">Complete every step. Required fields are enforced before submission.</p>
-        </div>
-        <div className="flow__meta">
-          <div>
-            <span className="muted">Intake ID</span>
-            <div className="mono">{intakeId}</div>
-          </div>
-          <div>
-            <span className="muted">Status</span>
-            <div className="pill">{status ?? 'draft'}</div>
-          </div>
-          {mode === 'resume' && (
-            <Button
-              variant="secondary"
-              onClick={handleStartNew}
-              disabled={loading}
-            >
-              Start new intake
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <div className="flow__body">
-        <aside className="steps">
-          <h3>Steps</h3>
-          {visibleSteps.map((item, index) => {
-            const missing = shouldShowMissingIndicators && (missingBySection[item.id] ?? []).length > 0;
-            return (
-              <Button
-                key={item.id}
-                variant="unstyled"
-                className={`steps__item ${index === currentStepIndex ? 'is-active' : ''}`}
-                onClick={() => setCurrentStepIndex(index)}
-              >
-                <span className="steps__index">{index + 1}</span>
-                <span className="steps__title">
-                  {getSectionTitleForMatterType(item.id, matterType)}
-                </span>
-                {missing && <span className="steps__alert">!</span>}
-              </Button>
-            );
-          })}
-          <div className="steps__footer">
-            <div className="muted">
-              Missing required: {shouldShowMissingIndicators ? validation.missingKeys.length : '-'}
-            </div>
-          </div>
-        </aside>
-
-        <div className="flow__panels">
+      <main className="intake-main">
+        <div className="chat-container">
           <GuidedChatPanel
-            sectionId={step.id}
+            sectionId={step?.id}
             library={GUIDED_PROMPT_LIBRARY}
             missingFields={missingFields}
             disabled={isLocked || loading}
             messages={messages}
             onSendMessage={handleAppendChatMessage}
             onJumpToField={(fieldKey) => {
-              const sectionId = fieldToSectionId.get(fieldKey);
-              if (sectionId) handleJumpToSection(sectionId);
+              setSidebarOpen(true);
             }}
           />
-
-          <main className="stage">
-            {step?.id === 'domestic_violence_risk'
-              && activeBanners.map((banner) => (
-                <SafetyBanner
-                  key={banner.key}
-                  banner={banner}
-                  onDismiss={() =>
-                    setDismissedBanners((prev) => ({ ...prev, [banner.key]: true }))
-                  }
-                />
-              ))}
-            <WarningsPanel items={inlineWarnings} />
-            {showRequiredErrors && hasMissingRequired && (
-              <Alert variant="info">Required fields are missing. They are highlighted in red.</Alert>
-            )}
-            {sectionContextNote && <Alert variant="info">{sectionContextNote}</Alert>}
-            <StepComponent
-              payload={payload}
-              missingKeys={sectionMissing}
-              disabled={isLocked}
-              titleOverride={sectionTitleOverride}
-              token={token}
-              intakeId={intakeId ?? undefined}
-              documents={documents}
-              onReload={() => {
-                if (token) void load(token);
-              }}
-              onFieldChange={(key, value) => {
-                setUiError(null);
-                updateField(key, value);
-              }}
-            />
-
-            <div className="actions">
-              <Button
-                variant="secondary"
-                onClick={() => setCurrentStepIndex((prev) => Math.max(prev - 1, 0))}
-                disabled={currentStepIndex === 0}
-              >
-                Back
-              </Button>
-              {currentStepIndex < visibleSteps.length - 1 ? (
-                <Button
-                  variant="primary"
-                  onClick={handleSaveStep}
-                  disabled={loading || isLocked}
-                >
-                  {loading ? 'Saving...' : 'Save & Continue'}
-                </Button>
-              ) : (
-                <Button
-                  variant="primary"
-                  onClick={handleSubmit}
-                  disabled={
-                    loading
-                    || validationSummary.missingRequiredPaths.length > 0
-                    || isLocked
-                    || !confirmFinal
-                  }
-                >
-                  {isLocked ? 'Submitted' : 'Submit intake'}
-                </Button>
-              )}
-            </div>
-
-            {currentStepIndex === visibleSteps.length - 1 && (
-              <>
-                {activeBanners.map((banner) => (
-                  <SafetyBanner
-                    key={`${banner.key}-review`}
-                    banner={banner}
-                    onDismiss={() =>
-                      setDismissedBanners((prev) => ({ ...prev, [banner.key]: true }))
-                    }
-                  />
-                ))}
-                <ReviewSubmitStep
-                  issues={validationIssues}
-                  messages={messages}
-                  onJump={handleJumpToSection}
-                  confirmChecked={confirmFinal}
-                  onConfirmChange={setConfirmFinal}
-                  disabled={isLocked}
-                />
-              </>
-            )}
-
-            <WarningsPanel items={warningItems} onJump={handleJumpToSection} />
-          </main>
         </div>
-      </div>
+
+        <IntakeSidebar
+          open={sidebarOpen}
+          payload={payload}
+          firmName={firm?.firm_name}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+        />
+      </main>
+
+      <ErrorBanner message={displayError} requestId={requestId} />
+      {isLocked && <LockedConfirmation submittedAt={submittedAt} />}
+
+      <style jsx>{`
+        .intake-layout {
+          min-height: 100vh;
+          background: var(--bg);
+          display: flex;
+          flex-direction: column;
+        }
+
+        .intake-main {
+          flex: 1;
+          display: flex;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .chat-container {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          max-width: 900px;
+          margin: 0 auto;
+          width: 100%;
+          padding: 24px;
+        }
+
+        .flow-loading {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          color: var(--text-2);
+        }
+      `}</style>
     </div>
   );
 }
