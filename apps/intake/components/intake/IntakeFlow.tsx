@@ -421,6 +421,7 @@ export default function IntakeFlow({
         firmName={firm?.firm_name}
         steps={stepsInfo}
         currentStepIndex={currentStepIndex}
+        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
       />
 
       <main className="intake-main">

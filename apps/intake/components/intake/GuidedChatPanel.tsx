@@ -4,8 +4,7 @@ import Button from '../ui/Button';
 import Textarea from '../ui/Textarea';
 import ChatMessage from './chat/ChatMessage';
 import type { IntakeMessage } from '../../../../lib/intake/intakeApi';
-import type { FieldPrompt, PromptLibrary } from '../../../../lib/intake/guidedChat/types';
-import { formatLabel } from '../../../../lib/intake/validation';
+import type { PromptLibrary } from '../../../../lib/intake/guidedChat/types';
 
 type ChatStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -22,66 +21,21 @@ type GuidedChatPanelProps = {
   onRefresh?: () => void;
 };
 
-function parseYesNo(response: string): boolean | null {
-  const normalized = response.trim().toLowerCase();
-  if (['yes', 'y', 'true', '1'].includes(normalized)) return true;
-  if (['no', 'n', 'false', '0'].includes(normalized)) return false;
-  return null;
-}
-
-function resolveRevealPaths(prompt: FieldPrompt, response: string | null): string[] {
-  if (!prompt.revealOn || !response) return [];
-  const { whenValue, revealPaths } = prompt.revealOn;
-
-  if (typeof whenValue === 'boolean') {
-    const parsed = parseYesNo(response);
-    if (parsed === null) return [];
-    return parsed === whenValue ? revealPaths : [];
-  }
-
-  if (typeof whenValue === 'string') {
-    return response.trim().toLowerCase() === whenValue.toLowerCase() ? revealPaths : [];
-  }
-
-  if (typeof whenValue === 'number') {
-    const parsed = Number(response);
-    if (Number.isNaN(parsed)) return [];
-    return parsed === whenValue ? revealPaths : [];
-  }
-
-  return [];
-}
-
-function findPromptResponse(prompt: string, transcript: IntakeMessage[]): string | null {
-  for (let idx = transcript.length - 1; idx >= 0; idx -= 1) {
-    const message = transcript[idx];
-    if (message.source === 'system' && message.content === prompt) {
-      for (let j = idx + 1; j < transcript.length; j += 1) {
-        const response = transcript[j];
-        if (response.source === 'client') return response.content;
-      }
-    }
-  }
-  return null;
-}
-
 export default function GuidedChatPanel({
   sectionId,
   library,
-  missingFields,
   messages,
   token,
   intakeId,
   disabled,
   onSaveMessages,
-  onJumpToField,
   onRefresh,
 }: GuidedChatPanelProps) {
-  const [inputs, setInputs] = useState<Record<string, string>>({});
-  const [statuses, setStatuses] = useState<Record<string, ChatStatus>>({});
+  const [inputText, setInputText] = useState('');
+  const [status, setStatus] = useState<ChatStatus>('idle');
   const [isAiTyping, setIsAiTyping] = useState(false);
 
-  // Filter messages to chat channel only (though props usually only pass chat)
+  // Filter messages to chat channel only
   const transcript = useMemo(() => messages.filter((message) => message.channel === 'chat'), [messages]);
   const section = library.sections[sectionId];
   const transcriptRef = useRef<HTMLDivElement>(null);
@@ -91,49 +45,27 @@ export default function GuidedChatPanel({
     if (transcriptRef.current) {
       transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
     }
-  }, [transcript.length]);
+  }, [transcript.length, isAiTyping]);
 
-  if (!section) {
-    return (
-      <div className="chat-area empty">
-        <p className="muted">No guided conversation available.</p>
-      </div>
-    );
-  }
+  // Initial Seeding: If chat is empty, AI should speak first
+  useEffect(() => {
+    if (transcript.length === 0 && section?.narrativePrompt && token) {
+      // We simulate an initial AI message if none exists
+      // But we don't want to double-send if the user reloads.
+      // We can just rely on the UI rendering an "intro" message if transcript is empty?
+      // Or better: effectively "start" the conversation.
+      // For now, let's just Render it as a ephemeral message if transcript empty.
+    }
+  }, [transcript.length, section, token]);
 
-  // Logic: Determine Active Question (Narrative vs Next Required)
-  const narrative = section.narrativePrompt;
-  const narrativeResponse = findPromptResponse(narrative.prompt, transcript);
-
-  const requiredPrompts = missingFields
-    .map((fieldKey) => section.fieldPrompts[fieldKey])
-    .filter((prompt): prompt is FieldPrompt => Boolean(prompt))
-    .filter((prompt) => prompt.askIfMissing);
-
-  // First missing prompt is the active one
-  const activePrompt = !narrativeResponse ? null : requiredPrompts[0];
-
-  const activeReveals = useMemo(() => {
-    const reveals: string[] = [];
-    Object.values(section.fieldPrompts).forEach(prompt => {
-      if (!prompt) return;
-      const resp = findPromptResponse(prompt.prompt, transcript);
-      if (resp) {
-        const paths = resolveRevealPaths(prompt, resp);
-        reveals.push(...paths);
-      }
-    });
-    return Array.from(new Set(reveals));
-  }, [section, transcript]);
-
-  const handleSend = async (promptId: string, promptText: string, text: string) => {
-    const trimmed = text.trim();
+  const handleSend = async () => {
+    const trimmed = inputText.trim();
     if (!trimmed || !token) return;
 
-    // 1. Optimistic: Add User Message
-    setStatuses((prev) => ({ ...prev, [promptId]: 'saving' }));
-    setInputs((prev) => ({ ...prev, [promptId]: '' }));
+    setStatus('saving');
+    setInputText('');
 
+    // 1. Optimistic: Add User Message
     const userMsg: IntakeMessage = { source: 'client', channel: 'chat', content: trimmed };
     await onSaveMessages([userMsg]);
 
@@ -171,20 +103,36 @@ export default function GuidedChatPanel({
         onRefresh?.();
       }
 
-      setStatuses((prev) => ({ ...prev, [promptId]: 'saved' }));
-      setTimeout(() => setStatuses((prev) => ({ ...prev, [promptId]: 'idle' })), 1000);
+      setStatus('saved');
+      setTimeout(() => setStatus('idle'), 1000);
 
     } catch (err) {
       console.error(err);
-      setStatuses((prev) => ({ ...prev, [promptId]: 'error' }));
+      setStatus('error');
     } finally {
       setIsAiTyping(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      void handleSend();
     }
   };
 
   return (
     <div className="chat-stream">
       <div className="transcript-container" ref={transcriptRef}>
+
+        {/* If transcript is empty, show the initial section prompt ephemerally */}
+        {transcript.length === 0 && section?.narrativePrompt && (
+          <ChatMessage
+            message={{ source: 'system', channel: 'chat', content: section.narrativePrompt.prompt }}
+            isLatest={false}
+          />
+        )}
+
         {/* Render History */}
         {transcript.map((msg, i) => (
           <ChatMessage
@@ -195,96 +143,39 @@ export default function GuidedChatPanel({
             intakeId={intakeId}
           />
         ))}
+
         {isAiTyping && (
-          <div className="typing-indicator muted">Verilex AI is checking...</div>
+          <div className="typing-indicator">
+            <span className="dot"></span>
+            <span className="dot"></span>
+            <span className="dot"></span>
+          </div>
         )}
+      </div>
 
-        {/* Render Active Turn */}
-        <div className="active-turn">
-          {/* If Narrative Not Answered */}
-          {!narrativeResponse && (
-            <div className="prompt-block">
-              <ChatMessage
-                message={{ source: 'system', channel: 'chat', content: narrative.prompt }}
-                isLatest={true}
-              />
-              <div className="input-wrapper">
-                <Textarea
-                  className="chat-input"
-                  rows={2}
-                  placeholder="Type your response..."
-                  value={inputs[narrative.id] ?? ''}
-                  onChange={(e) => setInputs(p => ({ ...p, [narrative.id]: e.target.value }))}
-                  disabled={disabled || isAiTyping}
-                  unstyled
-                />
-                <div className="input-actions">
-                  <Button
-                    variant="primary"
-                    onClick={() => handleSend(narrative.id, narrative.prompt, inputs[narrative.id] ?? '')}
-                    disabled={disabled || isAiTyping || !inputs[narrative.id]?.trim()}
-                  >
-                    Send
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* If Narrative Answered, Show Next Required Prompt */}
-          {narrativeResponse && activePrompt && (
-            <div className="prompt-block">
-              <ChatMessage
-                message={{ source: 'system', channel: 'chat', content: activePrompt.prompt }}
-                isLatest={true}
-              />
-              <div className="input-wrapper">
-                <Textarea
-                  className="chat-input"
-                  rows={2}
-                  placeholder="Type your response..."
-                  value={inputs[activePrompt.fieldKey] ?? ''}
-                  onChange={(e) => setInputs(p => ({ ...p, [activePrompt.fieldKey]: e.target.value }))}
-                  disabled={disabled || isAiTyping}
-                  unstyled
-                />
-                <div className="input-actions">
-                  <Button
-                    variant="primary"
-                    onClick={() => handleSend(activePrompt.fieldKey, activePrompt.prompt, inputs[activePrompt.fieldKey] ?? '')}
-                    disabled={disabled || isAiTyping || !inputs[activePrompt.fieldKey]?.trim()}
-                  >
-                    Send
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* If All Complete */}
-          {narrativeResponse && !activePrompt && (
-            <ChatMessage
-              message={{ source: 'system', channel: 'chat', content: "All set for this section. Proceeding..." }}
-              isLatest={true}
-            />
-          )}
-
-          {/* Suggested Actions (Reveals) */}
-          {activeReveals.length > 0 && (
-            <div className="suggested-actions">
-              {activeReveals.map(fieldKey => (
-                <Button
-                  key={fieldKey}
-                  variant="secondary"
-                  onClick={() => onJumpToField(fieldKey)}
-                  disabled={disabled}
-                  className="action-pill"
-                >
-                  Edit {formatLabel(fieldKey)}
-                </Button>
-              ))}
-            </div>
-          )}
+      <div className="input-area">
+        <div className="input-wrapper">
+          <Textarea
+            className="chat-input"
+            rows={1}
+            placeholder="Type your response..."
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={disabled || isAiTyping}
+            unstyled
+          />
+          <Button
+            variant="primary"
+            onClick={handleSend}
+            disabled={disabled || isAiTyping || !inputText.trim()}
+            className="send-btn"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </Button>
         </div>
       </div>
 
@@ -294,76 +185,89 @@ export default function GuidedChatPanel({
           flex-direction: column;
           height: 100%;
           width: 100%;
-          overflow: hidden; /* Main main scroll via container */
+          overflow: hidden;
         }
 
         .transcript-container {
           flex: 1;
           overflow-y: auto;
-          padding-bottom: 40px;
+          padding-bottom: 20px;
           display: flex;
           flex-direction: column;
         }
 
         .typing-indicator {
-          padding: 12px 0;
-          margin-left: 44px; /* Align with text */
-          font-size: 14px;
-          animation: pulse 1.5s infinite;
+          padding: 16px 0 16px 52px; /* avatar width offset */
+          display: flex;
+          gap: 4px;
+        }
+        
+        .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--text-2);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
         }
 
-        .active-turn {
-          margin-top: 24px;
-          animation: slideUp 0.4s ease-out;
+        .input-area {
+            padding-top: 20px;
+            background: linear-gradient(to bottom, rgba(var(--bg-rgb), 0) 0%, var(--bg) 20%);
         }
 
         .input-wrapper {
-          margin-left: 44px; /* Align with text, offset by avatar (28+16) */
-          margin-top: 16px;
           position: relative;
+          background: var(--surface-1);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          padding: 8px 12px;
+          display: flex;
+          align-items: flex-end;
+          transition: border-color 0.2s;
+        }
+        
+        .input-wrapper:focus-within {
+            border-color: var(--text-1);
         }
 
         .chat-input {
-          width: 100%;
+          flex: 1;
           background: transparent;
           border: none;
-          border-bottom: 1px solid var(--border);
           color: var(--text-0);
-          font-size: 16px;
+          font-size: 15px;
           padding: 8px 0;
           font-family: inherit;
           resize: none;
-          transition: border-color 0.2s;
+          min-height: 24px;
+          max-height: 120px;
         }
 
         .chat-input:focus {
           outline: none;
-          border-color: var(--text-1);
+        }
+        
+        .send-btn {
+            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+            margin-bottom: 2px; 
+            flex-shrink: 0;
         }
 
-        .input-actions {
-          display: flex;
-          justify-content: flex-end;
-          margin-top: 12px;
-        }
-
-        .suggested-actions {
-          margin-top: 24px;
-          margin-left: 44px;
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-        }
-
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pulse {
-           0% { opacity: 0.5; }
-           50% { opacity: 1; }
-           100% { opacity: 0.5; }
-        }
       `}</style>
     </div>
   );
