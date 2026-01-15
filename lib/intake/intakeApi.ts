@@ -88,7 +88,8 @@ async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit): Pro
   const response = await fetch(input, init);
   const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
   if (!response.ok) {
-    const error = new Error((data.error as string) || 'Request failed') as ApiError;
+    console.error(`API Error ${response.status}: ${response.statusText}`, data);
+    const error = new Error((data.error as string) || `Request failed (${response.status})`) as ApiError;
     error.status = response.status;
     error.requestId = typeof data.requestId === 'string' ? data.requestId : undefined;
     error.data = data;
