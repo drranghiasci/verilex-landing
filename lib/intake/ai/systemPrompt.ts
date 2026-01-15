@@ -25,7 +25,9 @@ export function transformSchemaToSystemPrompt(
                 const isMissing = missingFields.includes(f.key);
                 const value = payload[f.key];
                 const status = value ? `[Filled: ${JSON.stringify(value)}]` : isMissing ? '[MISSING]' : '[Optional]';
-                return `  - ${f.key} (${f.type}): ${formatLabel(f.key)} ${status}`;
+                let description = '';
+                if (f.key === 'debt_object') description = ' (Ask specifically about home mortgages and car loans)';
+                return `  - ${f.key} (${f.type}): ${formatLabel(f.key)}${description} ${status}`;
             })
             .join('\n');
 
@@ -58,7 +60,8 @@ RULES:
 - **Children Skip**: If \`has_children\` is explicitly FALSE, you MUST SKIP all questions in \`child_object\` and \`children_custody\`. Treat them as irrelevant.
 - **Open Text**: If user provides a description that matches an ENUM, infer the value. (e.g. "I work at Google" -> \`opposing_employment_status: employed_full_time\`).
 - **One Question**: ASK ONLY ONE QUESTION AT A TIME. Wait for the answer.
-- **Completion**: DO NOT say "Have a great day" until the "Final Review" step is reached and submitted. 
+- **Completion**: DO NOT say "Have a great day" until the "Final Review" step is reached and submitted.
+- **Closing Question**: When finishing, ask "Do you have any questions for the firm?" (Yes/No style) instead of a general "If you have questions...".
 - **Outcomes**: You MUST ensure the 'desired_outcomes' section is completed. Do not skip it.
 - **Resume**: If the user says "RESUME_INTAKE", ignore the text and immediately ask the next relevant question based on [MISSING] fields.
 

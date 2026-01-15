@@ -17,9 +17,8 @@ export const SAFETY_BANNER_COPY = {
   immediate: {
     title: 'Immediate safety',
     lines: [
-      'If you are in immediate danger, call 911 now.',
-      'If you are safe to do so, you can contact the National Domestic Violence Hotline at 1-800-799-SAFE (7233) or text "START" to 88788.',
-      'You can continue this intake, or stop and seek help first.',
+      'Please call **911** immediately if you are in danger.',
+      'This intake session is paused, if you are safe and would like to continue just proceed.',
     ],
   },
   dvPresent: {

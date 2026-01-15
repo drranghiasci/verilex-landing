@@ -37,7 +37,7 @@ export default function IntakeHeader({ firmName, steps, currentStepIndex, onTogg
                   index + 1
                 )}
               </div>
-              {isActive && <span className="step-label">{step.label}</span>}
+              <span className="step-label">{step.label}</span>
             </div>
           );
         })}
@@ -147,7 +147,10 @@ export default function IntakeHeader({ firmName, steps, currentStepIndex, onTogg
         .step-label {
           font-size: 13px;
           font-weight: 500;
-          animation: slideRight 0.2s ease-out;
+          color: var(--text-2); /* Default muted */
+        }
+        .step-item.active .step-label {
+            color: var(--text-0); /* Active highlight */
         }
 
         @keyframes slideRight {

@@ -265,6 +265,33 @@ export default function IntakeFlow({
     if (intakeId) setShowRequiredErrors(false);
   }, [intakeId]);
 
+  // DATE FIX & SYNC FIX
+  useEffect(() => {
+    if (!intakeId || isLocked || loading) return;
+
+    // 1. Auto-fill Date if missing
+    if (!payload.date_of_intake) {
+      updateField('date_of_intake', new Date().toISOString().split('T')[0]);
+    }
+
+    // 2. Force Sync UI to first incomplete step
+    // This prevents "drift" where AI is on Step 5 but UI is on Step 1.
+    // We only drift FORWARD.
+    if (visibleSteps.length > 0) {
+      const firstIncompleteIndex = visibleSteps.findIndex(step => {
+        const missing = missingFieldsForSection(payload, GA_DIVORCE_CUSTODY_V1, step.id);
+        return missing.length > 0;
+      });
+
+      if (firstIncompleteIndex !== -1 && firstIncompleteIndex > currentStepIndex) {
+        setCurrentStepIndex(firstIncompleteIndex);
+      } else if (firstIncompleteIndex === -1 && currentStepIndex < visibleSteps.length - 1) {
+        // All steps complete? Move to last
+        setCurrentStepIndex(visibleSteps.length - 1);
+      }
+    }
+  }, [intakeId, isLocked, loading, payload, visibleSteps, currentStepIndex, updateField]);
+
   const sectionMissing = new Set(missingBySection[step?.id ?? ''] ?? []);
   const inlineWarnings = warningItems.filter((item) =>
     item.sections?.some((section) => section.id === step?.id),
