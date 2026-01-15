@@ -39,13 +39,10 @@ export default function GuidedChatPanel({
   // Filter messages to chat channel only
   const transcript = useMemo(() => messages.filter((message) => message.channel === 'chat'), [messages]);
   const section = library.sections[sectionId];
-  const transcriptRef = useRef<HTMLDivElement>(null);
-
   // Scroll to bottom on new message
+  const bottomRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (transcriptRef.current) {
-      transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
-    }
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [transcript.length, isAiTyping]);
 
   // Initial Seeding: If chat is empty, AI should speak first
@@ -205,7 +202,7 @@ export default function GuidedChatPanel({
 
   return (
     <div className="chat-stream">
-      <div className="transcript-container" ref={transcriptRef}>
+      <div className="transcript-container">
         {/* Render History */}
         {transcript.map((msg, i) => (
           <ChatMessage
@@ -225,6 +222,7 @@ export default function GuidedChatPanel({
             <span className="dot"></span>
           </div>
         )}
+        <div ref={bottomRef} style={{ minHeight: '1px' }} />
       </div>
 
       <div className="input-area">
@@ -245,9 +243,9 @@ export default function GuidedChatPanel({
             disabled={disabled || isAiTyping || !inputText.trim()}
             className="send-btn"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 19V5" />
+              <path d="M5 12l7-7 7 7" />
             </svg>
           </Button>
         </div>

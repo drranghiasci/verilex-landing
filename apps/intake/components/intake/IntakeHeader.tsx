@@ -79,9 +79,9 @@ export default function IntakeHeader({ firmName, steps, currentStepIndex, onTogg
           border-color: var(--border-highlight);
         }
         .intake-header {
-          display: flex;
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
           align-items: center;
-          justify-content: space-between;
           height: 60px;
           padding: 0 24px;
           border-bottom: 1px solid var(--border);
@@ -92,20 +92,19 @@ export default function IntakeHeader({ firmName, steps, currentStepIndex, onTogg
           z-index: 100;
         }
 
-        .firm-brand {
-          font-size: 14px;
-          font-weight: 600;
-          color: var(--text-1);
-          letter-spacing: -0.01em;
+        .header-left {
+            justify-self: start;
+        }
+
+        .header-right {
+            justify-self: end;
         }
 
         .step-indicator {
           display: flex;
           align-items: center;
           gap: 12px;
-          position: absolute;
-          left: 50%;
-          transform: translateX(-50%);
+          justify-self: center;
         }
 
         .step-item {
