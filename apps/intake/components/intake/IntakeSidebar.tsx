@@ -26,9 +26,7 @@ export default function IntakeSidebar({ open, payload = {}, firmName, onToggle }
   return (
     <>
       <aside className={`sidebar ${open ? 'mobile-open' : ''}`}>
-        <div className="sidebar-tab">
-          <span className="vertical-text">Case Summary</span>
-        </div>
+        <div className="trigger-zone" />
 
         <div className="sidebar-inner">
           <div className="sidebar-header">
@@ -83,6 +81,16 @@ export default function IntakeSidebar({ open, payload = {}, firmName, onToggle }
           border-left: 1px solid var(--border);
         }
 
+        .trigger-zone {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            z-index: 91;
+            background: transparent;
+        }
+
         /* Logic for mobile open prop override */
         .sidebar.mobile-open {
             width: 320px;
@@ -90,15 +98,8 @@ export default function IntakeSidebar({ open, payload = {}, firmName, onToggle }
             border-left: 1px solid var(--border);
         }
 
-        .sidebar-tab {
-            width: 24px;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            opacity: 0.5;
-            transition: opacity 0.3s;
+        .vertical-text {
+            display: none; 
         }
 
         /* Hide tab text or make it very subtle vertical line */
