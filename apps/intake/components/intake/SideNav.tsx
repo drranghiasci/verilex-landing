@@ -70,9 +70,12 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage 
                     flex-direction: column;
                     padding: 24px 0;
                     overflow: hidden;
+                    align-items: center; /* Center execution */
                 }
 
+                /* Ensure children don't override alignment */
                 .side-nav.expanded {
+                    align-items: stretch; /* Stretch when expanded */
                     width: 260px;
                     background: rgba(10, 10, 15, 0.95);
                     box-shadow: 10px 0 30px rgba(0,0,0,0.5);
@@ -96,25 +99,25 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage 
                 /* Vertical Track */
                 .track {
                     position: absolute;
-                    left: 28px;
+                    left: 50%; /* Center in collapsed */
+                    transform: translateX(-50%);
                     top: 0;
-                    bottom: 0; /* Stretches to scroll height if relative is correct? No, absolute in scrolling div is tricky */
-                    /* FIX: Track should probably be fixed height or calculated? 
-                       Actually, if step gap is known, track length is implied.
-                       Let's make track just very tall or relative to steps. 
-                    */
-                    min-height: 100vh; /* Ensure at least screen height */
-                    height: 100%; /* Match scroll content */
+                    bottom: 0;
+                    min-height: 100vh;
+                    height: 100%;
                     width: 2px;
                     background: var(--border);
                     z-index: 0;
-                    opacity: 0;
-                    transition: opacity 0.3s ease;
+                    opacity: 0; /* Hidden by default (collapsed) ?? User said "can't see side numbers". Track logic might be confusing. */
+                    /* Revert track logic: Track is usually connecting lines. */
+                    opacity: 0.3; /* Show faint track in collapsed? */
+                    transition: all 0.3s ease;
                 }
 
                 .side-nav.expanded .track {
                     opacity: 1;
-                    left: 35px;
+                    left: 35px; /* Fixed position when expanded */
+                    transform: none;
                 }
 
                 .progress-fill {

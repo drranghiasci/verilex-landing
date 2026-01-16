@@ -68,8 +68,7 @@ export default function IntakeLayout({
                     display: flex;
                     flex-direction: column;
                     position: relative;
-                    /* Create space for right sidebar if present AND open */
-                    margin-right: ${sidebar && sidebarOpen ? '320px' : '0'}; 
+                    margin-right: 0; /* No reserved space, sidebar floats/overlays */
                     transition: margin-right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
                 }
 
@@ -78,10 +77,12 @@ export default function IntakeLayout({
                     right: 0;
                     top: 0;
                     bottom: 0;
-                    width: 320px;
-                    /* We don't set background here, let the child (IntakeSidebar) handle it */
+                    /* Width handled by child component based on state */
+                    /* width: auto; */
                     z-index: 40;
                     pointer-events: none; /* Let clicks pass through if empty/transparent */
+                    display: flex;
+                    justify-content: flex-end;
                 }
                 
                 /* Allow clicks on children */
@@ -113,10 +114,7 @@ export default function IntakeLayout({
                 }
 
                 @media (max-width: 1024px) {
-                    .main-content {
-                        margin-right: 0 !important; /* Always 0 on mobile */
-                    }
-                    /* We don't hide .right-sidebar because IntakeSidebar manages its own off-canvas state */
+                    /* Mobile adjustments if needed */
                 }
             `}</style>
         </div>
