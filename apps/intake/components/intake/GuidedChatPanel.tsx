@@ -214,11 +214,11 @@ export default function GuidedChatPanel({
               ref={textareaRef}
               className="chat-input"
               rows={1}
-              placeholder={isAiTyping ? 'Intake paused for safety.' : 'Type your answer...'}
+              placeholder="Type your answer..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
-              disabled={disabled || isAiTyping}
+              disabled={disabled}
             />
             <div className="absolute right-2 bottom-2 flex items-center gap-1">
               <VoiceInput

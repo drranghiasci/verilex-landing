@@ -32,16 +32,15 @@ export default function IntakeLayout({
 }: IntakeLayoutProps) {
     return (
         <div className="layout-roots">
-            <SideNav /* Actually TopNav now */
+            <SideNav
                 steps={steps}
                 currentStepIndex={currentStepIndex}
                 completionPercentage={completionPercentage}
             />
             <main className="main-content">
-                {/* Mobile header redundant if TopNav is always visible? 
-                    Keep it for mobile specific branding if needed, 
-                    but TopNav covers it. Let's hide mobile-header for now to avoid double header.
-                 */}
+                <header className="mobile-header">
+                    <span className="brand">{firmName || 'VeriLex'}</span>
+                </header>
                 <div className="content-area">
                     <div className="content-container">
                         {children}
@@ -59,27 +58,28 @@ export default function IntakeLayout({
             <style jsx>{`
                 .layout-roots {
                     display: flex;
-                    flex-direction: column; /* Vertical layout main */
+                    /* flex-direction: row; Default is row, but explicit is good */
                     height: 100vh;
                     color: var(--text-0);
                     font-family: var(--font-sans);
                     overflow: hidden;
-                    background: var(--bg); /* Ensure BG covers everything */
+                    background: var(--bg);
                 }
 
                 .main-content {
                     flex: 1;
+                    margin-left: 80px; /* Matches SideNav width (expanded to 80px for better fit) */
                     display: flex;
                     flex-direction: column;
                     position: relative;
-                    margin-top: 64px; /* Space for TopNav */
-                    width: 100%;
+                    margin-top: 0;
+                    width: auto;
                 }
 
                 .right-sidebar {
                     position: fixed;
                     right: 0;
-                    top: 64px; /* Below TopNav */
+                    top: 0;
                     bottom: 0;
                     z-index: 40;
                     pointer-events: none;
@@ -97,12 +97,12 @@ export default function IntakeLayout({
                     overflow: hidden; 
                     display: flex;
                     flex-direction: column;
-                    align-items: center; /* Center content container */
+                    align-items: center; 
                 }
 
                 .content-container {
                     width: 100%;
-                    max-width: 900px; /* Centered max width */
+                    max-width: 900px; 
                     height: 100%;
                     display: flex;
                     flex-direction: column;
@@ -110,13 +110,28 @@ export default function IntakeLayout({
                 }
 
                 .mobile-header {
-                    display: none; /* Hidden in favor of TopNav */
+                    height: 60px;
+                    display: flex;
+                    align-items: center;
+                    padding: 0 24px;
+                    border-bottom: 1px solid var(--border);
+                    background: rgba(10,10,10,0.5);
+                    backdrop-filter: blur(10px);
+                    display: none; /* Hide on desktop, show on mobile query below */
+                }
+
+                .brand {
+                    font-weight: 600;
+                    letter-spacing: -0.02em;
                 }
 
                 @media (max-width: 768px) {
-                   /* Mobile tweaks */
                    .main-content {
-                       margin-top: 64px; 
+                       margin-left: 0;
+                       margin-top: 0; 
+                   }
+                   .mobile-header {
+                       display: flex;
                    }
                 }
             `}</style>
