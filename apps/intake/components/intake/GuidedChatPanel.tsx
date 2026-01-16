@@ -46,8 +46,11 @@ export default function GuidedChatPanel({
   }, [transcript.length, isAiTyping]);
 
   // Initial Seeding: If chat is empty, AI should speak first
+  const didInitRef = useRef(false);
+
   useEffect(() => {
-    if (transcript.length === 0 && section?.narrativePrompt && token) {
+    if (transcript.length === 0 && section?.narrativePrompt && token && !didInitRef.current) {
+      didInitRef.current = true;
       const kickstart = async () => {
         setIsAiTyping(true);
         try {
