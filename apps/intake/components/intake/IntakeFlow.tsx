@@ -497,6 +497,16 @@ export default function IntakeFlow({
     label: getSectionTitleForMatterType(s.id, matterType),
   }));
 
+  // Debug Missing Fields (Moved to top level)
+  useEffect(() => {
+    if (visibleSteps.length > 0) {
+      const step1 = visibleSteps[0];
+      const missing = missingFieldsForSection(payload, GA_DIVORCE_CUSTODY_V1, step1.id);
+      console.log('[DEBUG] Step 1 Missing Fields:', missing);
+      console.log('[DEBUG] Current Payload:', payload);
+    }
+  }, [payload, visibleSteps]);
+
   if (!intakeId) {
     return (
       <div className="flow">
@@ -573,15 +583,7 @@ export default function IntakeFlow({
 
 
 
-  // Debug Missing Fields
-  useEffect(() => {
-    if (visibleSteps.length > 0) {
-      const step1 = visibleSteps[0];
-      const missing = missingFieldsForSection(payload, GA_DIVORCE_CUSTODY_V1, step1.id);
-      console.log('[DEBUG] Step 1 Missing Fields:', missing);
-      console.log('[DEBUG] Current Payload:', payload);
-    }
-  }, [payload, visibleSteps]);
+
 
   return (
     <IntakeLayout
