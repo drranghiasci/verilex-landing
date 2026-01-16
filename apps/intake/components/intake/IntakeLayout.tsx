@@ -32,17 +32,20 @@ export default function IntakeLayout({
 }: IntakeLayoutProps) {
     return (
         <div className="layout-roots">
-            <SideNav
+            <SideNav /* Actually TopNav now */
                 steps={steps}
                 currentStepIndex={currentStepIndex}
                 completionPercentage={completionPercentage}
             />
             <main className="main-content">
-                <header className="mobile-header">
-                    <span className="brand">{firmName || 'VeriLex'}</span>
-                </header>
+                {/* Mobile header redundant if TopNav is always visible? 
+                    Keep it for mobile specific branding if needed, 
+                    but TopNav covers it. Let's hide mobile-header for now to avoid double header.
+                 */}
                 <div className="content-area">
-                    {children}
+                    <div className="content-container">
+                        {children}
+                    </div>
                 </div>
             </main>
 
@@ -56,36 +59,34 @@ export default function IntakeLayout({
             <style jsx>{`
                 .layout-roots {
                     display: flex;
+                    flex-direction: column; /* Vertical layout main */
                     height: 100vh;
                     color: var(--text-0);
                     font-family: var(--font-sans);
-                    overflow: hidden; /* Prevent body scroll */
+                    overflow: hidden;
+                    background: var(--bg); /* Ensure BG covers everything */
                 }
 
                 .main-content {
                     flex: 1;
-                    margin-left: 72px; /* Matches SideNav width */
                     display: flex;
                     flex-direction: column;
                     position: relative;
-                    margin-right: 0; /* No reserved space, sidebar floats/overlays */
-                    transition: margin-right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                    margin-top: 64px; /* Space for TopNav */
+                    width: 100%;
                 }
 
                 .right-sidebar {
                     position: fixed;
                     right: 0;
-                    top: 0;
+                    top: 64px; /* Below TopNav */
                     bottom: 0;
-                    /* Width handled by child component based on state */
-                    /* width: auto; */
                     z-index: 40;
-                    pointer-events: none; /* Let clicks pass through if empty/transparent */
+                    pointer-events: none;
                     display: flex;
                     justify-content: flex-end;
                 }
                 
-                /* Allow clicks on children */
                 .right-sidebar > * {
                     pointer-events: auto;
                 }
@@ -96,25 +97,27 @@ export default function IntakeLayout({
                     overflow: hidden; 
                     display: flex;
                     flex-direction: column;
+                    align-items: center; /* Center content container */
+                }
+
+                .content-container {
+                    width: 100%;
+                    max-width: 900px; /* Centered max width */
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    position: relative;
                 }
 
                 .mobile-header {
-                    height: 60px;
-                    display: flex;
-                    align-items: center;
-                    padding: 0 24px;
-                    border-bottom: 1px solid var(--border);
-                    background: rgba(10,10,10,0.5);
-                    backdrop-filter: blur(10px);
+                    display: none; /* Hidden in favor of TopNav */
                 }
 
-                .brand {
-                    font-weight: 600;
-                    letter-spacing: -0.02em;
-                }
-
-                @media (max-width: 1024px) {
-                    /* Mobile adjustments if needed */
+                @media (max-width: 768px) {
+                   /* Mobile tweaks */
+                   .main-content {
+                       margin-top: 64px; 
+                   }
                 }
             `}</style>
         </div>

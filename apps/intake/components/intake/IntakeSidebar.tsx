@@ -62,10 +62,10 @@ export default function IntakeSidebar({ open, payload = {}, firmName, onToggle }
         .sidebar {
           position: fixed;
           right: 0;
-          top: 0; 
+          top: 64px; 
           bottom: 0;
           width: 48px; /* Collapsed width - visible tab */
-          height: 100vh;
+          height: calc(100vh - 64px);
           background: rgba(10, 10, 15, 0.6); /* Transparent dark when collapsed */
           border-left: 1px solid var(--border);
           backdrop-filter: blur(10px);

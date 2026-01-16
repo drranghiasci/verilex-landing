@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 
 type StepInfo = {
     id: string;
@@ -14,209 +13,188 @@ type SideNavProps = {
     completionPercentage: number;
 };
 
-export default function SideNav({ steps, currentStepIndex, completionPercentage }: SideNavProps) {
-    const [isHovered, setIsHovered] = useState(false);
-
+export default function TopNav({ steps, currentStepIndex, completionPercentage }: SideNavProps) {
     return (
-        <aside
-            className={`side-nav ${isHovered ? 'expanded' : ''}`}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-        >
-            <div className="scroll-area">
-                <div className="track">
-                    <div
-                        className="progress-fill"
-                        style={{ height: `${completionPercentage}%` }}
-                    />
+        <header className="top-nav">
+            <div className="nav-content">
+                <div className="brand-section">
+                    <span className="brand-logo">VeriLex</span>
+                    <span className="divider">/</span>
+                    <span className="context">Intake</span>
                 </div>
 
-                <div className="steps-container">
-                    {steps.map((step, index) => (
+                <div className="steps-track">
+                    <div className="steps-progress-bg">
                         <div
-                            key={step.id}
-                            className={`step-item ${step.isActive ? 'active' : ''} ${step.isCompleted ? 'completed' : ''}`}
-                        >
-                            <div className="step-marker">
-                                {step.isCompleted ? (
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                        <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                ) : (
-                                    <span className="step-num">{index + 1}</span>
-                                )}
+                            className="steps-progress-fill"
+                            style={{ width: `${completionPercentage}%` }}
+                        />
+                    </div>
+
+                    <div className="steps-nodes">
+                        {steps.map((step, index) => (
+                            <div
+                                key={step.id}
+                                className={`step-node ${step.isActive ? 'active' : ''} ${step.isCompleted ? 'completed' : ''}`}
+                            >
+                                <div className="node-circle">
+                                    {step.isCompleted ? (
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                                            <polyline points="20 6 9 17 4 12" />
+                                        </svg>
+                                    ) : (
+                                        <span>{index + 1}</span>
+                                    )}
+                                </div>
+                                <span className="node-label">{step.label}</span>
                             </div>
-                            <div className="step-label">
-                                {step.label}
-                            </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </div>
 
             <style jsx>{`
-                .side-nav {
+                .top-nav {
                     position: fixed;
-                    left: 0;
                     top: 0;
-                    bottom: 0;
-                    width: 72px; /* Slightly wider */
-                    background: rgba(5, 5, 10, 0.6);
+                    left: 0;
+                    right: 0;
+                    height: 64px;
+                    background: rgba(10, 10, 15, 0.8);
                     backdrop-filter: blur(20px);
-                    border-right: 1px solid var(--border);
+                    border-bottom: 1px solid var(--border);
                     z-index: 50;
-                    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     display: flex;
-                    flex-direction: column;
-                    padding: 24px 0;
-                    overflow: hidden;
-                    align-items: center; /* Center execution */
+                    justify-content: center;
                 }
 
-                /* Ensure children don't override alignment */
-                .side-nav.expanded {
-                    align-items: stretch; /* Stretch when expanded */
-                    width: 260px;
-                    background: rgba(10, 10, 15, 0.95);
-                    box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+                .nav-content {
+                    width: 100%;
+                    max-width: 1200px;
+                    display: flex;
+                    align-items: center;
+                    padding: 0 24px;
+                    gap: 40px;
                 }
 
-                /* Scroll Area Wrapper */
-                .scroll-area {
+                .brand-section {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: var(--text-0);
+                    min-width: 120px;
+                }
+
+                .brand-logo { color: var(--text-0); }
+                .divider { color: var(--text-2); }
+                .context { color: var(--text-2); }
+
+                .steps-track {
                     flex: 1;
                     position: relative;
-                    overflow-y: auto;
-                    overflow-x: hidden;
-                    width: 100%;
-                    /* Hide scrollbar */
-                    scrollbar-width: none;
-                    -ms-overflow-style: none;
-                }
-                .scroll-area::-webkit-scrollbar {
-                    display: none;
-                }
-
-                /* Vertical Track */
-                .track {
-                    position: absolute;
-                    left: 50%; /* Center in collapsed */
-                    transform: translateX(-50%);
-                    top: 0;
-                    bottom: 0;
-                    min-height: 100vh;
-                    height: 100%;
-                    width: 2px;
-                    background: var(--border);
-                    z-index: 0;
-                    opacity: 0; /* Hidden by default (collapsed) ?? User said "can't see side numbers". Track logic might be confusing. */
-                    /* Revert track logic: Track is usually connecting lines. */
-                    opacity: 0.3; /* Show faint track in collapsed? */
-                    transition: all 0.3s ease;
-                }
-
-                .side-nav.expanded .track {
-                    opacity: 1;
-                    left: 35px; /* Fixed position when expanded */
-                    transform: none;
-                }
-
-                .progress-fill {
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    background: linear-gradient(to bottom, var(--accent), var(--accent-light));
-                    box-shadow: 0 0 10px var(--accent-glow);
-                    transition: height 0.5s ease;
-                }
-
-                .steps-container {
-                    position: relative;
-                    z-index: 1;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 32px;
-                    padding: 60px 0 60px 0; /* Vertical padding */
-                }
-
-                .step-item {
                     display: flex;
                     align-items: center;
                     height: 32px;
-                    padding-left: 20px;
-                    opacity: 0.5;
-                    transition: all 0.3s;
-                    cursor: default;
-                    white-space: nowrap;
-                    overflow: hidden; /* Prevent spill */
                 }
 
-                .step-item.active {
+                .steps-progress-bg {
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    top: 50%;
+                    height: 2px;
+                    background: var(--surface-2);
+                    transform: translateY(-50%);
+                    z-index: 0;
+                    border-radius: 2px;
+                    overflow: hidden;
+                }
+
+                .steps-progress-fill {
+                    height: 100%;
+                    background: var(--accent);
+                    transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+                    box-shadow: 0 0 10px var(--accent-glow);
+                }
+
+                .steps-nodes {
+                    position: relative;
+                    width: 100%;
+                    display: flex;
+                    justify-content: space-between;
+                    z-index: 1;
+                }
+
+                .step-node {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: rgba(10, 10, 15, 0.8); /* cutout effect */
+                    padding: 0 8px;
+                    border-radius: 12px;
+                    transition: all 0.3s;
+                    opacity: 0.5;
+                }
+                
+                .step-node.active, .step-node.completed {
                     opacity: 1;
                 }
-                .step-item.completed {
-                    opacity: 0.8;
-                }
 
-                .step-marker {
-                    width: 32px;
-                    height: 32px;
+                .node-circle {
+                    width: 20px;
+                    height: 20px;
                     border-radius: 50%;
-                    background: var(--bg);
+                    background: var(--surface-1);
                     border: 2px solid var(--border);
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    font-size: 12px;
+                    font-size: 10px;
                     font-weight: 700;
                     color: var(--text-2);
                     transition: all 0.3s;
-                    position: relative;
-                    z-index: 2;
-                    flex-shrink: 0; /* PREVENT SQUISHING */
                 }
 
-                /* Center marker in collapsed state */
-                .side-nav:not(.expanded) .step-item {
-                    justify-content: center;
-                    padding-left: 0;
-                }
-
-                .step-item.active .step-marker {
-                    border-color: var(--accent-light);
-                    color: white;
+                .step-node.active .node-circle {
+                    border-color: var(--accent);
                     background: var(--accent);
-                    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2), 0 0 20px var(--accent-glow);
-                    transform: scale(1.15);
+                    color: white;
+                    transform: scale(1.1);
+                    box-shadow: 0 0 10px var(--accent-glow);
                 }
 
-                .step-item.completed .step-marker {
-                    background: var(--accent-light);
-                    border-color: var(--accent-light);
+                .step-node.completed .node-circle {
+                    border-color: var(--accent);
+                    background: var(--accent);
                     color: white;
                 }
 
-                .step-label {
-                    margin-left: 16px;
-                    font-size: 14px;
+                .node-label {
+                    font-size: 12px;
                     font-weight: 500;
-                    opacity: 0;
-                    transform: translateX(-10px);
-                    transition: all 0.2s;
-                    color: var(--text-1);
+                    display: none; /* Hide labels by default on small screens/dense steps */
                 }
 
-                .side-nav.expanded .step-label {
-                    opacity: 1;
-                    transform: translateX(0);
-                    transition-delay: 0.05s;
+                /* Show active step label */
+                .step-node.active .node-label {
+                    display: block;
+                    color: var(--text-0);
                 }
                 
-                .step-item.active .step-label {
-                    color: var(--text-0);
-                    font-weight: 600;
+                @media (min-width: 1024px) {
+                    .node-label {
+                        display: block; /* Show all on desktop if space permits */
+                    }
+                    .step-node {
+                        opacity: 0.7;
+                    }
+                    .step-node.active {
+                        opacity: 1;
+                    }
                 }
             `}</style>
-        </aside>
+        </header>
     );
 }
