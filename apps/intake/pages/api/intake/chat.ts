@@ -8,6 +8,7 @@ import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schema/gaDivorc
 import { validateIntakePayload } from '../../../../../lib/intake/validation';
 import type { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources/chat/completions';
 import { getEnabledSectionIds } from '../../../../../lib/intake/gating';
+import { wrapAssertion } from '../../../../../lib/intake/assertionTypes';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'POST') {
@@ -70,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 type: 'function',
                 function: {
                     name: 'update_intake_field',
-                    description: 'Update a specific field in the intake form with new information provided by the user.',
+                    description: 'Record a client assertion. This stores what the client stated, not a verified fact.',
                     parameters: {
                         type: 'object',
                         properties: {
@@ -167,7 +168,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         const name = toolCall.function.name;
 
                         if (name === 'update_intake_field') {
-                            updates[args.field] = args.value;
+                            // Wrap with assertion metadata for provenance
+                            updates[args.field] = wrapAssertion(args.value, {
+                                source_type: 'chat',
+                                transcript_reference: null, // Will be linked post-save
+                                evidence_support_level: 'none',
+                                contradiction_flag: false,
+                            });
                         } else if (name === 'request_document_upload') {
                             documentRequest = {
                                 type: args.documentType,

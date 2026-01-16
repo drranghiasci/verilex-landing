@@ -398,7 +398,7 @@ export default function IntakeFlow({
   const handleSubmit = async () => {
     if (!token || !intakeId) return;
     if (!confirmFinal) {
-      setUiError('Please confirm that submission is final.');
+      setUiError('Please confirm that this record reflects your statements.');
       return;
     }
     if (hasMissingRequired) {

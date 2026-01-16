@@ -1,0 +1,72 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - main [ref=e3]:
+    - generic [ref=e4]:
+      - complementary [ref=e5]:
+        - generic [ref=e7]:
+          - generic [ref=e8]:
+            - generic [ref=e11]: "1"
+            - generic: Basics
+          - generic [ref=e12]:
+            - generic [ref=e15]: "2"
+            - generic: About You
+          - generic [ref=e16]:
+            - generic [ref=e19]: "3"
+            - generic: Other Party
+          - generic [ref=e20]:
+            - generic [ref=e23]: "4"
+            - generic: Children
+          - generic [ref=e24]:
+            - generic [ref=e27]: "5"
+            - generic: Custody
+          - generic [ref=e28]:
+            - generic [ref=e31]: "6"
+            - generic: Safety
+          - generic [ref=e32]:
+            - generic [ref=e35]: "7"
+            - generic: Legal Venue
+          - generic [ref=e36]:
+            - generic [ref=e39]: "8"
+            - generic: Legal History
+          - generic [ref=e40]:
+            - generic [ref=e43]: "9"
+            - generic: Goals
+          - generic [ref=e44]:
+            - generic [ref=e47]: "10"
+            - generic: Documents
+          - generic [ref=e48]:
+            - generic [ref=e51]: "11"
+            - generic: Review
+      - main [ref=e52]:
+        - generic [ref=e58]:
+          - generic [ref=e60]:
+            - img [ref=e62]
+            - generic [ref=e64]:
+              - generic [ref=e65]: Dominic & Sons Legal
+              - paragraph [ref=e67]: "⚠️ **Startup Error**: Failed to initialize AI conversation. (Missing OPENAI_API_KEY environment variable)"
+          - generic [ref=e69]:
+            - generic [ref=e70]:
+              - textbox "Type your answer..." [ref=e71]
+              - generic [ref=e72]:
+                - button "Use Voice" [ref=e74] [cursor=pointer]:
+                  - img [ref=e75]
+                - button [disabled] [ref=e78]:
+                  - img [ref=e79]
+            - button "Stuck? Resume Intake" [ref=e82] [cursor=pointer]
+      - complementary:
+        - complementary:
+          - generic:
+            - generic:
+              - heading "Client Assertions" [level=3]
+            - generic:
+              - generic:
+                - generic:
+                  - generic: date of intake
+                  - generic: 2026-01-16
+            - generic: Client-Provided • Not Legal Advice
+  - button "Open Next.js Dev Tools" [ref=e88] [cursor=pointer]:
+    - img [ref=e89]
+  - alert [ref=e92]: Start Intake
+```

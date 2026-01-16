@@ -38,7 +38,7 @@ export default function ReviewSubmitStep({
           onChange={(event) => onConfirmChange(event.target.checked)}
           disabled={disabled}
         />{' '}
-        I understand submission is final and cannot be edited.
+        I confirm this record reflects the statements I provided. This is not legal advice.
       </label>
     </Card>
   );

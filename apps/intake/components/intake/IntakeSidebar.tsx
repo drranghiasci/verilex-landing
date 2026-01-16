@@ -1,6 +1,7 @@
 
 import { useMemo } from 'react';
 import { globalStyles } from './styles';
+import { unwrapAssertion, isAssertionMetadata } from '../../../../lib/intake/assertionTypes';
 
 type IntakeSidebarProps = {
   open: boolean;
@@ -10,17 +11,24 @@ type IntakeSidebarProps = {
 };
 
 export default function IntakeSidebar({ open, payload = {}, firmName, onToggle }: IntakeSidebarProps) {
-  // Simple flat list of fields for now. 
-  // In a real implementation, we would derive this from the schema.
+  // Extract fields and unwrap assertion metadata for display
   const fields = useMemo(() => {
     if (!payload) return [];
-    return Object.entries(payload).filter(([key, value]) => {
-      // Filter out internal fields and system fields we don't want to show yet
-      if (key.startsWith('_')) return false;
-      if (key === 'intake_channel') return false; // Per requirements: do not show
-      if (!value) return false;
-      return true;
-    });
+    return Object.entries(payload)
+      .filter(([key, value]) => {
+        if (key.startsWith('_')) return false;
+        if (key === 'intake_channel') return false;
+        // Check the unwrapped value, not the wrapper
+        const rawValue = unwrapAssertion(value);
+        if (!rawValue) return false;
+        return true;
+      })
+      .map(([key, value]) => ({
+        key,
+        displayValue: String(unwrapAssertion(value)),
+        hasMetadata: isAssertionMetadata(value),
+        sourceType: isAssertionMetadata(value) ? value.source_type : null,
+      }));
   }, [payload]);
 
   return (
@@ -30,7 +38,7 @@ export default function IntakeSidebar({ open, payload = {}, firmName, onToggle }
 
         <div className="sidebar-inner">
           <div className="sidebar-header">
-            <h3>Case Summary</h3>
+            <h3>Client Assertions</h3>
           </div>
 
           <div className="sidebar-content">
@@ -40,10 +48,13 @@ export default function IntakeSidebar({ open, payload = {}, firmName, onToggle }
               </div>
             ) : (
               <div className="field-list">
-                {fields.map(([key, value]) => (
+                {fields.map(({ key, displayValue, sourceType }) => (
                   <div key={key} className="field-item">
-                    <div className="field-label">{key.replace(/_/g, ' ')}</div>
-                    <div className="field-value">{String(value)}</div>
+                    <div className="field-label">
+                      {key.replace(/_/g, ' ')}
+                      {sourceType && <span className="source-badge">{sourceType}</span>}
+                    </div>
+                    <div className="field-value">{displayValue}</div>
                   </div>
                 ))}
               </div>
@@ -51,7 +62,7 @@ export default function IntakeSidebar({ open, payload = {}, firmName, onToggle }
           </div>
 
           <div className="sidebar-footer">
-            <span>AI-Generated • Read Only</span>
+            <span>Client-Provided • Not Legal Advice</span>
           </div>
         </div>
       </aside>
@@ -191,6 +202,18 @@ export default function IntakeSidebar({ open, payload = {}, firmName, onToggle }
           color: var(--text-1);
           word-break: break-word;
           font-family: var(--font-mono); 
+        }
+
+        .source-badge {
+          display: inline-block;
+          font-size: 9px;
+          padding: 2px 4px;
+          margin-left: 6px;
+          background: rgba(59, 130, 246, 0.2);
+          color: rgba(59, 130, 246, 0.9);
+          border-radius: 3px;
+          text-transform: lowercase;
+          vertical-align: middle;
         }
       `}</style>
     </>

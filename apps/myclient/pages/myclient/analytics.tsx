@@ -194,10 +194,10 @@ export default function AnalyticsPage() {
       if (decisionsResult.error || extractionsResult.error || flagsResult.error || docsResult.error) {
         setError(
           decisionsResult.error?.message ||
-            extractionsResult.error?.message ||
-            flagsResult.error?.message ||
-            docsResult.error?.message ||
-            'Unable to load analytics data',
+          extractionsResult.error?.message ||
+          flagsResult.error?.message ||
+          docsResult.error?.message ||
+          'Unable to load analytics data',
         );
         setMetrics(EMPTY_METRICS);
         setLoading(false);
@@ -361,7 +361,7 @@ export default function AnalyticsPage() {
           </Link>
           <h1 className="text-2xl font-semibold text-[color:var(--text)]">Analytics</h1>
           <p className="text-sm text-[color:var(--muted)]">
-            Firm-scoped insights for intake performance, risk, and document completion.
+            Firm-scoped insights for intake performance and document completion.
           </p>
         </div>
 
@@ -456,7 +456,7 @@ export default function AnalyticsPage() {
             </div>
 
             <div className="rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-6">
-              <h2 className="text-lg font-semibold text-white">AI Flags</h2>
+              <h2 className="text-lg font-semibold text-white">Case Integrity Observations</h2>
               <div className="mt-4 grid gap-4 text-sm">
                 <div>
                   <div className="text-xs uppercase tracking-wide text-[color:var(--muted)]">By severity</div>

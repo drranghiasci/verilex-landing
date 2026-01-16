@@ -179,6 +179,7 @@ export default function IntakeReviewPage() {
   const [actionNotice, setActionNotice] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [ackError, setAckError] = useState<string | null>(null);
+  const [attorneyAcknowledged, setAttorneyAcknowledged] = useState(false);
   const [wf4RerunStatus, setWf4RerunStatus] = useState<'idle' | 'running'>('idle');
   const [wf4RerunError, setWf4RerunError] = useState<string | null>(null);
   const [wf4RerunNotice, setWf4RerunNotice] = useState<string | null>(null);
@@ -678,15 +679,15 @@ export default function IntakeReviewPage() {
               disabled={!canEdit || actionStatus !== 'idle' || Boolean(decision)}
               className="rounded-lg border border-red-400/50 px-4 py-2 text-sm font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-60"
             >
-              {actionStatus === 'rejecting' ? 'Rejecting…' : 'Reject case'}
+              {actionStatus === 'rejecting' ? 'Declining…' : 'Decline intake'}
             </button>
             <button
               type="button"
               onClick={handleAccept}
-              disabled={!canEdit || actionStatus !== 'idle' || !reviewReady || Boolean(decision)}
+              disabled={!canEdit || actionStatus !== 'idle' || !reviewReady || Boolean(decision) || !attorneyAcknowledged}
               className="rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--accent)] disabled:opacity-60"
             >
-              {actionStatus === 'accepting' ? 'Accepting…' : 'Accept case'}
+              {actionStatus === 'accepting' ? 'Processing…' : 'Proceed with this record'}
             </button>
           </div>
         </div>
@@ -760,6 +761,25 @@ export default function IntakeReviewPage() {
                 Intake decision recorded: {decision.decision}
               </div>
             )}
+
+            {/* Attorney Acknowledgment Gate */}
+            {!decision && reviewReady && (
+              <div className="rounded-lg border border-sky-400/30 bg-sky-500/10 px-4 py-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={attorneyAcknowledged}
+                    onChange={(e) => setAttorneyAcknowledged(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-white/30 bg-transparent"
+                  />
+                  <span className="text-sm text-sky-100">
+                    <strong>Required:</strong> I understand this record contains client-asserted, unverified information.
+                    It has not been independently verified and does not constitute legal advice.
+                  </span>
+                </label>
+              </div>
+            )}
+
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-5">
                 <h3 className="text-sm font-semibold text-white">Intake status</h3>
@@ -1041,7 +1061,7 @@ export default function IntakeReviewPage() {
                   )}
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-[var(--surface-0)] p-5">
-                  <h2 className="text-lg font-semibold text-white">AI Risk Flags</h2>
+                  <h2 className="text-lg font-semibold text-white">Case Integrity Observations</h2>
                   {flags.length === 0 ? (
                     <p className="mt-3 text-sm text-[color:var(--muted)]">No AI flags generated yet.</p>
                   ) : (
@@ -1126,7 +1146,7 @@ export default function IntakeReviewPage() {
             </div>
           </>
         )}
-      </div >
+      </div>
     </>
   );
 }

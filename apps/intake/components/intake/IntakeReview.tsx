@@ -41,8 +41,13 @@ export default function IntakeReview({ intake, schema, onSubmit, disabled }: Int
     return (
         <div className="review-container">
             <div className="review-header">
-                <h1>Review Your Case File</h1>
-                <p>Please review the information we've collected. When you're ready, submit your file to the firm.</p>
+                <h1>Review Your Information</h1>
+                <p>Please review the information you provided. When you're ready, submit your record to the firm.</p>
+            </div>
+
+            <div className="attribution-notice">
+                <p><strong>Important:</strong> This record reflects the statements you provided.</p>
+                <p>It is not legal advice and has not been reviewed by an attorney.</p>
             </div>
 
             <div className="review-sections">
@@ -92,7 +97,7 @@ export default function IntakeReview({ intake, schema, onSubmit, disabled }: Int
                     onClick={handleSubmit}
                     disabled={disabled || submitting}
                 >
-                    {submitting ? 'Submitting...' : 'Submit Case File'}
+                    {submitting ? 'Submitting...' : 'Submit to Firm'}
                 </Button>
             </div>
 
@@ -114,6 +119,20 @@ export default function IntakeReview({ intake, schema, onSubmit, disabled }: Int
                 }
                 .review-header p {
                     color: var(--text-2);
+                }
+
+                .attribution-notice {
+                    background: rgba(59, 130, 246, 0.1);
+                    border: 1px solid rgba(59, 130, 246, 0.3);
+                    border-radius: 8px;
+                    padding: 16px;
+                    margin-bottom: 24px;
+                    text-align: center;
+                }
+                .attribution-notice p {
+                    font-size: 14px;
+                    color: var(--text-1);
+                    margin: 4px 0;
                 }
 
                 .review-sections {
