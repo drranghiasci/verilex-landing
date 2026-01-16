@@ -23,33 +23,35 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage 
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
-            <div className="track">
-                <div
-                    className="progress-fill"
-                    style={{ height: `${completionPercentage}%` }}
-                />
-            </div>
-
-            <div className="steps-container">
-                {steps.map((step, index) => (
+            <div className="scroll-area">
+                <div className="track">
                     <div
-                        key={step.id}
-                        className={`step-item ${step.isActive ? 'active' : ''} ${step.isCompleted ? 'completed' : ''}`}
-                    >
-                        <div className="step-marker">
-                            {step.isCompleted ? (
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                    <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                            ) : (
-                                <span className="step-num">{index + 1}</span>
-                            )}
+                        className="progress-fill"
+                        style={{ height: `${completionPercentage}%` }}
+                    />
+                </div>
+
+                <div className="steps-container">
+                    {steps.map((step, index) => (
+                        <div
+                            key={step.id}
+                            className={`step-item ${step.isActive ? 'active' : ''} ${step.isCompleted ? 'completed' : ''}`}
+                        >
+                            <div className="step-marker">
+                                {step.isCompleted ? (
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                ) : (
+                                    <span className="step-num">{index + 1}</span>
+                                )}
+                            </div>
+                            <div className="step-label">
+                                {step.label}
+                            </div>
                         </div>
-                        <div className="step-label">
-                            {step.label}
-                        </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
 
             <style jsx>{`
@@ -76,22 +78,43 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage 
                     box-shadow: 10px 0 30px rgba(0,0,0,0.5);
                 }
 
-                /* Vertical Track - Visible only when expanded */
+                /* Scroll Area Wrapper */
+                .scroll-area {
+                    flex: 1;
+                    position: relative;
+                    overflow-y: auto;
+                    overflow-x: hidden;
+                    width: 100%;
+                    /* Hide scrollbar */
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                }
+                .scroll-area::-webkit-scrollbar {
+                    display: none;
+                }
+
+                /* Vertical Track */
                 .track {
                     position: absolute;
-                    left: 28px; /* Adjusted for alignment */
+                    left: 28px;
                     top: 0;
-                    bottom: 0;
+                    bottom: 0; /* Stretches to scroll height if relative is correct? No, absolute in scrolling div is tricky */
+                    /* FIX: Track should probably be fixed height or calculated? 
+                       Actually, if step gap is known, track length is implied.
+                       Let's make track just very tall or relative to steps. 
+                    */
+                    min-height: 100vh; /* Ensure at least screen height */
+                    height: 100%; /* Match scroll content */
                     width: 2px;
                     background: var(--border);
                     z-index: 0;
-                    opacity: 0; /* Hidden by default (collapsed) */
+                    opacity: 0;
                     transition: opacity 0.3s ease;
                 }
 
                 .side-nav.expanded .track {
-                    opacity: 1; /* Show when expanded */
-                    left: 35px; /* Re-center when expanded */
+                    opacity: 1;
+                    left: 35px;
                 }
 
                 .progress-fill {
@@ -110,7 +133,7 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage 
                     display: flex;
                     flex-direction: column;
                     gap: 32px;
-                    padding-top: 60px;
+                    padding: 60px 0 60px 0; /* Vertical padding */
                 }
 
                 .step-item {

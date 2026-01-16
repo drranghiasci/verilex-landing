@@ -316,17 +316,9 @@ export default function IntakeFlow({
     if (!intakeId || isLocked || loading) return;
 
     // 1. Auto-fill System Fields if missing
-    if (!payload.matter_type) {
-      updateField('matter_type', 'divorce'); // Valid default
-    }
+    // ONLY initialize date_of_intake. Other fields must be user/AI driven.
     if (!payload.date_of_intake) {
       updateField('date_of_intake', new Date().toISOString().split('T')[0]);
-    }
-    if (!payload.urgency_level) {
-      updateField('urgency_level', 'routine');
-    }
-    if (!payload.intake_channel) {
-      updateField('intake_channel', 'web');
     }
 
     // 2. Force Sync UI to first incomplete step

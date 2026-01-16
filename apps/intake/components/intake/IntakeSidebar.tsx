@@ -15,8 +15,9 @@ export default function IntakeSidebar({ open, payload = {}, firmName, onToggle }
   const fields = useMemo(() => {
     if (!payload) return [];
     return Object.entries(payload).filter(([key, value]) => {
-      // Filter out internal fields
+      // Filter out internal fields and system fields we don't want to show yet
       if (key.startsWith('_')) return false;
+      if (key === 'intake_channel') return false; // Per requirements: do not show
       if (!value) return false;
       return true;
     });
