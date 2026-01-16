@@ -209,34 +209,32 @@ export default function GuidedChatPanel({
 
       <div className="input-area">
         <div className="input-wrapper">
-          <div className="relative w-full">
-            <textarea
-              ref={textareaRef}
-              className="chat-input"
-              rows={1}
-              placeholder="Type your answer..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={handleKeyDown}
+          <textarea
+            ref={textareaRef}
+            className="chat-input"
+            rows={1}
+            placeholder="Type your answer..."
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={disabled}
+          />
+          <div className="actions-area">
+            <VoiceInput
+              onTextReady={(text) => {
+                const newValue = inputText ? `${inputText} ${text}` : text;
+                setInputText(newValue);
+                textareaRef.current?.focus();
+              }}
               disabled={disabled}
             />
-            <div className="absolute right-2 bottom-2 flex items-center gap-1">
-              <VoiceInput
-                onTextReady={(text) => {
-                  const newValue = inputText ? `${inputText} ${text}` : text;
-                  setInputText(newValue);
-                  textareaRef.current?.focus();
-                }}
-                disabled={disabled || isAiTyping}
-              />
-              <button
-                onClick={() => handleSend()}
-                disabled={!inputText.trim() || disabled || isAiTyping}
-                className="send-btn"
-              >
-                <ArrowUp size={20} />
-              </button>
-            </div>
+            <button
+              onClick={() => handleSend()}
+              disabled={!inputText.trim() || disabled}
+              className="send-btn"
+            >
+              <ArrowUp size={20} />
+            </button>
           </div>
         </div>
         <div className="resume-container">
@@ -314,7 +312,8 @@ export default function GuidedChatPanel({
           border-radius: 12px;
           padding: 8px 12px;
           display: flex;
-          align-items: flex-end;
+          align-items: flex-end; /* Align bottom for multi-line support */
+          gap: 12px;
           transition: border-color 0.2s;
         }
         
@@ -323,21 +322,28 @@ export default function GuidedChatPanel({
         }
 
         .chat-input {
-          width: 100%;
+          flex: 1; /* Take available space */
           background: transparent;
           border: none;
           color: var(--text-0);
           font-size: 15px;
-          padding: 8px 48px 8px 0; /* right padding for buttons */
+          padding: 8px 0;
           font-family: inherit;
           resize: none;
           min-height: 24px;
-          max-height: 120px;
+          max-height: 200px;
         }
 
         .chat-input:focus {
           outline: none;
       }
+        
+        .actions-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 4px; /* Align with single line text */
+        }
         
         .send-btn {
             background: var(--primary);

@@ -64,58 +64,51 @@ export default function IntakeSidebar({ open, payload = {}, firmName, onToggle }
           right: 0;
           top: 0; 
           bottom: 0;
-          width: 48px; /* Collapsed width - visible tab */
+          width: 24px; /* Narrower trigger zone */
           height: 100vh;
-          background: rgba(10, 10, 15, 0.6); /* Transparent dark when collapsed */
-          border-left: 1px solid var(--border);
-          backdrop-filter: blur(10px);
-          transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s;
+          background: transparent; /* Invisible trigger */
+          border-left: none; /* No border in collapsed state */
           z-index: 90;
           display: flex;
           overflow: hidden;
           cursor: pointer;
+          transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s;
         }
 
         .sidebar:hover {
           width: 320px;
           background: rgba(10, 10, 15, 0.95); /* Solid on expand */
+          backdrop-filter: blur(20px);
           box-shadow: -10px 0 40px rgba(0,0,0,0.5);
+          border-left: 1px solid var(--border);
         }
 
-        /* Logic for mobile open prop */
+        /* Logic for mobile open prop override */
         .sidebar.mobile-open {
-            width: 320px; /* Force open on mobile trigger */
+            width: 320px;
             background: var(--surface-1);
+            border-left: 1px solid var(--border);
         }
 
         .sidebar-tab {
-            width: 48px;
+            width: 24px;
             height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            border-right: 1px solid transparent;
+            opacity: 0.5;
             transition: opacity 0.3s;
         }
-        
-        .sidebar:hover .sidebar-tab {
-            opacity: 0; /* Hide tab content when expanded? Or keep it? Let's hide to be clean */
-            width: 0;
-            border-right: none;
-        }
 
+        /* Hide tab text or make it very subtle vertical line */
         .vertical-text {
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
-            transform: rotate(180deg);
-            white-space: nowrap;
-            color: var(--text-2);
-            font-size: 12px;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            font-weight: 600;
+            display: none; /* Hide visible text in collapsed state per request "white box" removal */
         }
+        
+        /* Optional: Add a subtle indicator line on hover maybe? 
+           For now, purely invisible trigger zone as requested (no "white box").
+        */
 
         .sidebar-inner {
             flex: 1;
