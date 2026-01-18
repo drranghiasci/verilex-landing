@@ -10,6 +10,28 @@ const conditionalVisibility: Record<string, FieldCondition> = {
   protective_order_exists: (payload) => payload.dv_present === true,
   date_of_separation: (payload) => payload.currently_cohabitating === false,
   modification_existing_order: (payload) => payload.matter_type === 'modification',
+  // Gating-based visibility
+  children_count: (payload) => payload.has_children === true,
+  child_full_name: (payload) => payload.has_children === true,
+  child_dob: (payload) => payload.has_children === true,
+  child_current_residence: (payload) => payload.has_children === true,
+  biological_relation: (payload) => payload.has_children === true,
+  special_needs: (payload) => payload.has_children === true,
+  custody_type_requested: (payload) => payload.has_children === true,
+  parenting_plan_exists: (payload) => payload.has_children === true,
+  current_parenting_schedule: (payload) => payload.has_children === true,
+  school_district: (payload) => payload.has_children === true,
+  // Asset gating
+  asset_type: (payload) => payload.assets_present === true,
+  ownership: (payload) => payload.assets_present === true,
+  estimated_value: (payload) => payload.assets_present === true,
+  title_holder: (payload) => payload.assets_present === true,
+  acquired_pre_marriage: (payload) => payload.assets_present === true,
+  // Debt gating
+  debt_type: (payload) => payload.debts_present === true,
+  amount: (payload) => payload.debts_present === true,
+  responsible_party: (payload) => payload.debts_present === true,
+  incurred_during_marriage: (payload) => payload.debts_present === true,
 };
 
 const repeatableSectionIds = new Set(['child_object', 'asset_object', 'debt_object']);

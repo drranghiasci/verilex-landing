@@ -38,8 +38,8 @@ export const GA_DIVORCE_CUSTODY_V1: SchemaDef = {
         {
           key: 'has_children',
           type: 'boolean',
-          required: false,
-          notes: 'Determines if children sections are shown',
+          required: true,
+          notes: 'Gating field: determines if children/custody sections are required',
         },
         {
           key: 'children_count',
@@ -92,13 +92,15 @@ export const GA_DIVORCE_CUSTODY_V1: SchemaDef = {
       id: 'opposing_party',
       title: 'OPPOSING PARTY (SPOUSE / OTHER PARENT)',
       fields: [
-        { key: 'opposing_name', type: 'text', required: true },
+        { key: 'opposing_first_name', type: 'text', required: true, notes: 'Required for new intakes' },
+        { key: 'opposing_last_name', type: 'text', required: true, notes: 'Required for new intakes' },
+        { key: 'opposing_name', type: 'text', required: false, notes: 'Computed from first + last for display/legacy' },
         { key: 'opposing_address_known', type: 'boolean', required: true },
         {
           key: 'opposing_last_known_address',
           type: 'structured',
-          required: true,
-          notes: 'structured address; required if opposing_address_known',
+          required: false,
+          notes: 'structured address; required if opposing_address_known = true',
         },
         { key: 'service_concerns', type: 'boolean', required: false },
         {
@@ -112,7 +114,6 @@ export const GA_DIVORCE_CUSTODY_V1: SchemaDef = {
             'unemployed',
             'student',
             'retired',
-            'disabled',
             'disabled',
             'unknown',
           ],
@@ -388,6 +389,12 @@ export const GA_DIVORCE_CUSTODY_V1: SchemaDef = {
       id: 'evidence_documents',
       title: 'EVIDENCE & DOCUMENTS',
       fields: [
+        {
+          key: 'documents_reviewed_ack',
+          type: 'boolean',
+          required: true,
+          notes: 'Gating field: client acknowledges document review step',
+        },
         {
           key: 'document_type',
           type: 'enum',
