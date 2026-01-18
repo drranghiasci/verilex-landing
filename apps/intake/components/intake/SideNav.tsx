@@ -1,5 +1,13 @@
 import { useState } from 'react';
 
+// Constants for consistent sizing in collapsed/expanded states
+const BUBBLE_SIZE = 32; // px (h-8 w-8)
+const PIPE_WIDTH = 2; // px (w-0.5)
+const STEP_GAP = 8; // px vertical gap between steps
+const PIPELINE_COLUMN_WIDTH = 56; // px - fixed width for bubble + centering padding
+const SIDEBAR_COLLAPSED_WIDTH = 64; // px (w-16)
+const SIDEBAR_EXPANDED_WIDTH = 224; // px (w-56)
+
 type StepInfo = {
     id: string;
     label: string;
@@ -24,11 +32,11 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage,
             className={[
                 'fixed left-0 top-16 z-40 h-[calc(100vh-64px)]',
                 'border-r border-[color:var(--border)] bg-[rgba(10,10,12,0.92)] backdrop-blur',
-                'transition-all duration-200 ease-out',
-                expanded ? 'w-56' : 'w-16',
+                'transition-all duration-200 ease-out overflow-hidden',
             ].join(' ')}
+            style={{ width: expanded ? SIDEBAR_EXPANDED_WIDTH : SIDEBAR_COLLAPSED_WIDTH }}
         >
-            <div className="flex h-full flex-col px-3 py-6">
+            <div className="flex h-full flex-col py-6">
                 {/* Pipeline Progress Rail */}
                 <nav className="flex flex-1 flex-col">
                     {steps.map((step, index) => {
@@ -38,52 +46,44 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage,
                         const isLast = index === steps.length - 1;
 
                         return (
-                            <div key={step.id} className="relative flex items-start">
-                                {/* Vertical Pipe (connector to next step) */}
-                                {!isLast && (
-                                    <div
-                                        className={[
-                                            'absolute left-[31px] top-10 h-8 w-0.5',
-                                            index < currentStepIndex
-                                                ? 'bg-[color:var(--accent)]'
-                                                : 'bg-[color:var(--border)] border-dashed',
-                                        ].join(' ')}
-                                    />
-                                )}
-
-                                {/* Step Bubble + Label Row */}
-                                <button
-                                    type="button"
-                                    onClick={() => onStepClick?.(index)}
-                                    disabled={isFuture}
-                                    className={[
-                                        'relative flex items-center gap-3 rounded-xl px-3 py-2 w-full text-left transition-all duration-200',
-                                        'mb-4',
-                                        isActive
-                                            ? 'text-white'
-                                            : isCompleted
-                                                ? 'text-[color:var(--text-1)] hover:text-white'
-                                                : 'text-[color:var(--muted)] cursor-not-allowed',
-                                    ].join(' ')}
+                            <div key={step.id} className="relative flex" style={{ minHeight: BUBBLE_SIZE + STEP_GAP }}>
+                                {/* Column 1: Pipeline (bubble + pipe) - Fixed width, always centered */}
+                                <div
+                                    className="flex-shrink-0 flex flex-col items-center relative"
+                                    style={{ width: PIPELINE_COLUMN_WIDTH }}
                                 >
-                                    {/* Active Indicator Bar */}
-                                    <span
-                                        className={[
-                                            'absolute left-1 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-[color:var(--accent)] transition-opacity',
-                                            isActive ? 'opacity-100' : 'opacity-0',
-                                        ].join(' ')}
-                                    />
+                                    {/* Vertical Pipe (connector to next step) */}
+                                    {!isLast && (
+                                        <div
+                                            className={[
+                                                'absolute top-8 left-1/2 -translate-x-1/2',
+                                                index < currentStepIndex
+                                                    ? 'bg-[color:var(--accent)]'
+                                                    : 'bg-[color:var(--border)]',
+                                            ].join(' ')}
+                                            style={{
+                                                width: PIPE_WIDTH,
+                                                height: STEP_GAP + 8, // connects to next bubble
+                                            }}
+                                        />
+                                    )}
 
                                     {/* Pipeline Bubble */}
-                                    <span
+                                    <button
+                                        type="button"
+                                        onClick={() => onStepClick?.(index)}
+                                        disabled={isFuture}
                                         className={[
-                                            'relative flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all',
+                                            'relative flex items-center justify-center rounded-full text-xs font-bold transition-all',
+                                            'focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]/50',
                                             isActive
                                                 ? 'bg-[color:var(--accent)] text-white ring-4 ring-[color:var(--accent)]/20'
                                                 : isCompleted
-                                                    ? 'bg-[color:var(--accent-light)] text-white'
-                                                    : 'bg-[var(--surface-1)] border-2 border-[color:var(--border)] text-[color:var(--muted)]',
+                                                    ? 'bg-[color:var(--accent-light)] text-white hover:ring-2 hover:ring-[color:var(--accent)]/30'
+                                                    : 'bg-[var(--surface-1)] border-2 border-[color:var(--border)] text-[color:var(--muted)] cursor-not-allowed',
                                         ].join(' ')}
+                                        style={{ width: BUBBLE_SIZE, height: BUBBLE_SIZE }}
+                                        title={!expanded ? step.label : undefined}
                                     >
                                         {isCompleted ? (
                                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -92,18 +92,29 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage,
                                         ) : (
                                             index + 1
                                         )}
-                                    </span>
+                                    </button>
+                                </div>
 
-                                    {/* Label (shown when expanded) */}
+                                {/* Column 2: Label - Only visible when expanded */}
+                                <div
+                                    className={[
+                                        'flex items-center min-h-[32px] overflow-hidden transition-all duration-200',
+                                        expanded ? 'opacity-100' : 'opacity-0 w-0',
+                                    ].join(' ')}
+                                >
                                     <span
                                         className={[
-                                            'whitespace-nowrap text-sm font-medium transition-all duration-200',
-                                            expanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden',
+                                            'whitespace-nowrap text-sm font-medium pl-2',
+                                            isActive
+                                                ? 'text-white'
+                                                : isCompleted
+                                                    ? 'text-[color:var(--text-1)]'
+                                                    : 'text-[color:var(--muted)]',
                                         ].join(' ')}
                                     >
                                         {step.label}
                                     </span>
-                                </button>
+                                </div>
                             </div>
                         );
                     })}
@@ -112,7 +123,7 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage,
                 {/* Progress Percentage (shown when expanded) */}
                 <div
                     className={[
-                        'mt-auto pt-4 border-t border-[color:var(--border)] transition-opacity duration-200',
+                        'mx-4 pt-4 border-t border-[color:var(--border)] transition-opacity duration-200',
                         expanded ? 'opacity-100' : 'opacity-0',
                     ].join(' ')}
                 >
