@@ -28,7 +28,7 @@ interface ComputeSnapshotParams {
     matterType: string;
     scope: VenueStatsScope;
     firmId?: string;
-    timeWindowMonths?: number;
+    timeWindowMonths?: number; // Default: 12
 }
 
 /**
@@ -48,7 +48,7 @@ export async function computeVenueStatsSnapshot(params: ComputeSnapshotParams): 
         matterType,
         scope,
         firmId,
-        timeWindowMonths = 6,
+        timeWindowMonths = 12, // Rolling 12 months
     } = params;
 
     // Calculate time window

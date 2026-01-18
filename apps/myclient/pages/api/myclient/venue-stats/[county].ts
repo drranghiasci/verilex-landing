@@ -86,7 +86,8 @@ export default async function handler(
     const county = req.query.county as string;
     const state = (req.query.state as string) || 'GA';
     const matterType = (req.query.matter_type as string) || 'divorce';
-    const scope = (req.query.scope as 'firm' | 'global') || 'global';
+    // Scope preference: firm-first when available, with global as labeled context
+    const requestedScope = (req.query.scope as 'firm' | 'global') || 'firm';
 
     if (!county) {
         return res.status(400).json({ error: 'County is required' });
@@ -99,28 +100,59 @@ export default async function handler(
         });
     }
 
-    // Query latest snapshot
-    let snapshotQuery = supabase
-        .from('venue_stats_snapshots')
-        .select('id, venue_state, venue_county, matter_type, time_window_start, time_window_end, scope, sample_size, is_suppressed, suppression_reason')
-        .eq('venue_state', state)
-        .eq('venue_county', county)
-        .eq('matter_type', matterType)
-        .eq('scope', scope)
-        .order('computed_at', { ascending: false })
-        .limit(1);
+    // Try firm-scoped snapshot first (default), fall back to global
+    let snapshot: SnapshotRow | undefined;
+    let actualScope: 'firm' | 'global' = requestedScope;
 
-    if (scope === 'firm') {
-        snapshotQuery = snapshotQuery.eq('firm_id', membership.firm_id);
+    if (requestedScope === 'firm') {
+        // Try firm first
+        const { data: firmSnapshots, error: firmError } = await supabase
+            .from('venue_stats_snapshots')
+            .select('id, venue_state, venue_county, matter_type, time_window_start, time_window_end, scope, sample_size, is_suppressed, suppression_reason')
+            .eq('venue_state', state)
+            .eq('venue_county', county)
+            .eq('matter_type', matterType)
+            .eq('scope', 'firm')
+            .eq('firm_id', membership.firm_id)
+            .order('computed_at', { ascending: false })
+            .limit(1);
+
+        if (!firmError && firmSnapshots?.length) {
+            snapshot = firmSnapshots[0] as SnapshotRow;
+            actualScope = 'firm';
+        } else {
+            // Fall back to global
+            const { data: globalSnapshots } = await supabase
+                .from('venue_stats_snapshots')
+                .select('id, venue_state, venue_county, matter_type, time_window_start, time_window_end, scope, sample_size, is_suppressed, suppression_reason')
+                .eq('venue_state', state)
+                .eq('venue_county', county)
+                .eq('matter_type', matterType)
+                .eq('scope', 'global')
+                .order('computed_at', { ascending: false })
+                .limit(1);
+
+            if (globalSnapshots?.length) {
+                snapshot = globalSnapshots[0] as SnapshotRow;
+                actualScope = 'global';
+            }
+        }
+    } else {
+        // Explicitly requested global
+        const { data: globalSnapshots } = await supabase
+            .from('venue_stats_snapshots')
+            .select('id, venue_state, venue_county, matter_type, time_window_start, time_window_end, scope, sample_size, is_suppressed, suppression_reason')
+            .eq('venue_state', state)
+            .eq('venue_county', county)
+            .eq('matter_type', matterType)
+            .eq('scope', 'global')
+            .order('computed_at', { ascending: false })
+            .limit(1);
+
+        if (globalSnapshots?.length) {
+            snapshot = globalSnapshots[0] as SnapshotRow;
+        }
     }
-
-    const { data: snapshots, error: snapshotError } = await snapshotQuery;
-
-    if (snapshotError) {
-        return res.status(500).json({ error: snapshotError.message });
-    }
-
-    const snapshot = snapshots?.[0] as SnapshotRow | undefined;
 
     // No snapshot exists
     if (!snapshot) {
@@ -130,7 +162,7 @@ export default async function handler(
             matter_type: matterType,
             sample_size: 0,
             time_window: 'N/A',
-            scope,
+            scope: actualScope,
             suppressed: true,
             suppression_reason: 'No data available for this venue',
             metrics: [],
