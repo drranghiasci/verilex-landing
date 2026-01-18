@@ -8,7 +8,7 @@ import LockedConfirmation from './LockedConfirmation';
 import ErrorBanner from './ErrorBanner';
 import GuidedChatPanel from './GuidedChatPanel';
 import SafetyBanner from './SafetyBanner';
-import IntakeSidebar from './IntakeSidebar';
+
 import { useIntakeSession } from './useIntakeSession';
 import Button from '../ui/Button';
 import Alert from '../ui/Alert';
@@ -535,7 +535,6 @@ export default function IntakeFlow({
   // New Layout Logic
   const displayError = uiError ?? error?.message ?? null;
   const requestId = error?.requestId ?? null;
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const stepsInfo = visibleSteps.map((s) => ({
     id: s.id,
     label: getSectionTitleForMatterType(s.id, matterType),
@@ -581,12 +580,6 @@ export default function IntakeFlow({
   if (intake?.status === 'submitted') {
     return (
       <div className="flow-container">
-        <IntakeSidebar
-          open={sidebarOpen}
-          payload={payload}
-          firmName={firm?.firm_name}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
-        />
         <div className="success-screen">
           <h1>Reference ID: {intake.id.slice(0, 8)}</h1>
           <h2>Case File Submitted</h2>
@@ -635,31 +628,10 @@ export default function IntakeFlow({
       steps={visibleSteps}
       currentStepIndex={currentStepIndex}
       completionPercentage={totalCompletion}
-      sidebarOpen={sidebarOpen}
-      onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-      sidebar={
-        <IntakeSidebar
-          open={sidebarOpen}
-          payload={payload}
-          firmName={firm?.firm_name}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
-        />
-      }
     >
       <div className="flex h-full relative">
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col relative min-w-0 bg-bg">
-          {/* Mobile Toggle for Sidebar */}
-          {!sidebarOpen && (
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="absolute top-4 right-4 z-40 p-2 bg-surface-1 border border-border rounded-lg shadow-sm hover:bg-surface-2 transition-colors lg:hidden"
-            >
-              <span className="sr-only">Open Case Details</span>
-              {/* Icon placeholder - usually Info or Sidebar icon */}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><line x1="15" x2="15" y1="3" y2="21" /></svg>
-            </button>
-          )}
           <AnimatePresence mode="wait">
             {/* REVIEW SCREEN */}
             {status === 'ready_for_review' || status === 'submitted' ? (
@@ -709,7 +681,7 @@ export default function IntakeFlow({
                     queueMessages(newMessages);
                     await flushPending();
                   }}
-                  onJumpToField={(k) => setSidebarOpen(true)}
+                  onJumpToField={() => { }}
                   sectionId={step?.id}
                   library={GUIDED_PROMPT_LIBRARY}
                   missingFields={missingFields}

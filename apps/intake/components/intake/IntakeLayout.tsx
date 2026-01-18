@@ -15,27 +15,24 @@ type StepInfo = {
 type IntakeLayoutProps = {
     children: ReactNode;
     firmName?: string;
+    firmWebsiteUrl?: string;
     steps: StepInfo[];
     currentStepIndex: number;
     completionPercentage: number;
-    sidebar?: ReactNode; // New prop for the right sidebar
+    sidebar?: ReactNode;
     sidebarOpen?: boolean;
-    onToggleSidebar?: () => void;
 };
 
 export default function IntakeLayout({
     children,
     firmName,
+    firmWebsiteUrl,
     steps,
     currentStepIndex,
     completionPercentage,
     sidebar,
     sidebarOpen = true,
-    onToggleSidebar
 }: IntakeLayoutProps) {
-    // Convert steps to the format IntakeHeader expects
-    const headerSteps = steps.map(s => ({ id: s.id, label: s.label }));
-
     return (
         <div className="layout-roots">
             <SideNav
@@ -46,9 +43,7 @@ export default function IntakeLayout({
             <main className="main-content">
                 <IntakeHeader
                     firmName={firmName}
-                    steps={headerSteps}
-                    currentStepIndex={currentStepIndex}
-                    onToggleSidebar={onToggleSidebar}
+                    firmWebsiteUrl={firmWebsiteUrl}
                 />
                 <div className="content-area">
                     <div className="content-container">
