@@ -636,6 +636,7 @@ export default function IntakeFlow({
       currentStepIndex={currentStepIndex}
       completionPercentage={totalCompletion}
       sidebarOpen={sidebarOpen}
+      onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
       sidebar={
         <IntakeSidebar
           open={sidebarOpen}

@@ -1,6 +1,7 @@
 
 import React, { ReactNode } from 'react';
 import SideNav from './SideNav';
+import IntakeHeader from './IntakeHeader';
 
 type StepInfo = {
     id: string;
@@ -19,6 +20,7 @@ type IntakeLayoutProps = {
     completionPercentage: number;
     sidebar?: ReactNode; // New prop for the right sidebar
     sidebarOpen?: boolean;
+    onToggleSidebar?: () => void;
 };
 
 export default function IntakeLayout({
@@ -28,8 +30,12 @@ export default function IntakeLayout({
     currentStepIndex,
     completionPercentage,
     sidebar,
-    sidebarOpen = true // Default to true if not passed
+    sidebarOpen = true,
+    onToggleSidebar
 }: IntakeLayoutProps) {
+    // Convert steps to the format IntakeHeader expects
+    const headerSteps = steps.map(s => ({ id: s.id, label: s.label }));
+
     return (
         <div className="layout-roots">
             <SideNav
@@ -38,9 +44,12 @@ export default function IntakeLayout({
                 completionPercentage={completionPercentage}
             />
             <main className="main-content">
-                <header className="mobile-header">
-                    <span className="brand">{firmName || 'VeriLex'}</span>
-                </header>
+                <IntakeHeader
+                    firmName={firmName}
+                    steps={headerSteps}
+                    currentStepIndex={currentStepIndex}
+                    onToggleSidebar={onToggleSidebar}
+                />
                 <div className="content-area">
                     <div className="content-container">
                         {children}
