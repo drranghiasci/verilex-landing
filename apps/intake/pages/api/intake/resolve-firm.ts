@@ -71,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { data, error } = await supabaseAdmin
     .from('firms')
-    .select('id, name, slug, branding')
+    .select('id, name, slug, website_url, branding')
     .eq('slug', slug)
     .maybeSingle();
 
@@ -91,6 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ok: true,
     firm_id: data.id,
     firm_name: data.name,
+    website_url: data.website_url || null,
     branding: safeBranding,
   });
 }

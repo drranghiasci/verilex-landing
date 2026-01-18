@@ -625,6 +625,7 @@ export default function IntakeFlow({
   return (
     <IntakeLayout
       firmName={firm?.firm_name}
+      firmWebsiteUrl={firm?.website_url || undefined}
       steps={visibleSteps}
       currentStepIndex={currentStepIndex}
       completionPercentage={totalCompletion}

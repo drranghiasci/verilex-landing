@@ -1,0 +1,104 @@
+{
+    "project": "VeriLex",
+    "scope": "Intake UI parity with MyClient",
+    "intake": {
+        "header": {
+            "left": {
+                "type": "logo",
+                "targetUrl": "https://verilex.us"
+            },
+            "right": [
+                {
+                    "type": "themeToggle",
+                    "modes": [
+                        "light",
+                        "dark",
+                        "system"
+                    ]
+                },
+                {
+                    "type": "firmName",
+                    "position": "topRight",
+                    "link": {
+                        "enabledIf": "firm.website_url != null && firm.website_url != ''",
+                        "warningModal": {
+                            "title": "Leave this intake page?",
+                            "body": "You’re about to visit the firm’s website. Your progress may not be saved.",
+                            "continueOpensNewTab": true,
+                            "buttons": [
+                                "Continue to website",
+                                "Stay here"
+                            ]
+                        }
+                    }
+                }
+            ],
+            "layoutRules": {
+                "headerOverlaysSidebar": true,
+                "sidebarContentTopPadding": ">= headerHeight",
+                "noProgressInHeader": true
+            }
+        },
+        "sidebar": {
+            "styleSource": "MyClient",
+            "collapsible": true,
+            "progressRail": {
+                "type": "pipeline",
+                "stepsAsBubbles": true,
+                "pipesConnectSteps": true,
+                "states": [
+                    "complete",
+                    "current",
+                    "future",
+                    "locked"
+                ],
+                "clickable": true,
+                "noHeaderProgress": true
+            }
+        },
+        "theme": {
+            "mustMatchMyClient": true,
+            "toggleChangesEntirePage": true,
+            "persistPreference": true
+        },
+        "assertionsVisibility": {
+            "duringIntake": "hidden",
+            "finalReviewOnly": true
+        }
+    },
+    "myclient": {
+        "settings": {
+            "addField": {
+                "name": "website_url",
+                "label": "Firm website URL",
+                "validation": "url|empty",
+                "table": "firms"
+            }
+        }
+    },
+    "database": {
+        "migration": {
+            "table": "firms",
+            "addColumn": {
+                "name": "website_url",
+                "type": "text",
+                "nullable": true
+            }
+        },
+        "rls": {
+            "firms.website_url": {
+                "read": "firm members",
+                "write": "firm admins only",
+                "intakePublicRead": "name + website_url only by firmSlug"
+            }
+        }
+    },
+    "tests": [
+        "intake header/sidebar matches myclient",
+        "pipeline progress bubbles + pipes",
+        "theme toggle transforms full intake page",
+        "verilex logo links to verilex.us",
+        "firm name link warning modal + new tab",
+        "assertions hidden during intake, only on final review"
+    ]
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 type StepInfo = {
     id: string;
@@ -11,204 +11,116 @@ type SideNavProps = {
     steps: StepInfo[];
     currentStepIndex: number;
     completionPercentage: number;
+    onStepClick?: (stepIndex: number) => void;
 };
 
-export default function SideNav({ steps, currentStepIndex, completionPercentage }: SideNavProps) {
-    const [isHovered, setIsHovered] = useState(false);
+export default function SideNav({ steps, currentStepIndex, completionPercentage, onStepClick }: SideNavProps) {
+    const [expanded, setExpanded] = useState(false);
 
     return (
         <aside
-            className={`side-nav ${isHovered ? 'expanded' : ''}`}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            onMouseEnter={() => setExpanded(true)}
+            onMouseLeave={() => setExpanded(false)}
+            className={[
+                'fixed left-0 top-16 z-40 h-[calc(100vh-64px)]',
+                'border-r border-[color:var(--border)] bg-[rgba(10,10,12,0.92)] backdrop-blur',
+                'transition-all duration-200 ease-out',
+                expanded ? 'w-56' : 'w-16',
+            ].join(' ')}
         >
-            <div className="scroll-area">
-                <div className="track-container">
-                    <div className="track">
-                        <div
-                            className="progress-fill"
-                            style={{ height: `${completionPercentage}%` }}
-                        />
+            <div className="flex h-full flex-col px-3 py-6">
+                {/* Pipeline Progress Rail */}
+                <nav className="flex flex-1 flex-col">
+                    {steps.map((step, index) => {
+                        const isCompleted = step.isCompleted;
+                        const isActive = step.isActive;
+                        const isFuture = !isCompleted && !isActive;
+                        const isLast = index === steps.length - 1;
+
+                        return (
+                            <div key={step.id} className="relative flex items-start">
+                                {/* Vertical Pipe (connector to next step) */}
+                                {!isLast && (
+                                    <div
+                                        className={[
+                                            'absolute left-[31px] top-10 h-8 w-0.5',
+                                            index < currentStepIndex
+                                                ? 'bg-[color:var(--accent)]'
+                                                : 'bg-[color:var(--border)] border-dashed',
+                                        ].join(' ')}
+                                    />
+                                )}
+
+                                {/* Step Bubble + Label Row */}
+                                <button
+                                    type="button"
+                                    onClick={() => onStepClick?.(index)}
+                                    disabled={isFuture}
+                                    className={[
+                                        'relative flex items-center gap-3 rounded-xl px-3 py-2 w-full text-left transition-all duration-200',
+                                        'mb-4',
+                                        isActive
+                                            ? 'text-white'
+                                            : isCompleted
+                                                ? 'text-[color:var(--text-1)] hover:text-white'
+                                                : 'text-[color:var(--muted)] cursor-not-allowed',
+                                    ].join(' ')}
+                                >
+                                    {/* Active Indicator Bar */}
+                                    <span
+                                        className={[
+                                            'absolute left-1 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-[color:var(--accent)] transition-opacity',
+                                            isActive ? 'opacity-100' : 'opacity-0',
+                                        ].join(' ')}
+                                    />
+
+                                    {/* Pipeline Bubble */}
+                                    <span
+                                        className={[
+                                            'relative flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all',
+                                            isActive
+                                                ? 'bg-[color:var(--accent)] text-white ring-4 ring-[color:var(--accent)]/20'
+                                                : isCompleted
+                                                    ? 'bg-[color:var(--accent-light)] text-white'
+                                                    : 'bg-[var(--surface-1)] border-2 border-[color:var(--border)] text-[color:var(--muted)]',
+                                        ].join(' ')}
+                                    >
+                                        {isCompleted ? (
+                                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        ) : (
+                                            index + 1
+                                        )}
+                                    </span>
+
+                                    {/* Label (shown when expanded) */}
+                                    <span
+                                        className={[
+                                            'whitespace-nowrap text-sm font-medium transition-all duration-200',
+                                            expanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden',
+                                        ].join(' ')}
+                                    >
+                                        {step.label}
+                                    </span>
+                                </button>
+                            </div>
+                        );
+                    })}
+                </nav>
+
+                {/* Progress Percentage (shown when expanded) */}
+                <div
+                    className={[
+                        'mt-auto pt-4 border-t border-[color:var(--border)] transition-opacity duration-200',
+                        expanded ? 'opacity-100' : 'opacity-0',
+                    ].join(' ')}
+                >
+                    <div className="text-xs text-[color:var(--muted)] text-center">
+                        {Math.round(completionPercentage)}% complete
                     </div>
                 </div>
-
-                <div className="steps-container">
-                    {steps.map((step, index) => (
-                        <div
-                            key={step.id}
-                            className={`step-item ${step.isActive ? 'active' : ''} ${step.isCompleted ? 'completed' : ''}`}
-                        >
-                            <div className="step-marker-wrapper">
-                                <div className="step-marker">
-                                    {step.isCompleted ? (
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                            <polyline points="20 6 9 17 4 12" />
-                                        </svg>
-                                    ) : (
-                                        <span className="step-num">{index + 1}</span>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="step-label">
-                                {step.label}
-                            </div>
-                        </div>
-                    ))}
-                </div>
             </div>
-
-            <style jsx>{`
-                .side-nav {
-                    position: fixed;
-                    left: 0;
-                    top: 0;
-                    bottom: 0;
-                    width: 80px; /* Wider to avoid clipping */
-                    background: rgba(5, 5, 10, 0.6);
-                    backdrop-filter: blur(20px);
-                    border-right: 1px solid var(--border);
-                    z-index: 50;
-                    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                .side-nav.expanded {
-                    width: 260px;
-                    background: rgba(10, 10, 15, 0.95);
-                    box-shadow: 10px 0 30px rgba(0,0,0,0.5);
-                }
-
-                .scroll-area {
-                    flex: 1;
-                    position: relative;
-                    overflow-y: auto;
-                    overflow-x: hidden;
-                    width: 100%;
-                    scrollbar-width: none;
-                    -ms-overflow-style: none;
-                }
-                .scroll-area::-webkit-scrollbar {
-                    display: none;
-                }
-
-                .track-container {
-                    position: absolute;
-                    left: 0;
-                    top: 0;
-                    bottom: 0;
-                    width: 80px; /* Match collapsed width */
-                    pointer-events: none;
-                    z-index: 0;
-                }
-
-                .track {
-                    position: absolute;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    top: 0;
-                    bottom: 0;
-                    width: 2px;
-                    background: var(--border);
-                    min-height: 100vh; /* Ensure it stretches */
-                    opacity: 0.2;
-                }
-
-                .side-nav.expanded .track {
-                    /* In expanded mode, move track to align with markers on left */
-                    left: 40px; 
-                    transform: translateX(-50%);
-                    opacity: 1;
-                }
-
-                .progress-fill {
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    background: linear-gradient(to bottom, var(--accent), var(--accent-light));
-                    box-shadow: 0 0 10px var(--accent-glow);
-                    transition: height 0.5s ease;
-                }
-
-                .steps-container {
-                    position: relative;
-                    z-index: 1;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 32px;
-                    padding: 40px 0;
-                }
-
-                .step-item {
-                    display: flex;
-                    align-items: center;
-                    height: 40px;
-                    position: relative;
-                    padding-left: 0; /* Centered by default via flex in container? No, let's use padding */
-                }
-
-                .step-marker-wrapper {
-                    width: 80px; /* Fixed width matching collapsed nav */
-                    display: flex;
-                    justify-content: center;
-                    flex-shrink: 0;
-                }
-
-                .step-marker {
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 50%;
-                    background: var(--bg);
-                    border: 2px solid var(--border);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 12px;
-                    font-weight: 700;
-                    color: var(--text-2);
-                    transition: all 0.3s;
-                    z-index: 2;
-                }
-
-                .step-item.active .step-marker {
-                    border-color: var(--accent-light);
-                    color: white;
-                    background: var(--accent);
-                    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2), 0 0 20px var(--accent-glow);
-                    transform: scale(1.15);
-                }
-
-                .step-item.completed .step-marker {
-                    background: var(--accent-light);
-                    border-color: var(--accent-light);
-                    color: white;
-                }
-
-                .step-label {
-                    margin-left: 0;
-                    font-size: 14px;
-                    font-weight: 500;
-                    color: var(--text-1);
-                    opacity: 0;
-                    white-space: nowrap;
-                    transform: translateX(-10px);
-                    transition: all 0.2s;
-                    pointer-events: none;
-                }
-
-                .side-nav.expanded .step-label {
-                    opacity: 1;
-                    transform: translateX(0);
-                    transition-delay: 0.05s;
-                    pointer-events: auto;
-                }
-
-                .step-item.active .step-label {
-                    color: var(--text-0);
-                    font-weight: 600;
-                }
-            `}</style>
         </aside>
     );
 }

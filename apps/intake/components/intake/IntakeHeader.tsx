@@ -33,176 +33,64 @@ export default function IntakeHeader({ firmName, firmWebsiteUrl }: IntakeHeaderP
 
   return (
     <>
-      <header className="intake-header">
-        <div className="header-left">
-          <img src={logoSrc} alt="VeriLex" className="logo" />
+      <header className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-[color:var(--border)] bg-[rgba(10,10,12,0.88)] backdrop-blur">
+        <div className="flex h-full items-center justify-between px-4 md:px-6">
+          {/* Left: VeriLex Logo - links to verilex.us */}
+          <div className="flex items-center">
+            <a
+              href="https://verilex.us"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center"
+            >
+              <img src={logoSrc} alt="VeriLex" className="h-7 w-auto" />
+            </a>
+          </div>
+
+          {/* Right: Theme Toggle + Firm Name */}
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            {firmWebsiteUrl ? (
+              <button
+                onClick={handleFirmClick}
+                className="rounded-lg px-3 py-1.5 text-sm font-medium text-[color:var(--text-1)] transition hover:bg-white/10 hover:text-white"
+              >
+                {displayName}
+              </button>
+            ) : (
+              <span className="text-sm font-medium text-[color:var(--text-1)]">
+                {displayName}
+              </span>
+            )}
+          </div>
         </div>
-
-        <div className="header-right">
-          <ThemeToggle />
-          {firmWebsiteUrl ? (
-            <button className="firm-link" onClick={handleFirmClick}>
-              {displayName}
-            </button>
-          ) : (
-            <span className="firm-name">{displayName}</span>
-          )}
-        </div>
-
-        <style jsx>{`
-          .intake-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 56px;
-            padding: 0 24px;
-            border-bottom: 1px solid var(--border);
-            background: var(--surface-0);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-          }
-
-          .header-left {
-            display: flex;
-            align-items: center;
-          }
-
-          .logo {
-            height: 24px;
-            width: auto;
-          }
-
-          .header-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-          }
-
-          .firm-link {
-            background: transparent;
-            border: none;
-            color: var(--text-1);
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            padding: 6px 12px;
-            border-radius: 6px;
-            transition: all 0.2s;
-          }
-
-          .firm-link:hover {
-            background: var(--surface-2);
-            color: var(--text-0);
-          }
-
-          .firm-name {
-            color: var(--text-1);
-            font-size: 14px;
-            font-weight: 500;
-          }
-
-          @media (max-width: 768px) {
-            .intake-header {
-              padding: 0 16px;
-            }
-            .logo {
-              height: 20px;
-            }
-          }
-        `}</style>
       </header>
 
       {/* Leave Page Warning Modal */}
       {showLeaveModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>Leave this intake page?</h2>
-            <p>You're about to visit the firm's website. Your progress may not be saved.</p>
-            <div className="modal-actions">
-              <button className="btn-secondary" onClick={() => setShowLeaveModal(false)}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="mx-4 max-w-sm rounded-2xl border border-[color:var(--border)] bg-[var(--surface-1)] p-6 text-center shadow-2xl">
+            <h2 className="text-lg font-semibold text-[color:var(--text-0)]">
+              Leave this intake page?
+            </h2>
+            <p className="mt-3 text-sm text-[color:var(--text-2)]">
+              You're about to visit the firm's website. Your progress may not be saved.
+            </p>
+            <div className="mt-6 flex justify-center gap-3">
+              <button
+                onClick={() => setShowLeaveModal(false)}
+                className="rounded-lg border border-[color:var(--border)] px-4 py-2 text-sm font-medium text-[color:var(--text-1)] transition hover:bg-white/5"
+              >
                 Stay here
               </button>
-              <button className="btn-primary" onClick={handleContinueToWebsite}>
+              <button
+                onClick={handleContinueToWebsite}
+                className="rounded-lg bg-[color:var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+              >
                 Continue to website
               </button>
             </div>
           </div>
-
-          <style jsx>{`
-            .modal-overlay {
-              position: fixed;
-              inset: 0;
-              background: rgba(0, 0, 0, 0.7);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              z-index: 1000;
-              backdrop-filter: blur(4px);
-            }
-
-            .modal-content {
-              background: var(--surface-1);
-              border: 1px solid var(--border);
-              border-radius: 12px;
-              padding: 32px;
-              max-width: 400px;
-              width: 90%;
-              text-align: center;
-            }
-
-            .modal-content h2 {
-              font-size: 18px;
-              font-weight: 600;
-              color: var(--text-0);
-              margin-bottom: 12px;
-            }
-
-            .modal-content p {
-              font-size: 14px;
-              color: var(--text-2);
-              margin-bottom: 24px;
-              line-height: 1.5;
-            }
-
-            .modal-actions {
-              display: flex;
-              gap: 12px;
-              justify-content: center;
-            }
-
-            .btn-secondary {
-              padding: 10px 20px;
-              border-radius: 8px;
-              background: transparent;
-              border: 1px solid var(--border);
-              color: var(--text-1);
-              font-size: 14px;
-              font-weight: 500;
-              cursor: pointer;
-              transition: all 0.2s;
-            }
-
-            .btn-secondary:hover {
-              background: var(--surface-2);
-            }
-
-            .btn-primary {
-              padding: 10px 20px;
-              border-radius: 8px;
-              background: var(--accent);
-              border: none;
-              color: white;
-              font-size: 14px;
-              font-weight: 500;
-              cursor: pointer;
-              transition: all 0.2s;
-            }
-
-            .btn-primary:hover {
-              opacity: 0.9;
-            }
-          `}</style>
         </div>
       )}
     </>

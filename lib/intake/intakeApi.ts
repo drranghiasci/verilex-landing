@@ -1,6 +1,7 @@
 export type ResolveFirmResponse = {
   firm_id: string;
   firm_name: string;
+  website_url?: string | null;
   branding?: {
     logo_url?: string;
     accent_color?: string;

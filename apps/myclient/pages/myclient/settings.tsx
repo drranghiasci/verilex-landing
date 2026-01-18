@@ -10,6 +10,7 @@ import { logActivity } from '@/lib/activity';
 type FirmRecord = {
   id: string;
   name: string | null;
+  website_url: string | null;
   created_at: string;
 };
 
@@ -22,6 +23,7 @@ export default function FirmSettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [firmName, setFirmName] = useState('');
+  const [firmWebsiteUrl, setFirmWebsiteUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [profileTimezone, setProfileTimezone] = useState('America/New_York');
   const [loadingProfile, setLoadingProfile] = useState(false);
@@ -54,7 +56,7 @@ export default function FirmSettingsPage() {
       setError(null);
       const { data, error: firmError } = await supabase
         .from('firms')
-        .select('id, name, created_at')
+        .select('id, name, website_url, created_at')
         .eq('id', state.firmId)
         .single();
 
@@ -65,6 +67,7 @@ export default function FirmSettingsPage() {
       } else {
         setFirm(data);
         setFirmName(data?.name ?? '');
+        setFirmWebsiteUrl(data?.website_url ?? '');
       }
       setLoadingFirm(false);
     };
@@ -125,9 +128,10 @@ export default function FirmSettingsPage() {
     setSaved(false);
     setError(null);
     const nextName = firmName.trim();
+    const nextWebsiteUrl = firmWebsiteUrl.trim() || null;
     const { error: updateError } = await supabase
       .from('firms')
-      .update({ name: nextName })
+      .update({ name: nextName, website_url: nextWebsiteUrl })
       .eq('id', state.firmId);
 
     if (updateError) {
@@ -146,7 +150,7 @@ export default function FirmSettingsPage() {
       metadata: { old_name: firm.name, new_name: nextName },
     });
 
-    setFirm({ ...firm, name: nextName });
+    setFirm({ ...firm, name: nextName, website_url: nextWebsiteUrl });
     setSaved(true);
     setSaving(false);
   };
@@ -215,6 +219,17 @@ export default function FirmSettingsPage() {
                   <input
                     value={firmName}
                     onChange={(event) => setFirmName(event.target.value)}
+                    className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-base text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                  />
+                </label>
+
+                <label className="grid gap-2 text-sm text-[color:var(--text-2)]">
+                  Firm website URL
+                  <input
+                    type="url"
+                    value={firmWebsiteUrl}
+                    onChange={(event) => setFirmWebsiteUrl(event.target.value)}
+                    placeholder="https://example.com"
                     className="rounded-lg border border-white/10 bg-[var(--surface-0)] px-4 py-2 text-base text-white outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                   />
                 </label>
