@@ -15,6 +15,16 @@ const FIELD_REVEALS: Record<string, { whenValue: unknown; revealPaths: string[] 
     whenValue: false,
     revealPaths: ['date_of_separation'],
   },
+  // Progressive disclosure for assets
+  assets_present: {
+    whenValue: true,
+    revealPaths: ['asset_type', 'ownership', 'estimated_value', 'title_holder', 'acquired_pre_marriage'],
+  },
+  // Progressive disclosure for debts
+  debts_present: {
+    whenValue: true,
+    revealPaths: ['debt_type', 'amount', 'responsible_party', 'incurred_during_marriage'],
+  },
 };
 
 function buildNarrativePrompt(section: SectionDef) {

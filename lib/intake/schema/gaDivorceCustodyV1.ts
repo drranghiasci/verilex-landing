@@ -210,8 +210,14 @@ export const GA_DIVORCE_CUSTODY_V1: SchemaDef = {
     },
     {
       id: 'asset_object',
-      title: 'ASSET OBJECT (REPEATABLE)',
+      title: 'ASSETS & PROPERTY',
       fields: [
+        {
+          key: 'assets_present',
+          type: 'boolean',
+          required: true,
+          notes: 'Gateway: Do you have any assets to report? (real estate, vehicles, bank accounts, retirement, business interests)',
+        },
         {
           key: 'asset_type',
           type: 'enum',
@@ -268,8 +274,14 @@ export const GA_DIVORCE_CUSTODY_V1: SchemaDef = {
     },
     {
       id: 'debt_object',
-      title: 'DEBT OBJECT (REPEATABLE)',
+      title: 'LIABILITIES & DEBTS',
       fields: [
+        {
+          key: 'debts_present',
+          type: 'boolean',
+          required: true,
+          notes: 'Gateway: Do you have any debts to report? (mortgages, loans, credit cards, medical debts)',
+        },
         {
           key: 'debt_type',
           type: 'enum',

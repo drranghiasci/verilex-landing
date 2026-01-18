@@ -1,3 +1,5 @@
+import { useTheme } from '../../lib/theme-context';
+import ThemeToggle from '../ThemeToggle';
 
 type StepInfo = { id: string; label: string };
 
@@ -9,11 +11,18 @@ type IntakeHeaderProps = {
 };
 
 export default function IntakeHeader({ firmName, steps, currentStepIndex, onToggleSidebar }: IntakeHeaderProps) {
-  const displayName = firmName?.trim() || 'Verilex';
+  const { theme } = useTheme();
+  const displayName = firmName?.trim() || 'VeriLex';
+
+  const logoSrc = theme === 'dark'
+    ? '/verilex-logo-name-darkmode.svg'
+    : '/verilex-logo-name-lightmode.svg';
 
   return (
     <header className="intake-header">
       <div className="header-left">
+        <img src={logoSrc} alt="VeriLex" className="logo" />
+        <span className="firm-divider">|</span>
         <span className="firm-brand">{displayName}</span>
       </div>
 
@@ -44,6 +53,7 @@ export default function IntakeHeader({ firmName, steps, currentStepIndex, onTogg
       </nav>
 
       <div className="header-right">
+        <ThemeToggle />
         {onToggleSidebar && (
           <button className="sidebar-toggle" onClick={onToggleSidebar}>
             <span>Case Details</span>
@@ -56,8 +66,50 @@ export default function IntakeHeader({ firmName, steps, currentStepIndex, onTogg
       </div>
 
       <style jsx>{`
-        /* ... existing styles ... */
-        
+        .intake-header {
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          align-items: center;
+          height: 60px;
+          padding: 0 24px;
+          border-bottom: 1px solid var(--border);
+          background: var(--surface-0);
+          backdrop-filter: blur(20px);
+          position: sticky;
+          top: 0;
+          z-index: 100;
+        }
+
+        .header-left {
+          justify-self: start;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .logo {
+          height: 28px;
+          width: auto;
+        }
+
+        .firm-divider {
+          color: var(--border);
+          font-weight: 300;
+        }
+
+        .firm-brand {
+          font-size: 14px;
+          font-weight: 500;
+          color: var(--text-1);
+        }
+
+        .header-right {
+          justify-self: end;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
         .sidebar-toggle {
           display: flex;
           align-items: center;
@@ -77,27 +129,6 @@ export default function IntakeHeader({ firmName, steps, currentStepIndex, onTogg
           background: var(--surface-2);
           color: var(--text-0);
           border-color: var(--border-highlight);
-        }
-        .intake-header {
-          display: grid;
-          grid-template-columns: 1fr auto 1fr;
-          align-items: center;
-          height: 60px;
-          padding: 0 24px;
-          border-bottom: 1px solid var(--border);
-          background: rgba(10, 10, 10, 0.6);
-          backdrop-filter: blur(20px);
-          position: sticky;
-          top: 0;
-          z-index: 100;
-        }
-
-        .header-left {
-            justify-self: start;
-        }
-
-        .header-right {
-            justify-self: end;
         }
 
         .step-indicator {
@@ -147,18 +178,31 @@ export default function IntakeHeader({ firmName, steps, currentStepIndex, onTogg
         .step-label {
           font-size: 13px;
           font-weight: 500;
-          color: var(--text-2); /* Default muted */
+          color: var(--text-2);
         }
+        
         .step-item.active .step-label {
-            color: var(--text-0); /* Active highlight */
+          color: var(--text-0);
         }
 
-        @keyframes slideRight {
-          from { opacity: 0; transform: translateX(-4px); }
-          to { opacity: 1; transform: translateX(0); }
+        @media (max-width: 768px) {
+          .intake-header {
+            grid-template-columns: auto 1fr auto;
+            padding: 0 16px;
+          }
+          
+          .step-indicator {
+            display: none;
+          }
+
+          .firm-brand {
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
         }
       `}</style>
     </header>
   );
 }
-

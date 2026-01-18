@@ -153,6 +153,43 @@ export default function IntakeFlow({
     [payload, step],
   );
 
+  // Schema Enforcement: assets_present and debts_present with progressive disclosure
+  const assetDebtCoverage = useMemo(() => {
+    const issues: string[] = [];
+
+    // Assets coverage check
+    const assetsPresent = payload.assets_present;
+    if (assetsPresent === undefined || assetsPresent === null) {
+      issues.push('assets_present');
+    } else if (assetsPresent === true) {
+      // If assets present, require at least one asset object with asset_type
+      const assets = payload.assets as Array<Record<string, unknown>> | undefined;
+      if (!assets || assets.length === 0 || !assets[0]?.asset_type) {
+        issues.push('asset_object');
+      }
+    }
+
+    // Debts coverage check
+    const debtsPresent = payload.debts_present;
+    if (debtsPresent === undefined || debtsPresent === null) {
+      issues.push('debts_present');
+    } else if (debtsPresent === true) {
+      // If debts present, require at least one debt object with debt_type
+      const debts = payload.debts as Array<Record<string, unknown>> | undefined;
+      if (!debts || debts.length === 0 || !debts[0]?.debt_type) {
+        issues.push('debt_object');
+      }
+    }
+
+    return {
+      isComplete: issues.length === 0,
+      missingItems: issues,
+    };
+  }, [payload]);
+
+  // Block final review until assets/debts are resolved
+  const canProceedToReview = assetDebtCoverage.isComplete;
+
   const validation = useMemo(
     () => validateIntakePayload(payload, enabledSectionIds),
     [payload, enabledSectionIds],
@@ -161,7 +198,7 @@ export default function IntakeFlow({
     () => validate(payload, undefined, enabledSectionIds),
     [payload, enabledSectionIds],
   );
-  const hasMissingRequired = validationSummary.missingRequiredPaths.length > 0;
+  const hasMissingRequired = validationSummary.missingRequiredPaths.length > 0 || !canProceedToReview;
   const shouldShowMissingIndicators = showRequiredErrors;
   const missingBySection = shouldShowMissingIndicators ? validation.missingBySection : {};
   const consistency = useMemo(() => runConsistencyChecks(payload), [payload]);
@@ -401,6 +438,21 @@ export default function IntakeFlow({
       setUiError('Please confirm that this record reflects your statements.');
       return;
     }
+
+    // Check assets/debts coverage first with specific message
+    if (!canProceedToReview) {
+      const missing = assetDebtCoverage.missingItems;
+      if (missing.includes('assets_present') || missing.includes('asset_object')) {
+        setUiError('We still need a few statements about assets to complete your record.');
+      } else if (missing.includes('debts_present') || missing.includes('debt_object')) {
+        setUiError('We still need a few statements about debts to complete your record.');
+      } else {
+        setUiError('We still need a few statements to complete your record.');
+      }
+      setShowRequiredErrors(true);
+      return;
+    }
+
     if (hasMissingRequired) {
       setUiError(null);
       setShowRequiredErrors(true);
