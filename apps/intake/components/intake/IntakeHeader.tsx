@@ -33,7 +33,7 @@ export default function IntakeHeader({ firmName, firmWebsiteUrl }: IntakeHeaderP
 
   return (
     <>
-      <header className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-[color:var(--border)] bg-[rgba(10,10,12,0.88)] backdrop-blur">
+      <header className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-[color:var(--border)] bg-[var(--header-bg)] backdrop-blur transition-colors duration-300">
         <div className="flex h-full items-center justify-between px-3">
           {/* Left: VeriLex Logo - links to verilex.us */}
           <div className="flex items-center">

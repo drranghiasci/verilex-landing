@@ -31,7 +31,7 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage,
             onMouseLeave={() => setExpanded(false)}
             className={[
                 'fixed left-0 top-16 z-40 h-[calc(100vh-64px)]',
-                'border-r border-[color:var(--border)] bg-[rgba(10,10,12,0.92)] backdrop-blur',
+                'border-r border-[color:var(--border)] bg-[var(--sidebar-bg)] backdrop-blur',
                 'transition-all duration-200 ease-out overflow-hidden',
             ].join(' ')}
             style={{ width: expanded ? SIDEBAR_EXPANDED_WIDTH : SIDEBAR_COLLAPSED_WIDTH }}

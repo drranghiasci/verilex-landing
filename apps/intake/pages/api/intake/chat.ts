@@ -5,17 +5,38 @@ import { getOpenAIClient } from '../../../../../lib/server/openai';
 import { verifyIntakeToken } from '../../../../../lib/server/intakeToken';
 import { transformSchemaToSystemPrompt } from '../../../../../lib/intake/ai/systemPrompt';
 import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schema/gaDivorceCustodyV1';
-import { validateIntakePayload } from '../../../../../lib/intake/validation';
 import type { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources/chat/completions';
-import { getEnabledSectionIds } from '../../../../../lib/intake/gating';
 import { wrapAssertion } from '../../../../../lib/intake/assertionTypes';
+import { orchestrateIntake, type OrchestratorResult } from '../../../../../lib/intake/orchestrator';
+
+// Map schema step keys to schema section IDs for system prompt
+const SCHEMA_STEP_TO_SECTION: Record<string, string> = {
+    matter_metadata: 'matter_metadata',
+    client_identity: 'client_identity',
+    opposing_party: 'opposing_party',
+    marriage_details: 'marriage_details',
+    separation_grounds: 'separation_grounds',
+    child_object: 'child_object',
+    children_custody: 'children_custody',
+    asset_object: 'asset_object',
+    income_support: 'income_support',
+    debt_object: 'debt_object',
+    domestic_violence_risk: 'domestic_violence_risk',
+    jurisdiction_venue: 'jurisdiction_venue',
+    prior_legal_actions: 'prior_legal_actions',
+    desired_outcomes: 'desired_outcomes',
+    evidence_documents: 'evidence_documents',
+    final_review: 'final_review',
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { token, message, history, sectionId } = req.body;
+    const { token, message, history } = req.body;
+    // NOTE: sectionId is intentionally NOT read from request body
+    // The orchestrator determines the current section
 
     if (!token || typeof token !== 'string') {
         return res.status(400).json({ error: 'Missing token' });
@@ -32,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // 2. Load Intake
         const { data: intake, error: loadError } = await supabaseAdmin
             .from('intakes')
-            .select('id, status, submitted_at, raw_payload, matter_type') // Select locked if it exists, or derive it
+            .select('id, status, submitted_at, raw_payload, matter_type')
             .eq('id', intake_id)
             .eq('firm_id', firm_id)
             .single();
@@ -41,31 +62,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(404).json({ error: 'Intake not found', details: loadError?.message });
         }
 
-        const isLocked = intake.status === 'submitted' || !!intake.submitted_at; // derives locked state if no column
-
+        const isLocked = intake.status === 'submitted' || !!intake.submitted_at;
         if (isLocked) {
             return res.status(403).json({ error: 'Intake is locked' });
         }
 
-        // 3. Prepare Context
-        const payload = intake.raw_payload ?? {};
-        const enabledSectionIds = getEnabledSectionIds(payload);
+        // 3. Run Orchestrator to get current step (SINGLE SOURCE OF TRUTH)
+        const payload = (intake.raw_payload ?? {}) as Record<string, unknown>;
+        const orchestratorResult = orchestrateIntake(payload);
 
+        // Get current section from orchestrator
+        const currentSchemaStep = orchestratorResult.currentSchemaStep;
+        const currentSectionId = SCHEMA_STEP_TO_SECTION[currentSchemaStep] || currentSchemaStep;
+        const missingFields = orchestratorResult.currentStepMissingFields;
 
+        // Log for debugging
+        console.log('[ORCHESTRATOR]', {
+            intake_id,
+            currentSchemaStep,
+            currentSectionId,
+            missingFields: missingFields.slice(0, 5),
+            gatingValues: orchestratorResult.gatingFieldValues,
+        });
 
-        // Calculate missing fields for System Prompt
-        const validationResult = validateIntakePayload(payload, enabledSectionIds);
-        const missingFields = validationResult.missingKeys;
-
+        // 4. Generate System Prompt (constrained to current section)
         const systemPrompt = transformSchemaToSystemPrompt(
             GA_DIVORCE_CUSTODY_V1,
             payload,
-            sectionId,
+            currentSectionId,
             missingFields
         );
 
-
-        // 3. Define Tools
+        // 5. Define Tools
         const tools: ChatCompletionTool[] = [
             {
                 type: 'function',
@@ -97,40 +125,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     },
                 },
             },
-            {
-                type: 'function',
-                function: {
-                    name: 'mark_section_complete',
-                    description: 'Call this when the user indicates they have no more information for the current section.',
-                    parameters: {
-                        type: 'object',
-                        properties: {
-                            sectionId: { type: 'string' },
-                        },
-                        required: ['sectionId'],
-                    },
-                },
-            },
         ];
 
-        // 4. Construct Messages
+        // 6. Construct Messages
         const messages: ChatCompletionMessageParam[] = [
             { role: 'system', content: systemPrompt },
-            ...history.map((msg: any) => ({
+            ...history.map((msg: { source: string; content: string }) => ({
                 role: msg.source === 'client' ? 'user' : 'assistant',
                 content: msg.content,
-            })),
+            })) as ChatCompletionMessageParam[],
         ];
 
         // Only add the user message if it's NOT the special start signal
         if (message !== 'START_CONVERSATION') {
             messages.push({ role: 'user', content: message });
         } else {
-            // Optional: Add a nudge system message to ensure greeting
-            messages.push({ role: 'system', content: ' The user has opened the chat. Please provide your Phase 1 Greeting.' });
+            messages.push({ role: 'system', content: 'The user has opened the chat. Please provide your Phase 1 Greeting.' });
         }
 
-        // 5. Call OpenAI
+        // 7. Call OpenAI
         let completion;
         try {
             const client = getOpenAIClient();
@@ -139,103 +152,103 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 messages,
                 tools,
                 tool_choice: 'auto',
-                temperature: 0.2, // Low temp for accurate extraction
+                temperature: 0.2,
             });
-        } catch (openaiErr: any) {
+        } catch (openaiErr: unknown) {
+            const errMessage = openaiErr instanceof Error ? openaiErr.message : 'Unknown error';
             console.error('OpenAI Initialization or Call Failed:', openaiErr);
             return res.status(502).json({
                 error: 'AI Service Unavailable',
-                details: openaiErr.message
+                details: errMessage,
             });
         }
 
         const choice = completion.choices[0];
         const responseMessage = choice.message;
 
-        // 6. Handle Tool Calls
+        // 8. Handle Tool Calls
         let finalResponse = responseMessage.content;
-        const updates: Record<string, any> = {};
+        const updates: Record<string, unknown> = {};
         let documentRequest: { type: string; reason: string } | null = null;
 
         if (responseMessage.tool_calls) {
             for (const toolCall of responseMessage.tool_calls) {
-                // @ts-ignore
-                if (toolCall.function) {
+                // Type assertion for tool call structure
+                const tc = toolCall as { id: string; type: string; function?: { name: string; arguments: string } };
+                if (tc.function) {
                     try {
-                        // @ts-ignore
-                        const args = JSON.parse(toolCall.function.arguments);
-                        // @ts-ignore
-                        const name = toolCall.function.name;
+                        const args = JSON.parse(tc.function.arguments);
+                        const name = tc.function.name;
 
                         if (name === 'update_intake_field') {
                             // Wrap with assertion metadata for provenance
                             updates[args.field] = wrapAssertion(args.value, {
                                 source_type: 'chat',
-                                transcript_reference: null, // Will be linked post-save
+                                transcript_reference: null,
                                 evidence_support_level: 'none',
                                 contradiction_flag: false,
                             });
                         } else if (name === 'request_document_upload') {
                             documentRequest = {
                                 type: args.documentType,
-                                reason: args.reason
+                                reason: args.reason,
                             };
                         }
-
                     } catch (e) {
                         console.error('Failed to parse tool args', e);
                     }
                 }
             }
 
-            // If we have updates, save them
+            // 9. If we have updates, save them AND re-run orchestrator
             if (Object.keys(updates).length > 0) {
                 const newPayload = { ...payload, ...updates };
+
+                // Re-run orchestrator with new payload to get new state
+                const newOrchestratorResult = orchestrateIntake(newPayload);
+
+                // Update DB with new payload AND orchestrator state
                 await supabaseAdmin
                     .from('intakes')
-                    .update({ raw_payload: newPayload, updated_at: new Date().toISOString() })
+                    .update({
+                        raw_payload: newPayload,
+                        updated_at: new Date().toISOString(),
+                        current_step_key: newOrchestratorResult.currentSchemaStep,
+                        completed_step_keys: newOrchestratorResult.completedSchemaSteps,
+                        step_status: Object.fromEntries(
+                            newOrchestratorResult.schemaSteps.map((s) => [s.key, {
+                                status: s.status,
+                                missing: s.missingFields,
+                                errors: s.validationErrors,
+                            }])
+                        ),
+                        last_orchestrated_at: new Date().toISOString(),
+                    })
                     .eq('id', intake_id)
                     .eq('firm_id', firm_id);
+
+                console.log('[ORCHESTRATOR] After update:', {
+                    intake_id,
+                    previousStep: currentSchemaStep,
+                    newStep: newOrchestratorResult.currentSchemaStep,
+                    updatedFields: Object.keys(updates),
+                });
             }
 
-            // For document requests, we usually want the AI to also say something like "I can help with that..."
-            // If finalResponse is null, generate a confirmation message. 
-            // If finalResponse is null, generate a confirmation message. 
+            // 10. If no text response, do second turn for tool confirmation
             if (!finalResponse) {
-                // Second turn: We must provide a tool output for EVERY tool call
-                const toolMessages = responseMessage.tool_calls.map((tc: any) => {
-                    const callName = tc.function.name;
-                    // For update_intake_field, we can return success
-                    if (callName === 'update_intake_field') {
-                        // We could try to return specific field success, but generic is fine for now
-                        return {
-                            role: 'tool',
-                            tool_call_id: tc.id,
-                            content: JSON.stringify({ success: true, updated: Object.keys(updates) }),
-                        };
-                    }
-                    // For request_document_upload
-                    if (callName === 'request_document_upload') {
-                        return {
-                            role: 'tool',
-                            tool_call_id: tc.id,
-                            content: JSON.stringify({ success: true, docRequestTriggered: true }),
-                        };
-                    }
-
-                    // Fallback
-                    return {
-                        role: 'tool',
-                        tool_call_id: tc.id,
-                        content: JSON.stringify({ success: true }),
-                    };
-                });
+                const toolMessages = responseMessage.tool_calls.map((tc) => ({
+                    role: 'tool' as const,
+                    tool_call_id: tc.id,
+                    content: JSON.stringify({ success: true, updated: Object.keys(updates) }),
+                }));
 
                 const secondTurnMessages: ChatCompletionMessageParam[] = [
                     ...messages,
                     responseMessage,
-                    ...toolMessages as any[] // Cast primarily for strict checks, but structure matches
+                    ...toolMessages,
                 ];
+
                 const client = getOpenAIClient();
                 const secondCompletion = await client.chat.completions.create({
                     model: 'gpt-4o',
@@ -246,19 +259,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
         }
 
-
         const safetyTrigger = finalResponse?.includes('WARNING: 911') || false;
 
         return res.status(200).json({
             ok: true,
             response: finalResponse,
-            updates: updates,
-            documentRequest, // Return this to frontend
-            safetyTrigger
+            updates,
+            documentRequest,
+            safetyTrigger,
+            // Return orchestrator state for frontend
+            orchestrator: {
+                currentStep: orchestratorResult.currentSchemaStep,
+                currentUiStep: orchestratorResult.currentUiStep,
+                completionPercent: orchestratorResult.totalCompletionPercent,
+                readyForReview: orchestratorResult.readyForReview,
+            },
         });
-
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errMessage = error instanceof Error ? error.message : 'Unknown error';
         console.error('AI Chat Error:', error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: errMessage });
     }
 }

@@ -1,6 +1,43 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   LIGHT MODE (default)
+   ============================================================================ */
 :root {
+  --g1: #f5f5f7;
+  --g2: #e8e4f0;
+  --g3: #ddd8eb;
+  --bg: #fafafa;
+  --surface-0: rgba(255, 255, 255, 0.9);
+  --surface-1: rgba(248, 248, 250, 0.95);
+  --surface-2: rgba(240, 240, 245, 0.9);
+  --surface-3: rgba(230, 230, 240, 0.9);
+  --border: rgba(0, 0, 0, 0.1);
+  --border-highlight: rgba(0, 0, 0, 0.2);
+  --muted: rgba(0, 0, 0, 0.5);
+  --muted-2: rgba(0, 0, 0, 0.35);
+  --text: rgba(0, 0, 0, 0.9);
+  --text-0: #1a1a1a;
+  --text-1: rgba(0, 0, 0, 0.85);
+  --text-2: rgba(0, 0, 0, 0.6);
+  --accent: #6d28d9;
+  --accent-light: #8b5cf6;
+  --accent-soft: #c4b5fd;
+  --accent-glow: rgba(139, 92, 246, 0.3);
+  --danger: #dc2626;
+  --success: #16a34a;
+  --firm-accent: var(--accent);
+  --glass-blur: 20px;
+
+  /* Header/sidebar specific */
+  --header-bg: rgba(255, 255, 255, 0.92);
+  --sidebar-bg: rgba(250, 250, 252, 0.95);
+}
+
+/* ============================================================================
+   DARK MODE (via .dark class on html)
+   ============================================================================ */
+.dark {
   --g1: #000000;
   --g2: #13001f;
   --g3: #1a0b2e;
@@ -19,26 +56,38 @@
   --text-2: rgba(255, 255, 255, 0.6);
   --accent: #7c3aed;
   --accent-light: #a78bfa;
+  --accent-soft: #c4b5fd;
   --accent-glow: rgba(139, 92, 246, 0.5);
   --danger: #f87171;
   --success: #34d399;
   --firm-accent: var(--accent-light);
-  --glass-blur: 20px;
+
+  /* Header/sidebar specific for dark */
+  --header-bg: rgba(10, 10, 12, 0.88);
+  --sidebar-bg: rgba(10, 10, 12, 0.92);
 }
 
+/* ============================================================================
+   BASE STYLES
+   ============================================================================ */
 body {
   margin: 0;
   padding: 0;
   background-color: var(--bg);
+  color: var(--text-0);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode gradient background */
+.dark body {
   background-image:
     radial-gradient(circle at 10% 10%, var(--g2), transparent 45%),
     radial-gradient(circle at 80% 20%, var(--g3), transparent 50%),
     radial-gradient(circle at 40% 90%, var(--g2), transparent 40%);
   background-attachment: fixed;
-  color: var(--text-0);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -66,4 +115,40 @@ button {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--surface-3);
+}
+
+/* ============================================================================
+   THEME-AWARE COMPONENT CLASSES
+   ============================================================================ */
+
+/* Cards and surfaces */
+.surface-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(var(--glass-blur));
+}
+
+/* Input fields */
+.input-field {
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  color: var(--text-0);
+}
+
+.input-field:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+/* Chat bubbles */
+.chat-bubble-user {
+  background: var(--accent);
+  color: white;
+}
+
+.chat-bubble-assistant {
+  background: var(--surface-1);
+  color: var(--text-0);
+  border: 1px solid var(--border);
 }
