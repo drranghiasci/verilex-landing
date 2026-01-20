@@ -4,13 +4,18 @@ import { supabaseAdmin } from '../../../../../lib/server/supabaseAdmin';
 import { getOpenAIClient } from '../../../../../lib/server/openai';
 import { verifyIntakeToken } from '../../../../../lib/server/intakeToken';
 import { transformSchemaToSystemPrompt } from '../../../../../lib/intake/ai/systemPrompt';
+import { transformCustodySchemaToSystemPrompt } from '../../../../../lib/intake/ai/custodySystemPrompt';
 import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schema/gaDivorceCustodyV1';
 import type { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources/chat/completions';
 import { wrapAssertion } from '../../../../../lib/intake/assertionTypes';
 import { orchestrateIntake, type OrchestratorResult } from '../../../../../lib/intake/orchestrator';
+import { orchestrateCustodyIntake, type CustodyOrchestratorResult } from '../../../../../lib/intake/orchestrator/custodyUnmarriedOrchestrator';
 
-// Map schema step keys to schema section IDs for system prompt
-const SCHEMA_STEP_TO_SECTION: Record<string, string> = {
+// Intake modes
+type IntakeMode = 'divorce_custody' | 'custody_unmarried';
+
+// Map schema step keys to schema section IDs for system prompt (divorce)
+const DIVORCE_SCHEMA_STEP_TO_SECTION: Record<string, string> = {
     matter_metadata: 'matter_metadata',
     client_identity: 'client_identity',
     opposing_party: 'opposing_party',
@@ -53,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // 2. Load Intake
         const { data: intake, error: loadError } = await supabaseAdmin
             .from('intakes')
-            .select('id, status, submitted_at, raw_payload, matter_type')
+            .select('id, status, submitted_at, raw_payload, matter_type, intake_type')
             .eq('id', intake_id)
             .eq('firm_id', firm_id)
             .single();
@@ -67,31 +72,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(403).json({ error: 'Intake is locked' });
         }
 
-        // 3. Run Orchestrator to get current step (SINGLE SOURCE OF TRUTH)
+        // 3. Determine intake mode
         const payload = (intake.raw_payload ?? {}) as Record<string, unknown>;
-        const orchestratorResult = orchestrateIntake(payload);
+        const intakeMode: IntakeMode = (payload.intake_type as IntakeMode) || 'divorce_custody';
 
-        // Get current section from orchestrator
-        const currentSchemaStep = orchestratorResult.currentSchemaStep;
-        const currentSectionId = SCHEMA_STEP_TO_SECTION[currentSchemaStep] || currentSchemaStep;
-        const missingFields = orchestratorResult.currentStepMissingFields;
+        // 4. Run appropriate orchestrator (SINGLE SOURCE OF TRUTH)
+        let currentSchemaStep: string;
+        let currentSectionId: string;
+        let missingFields: string[];
+        let orchestratorState: OrchestratorResult | CustodyOrchestratorResult;
+        let systemPrompt: string;
+
+        if (intakeMode === 'custody_unmarried') {
+            // Mode-locked: custody unmarried
+            orchestratorState = orchestrateCustodyIntake(payload);
+            currentSchemaStep = orchestratorState.currentSchemaStep;
+            currentSectionId = orchestratorState.currentSchemaStep; // Same for custody
+            missingFields = orchestratorState.currentStepMissingFields;
+            systemPrompt = transformCustodySchemaToSystemPrompt(payload, currentSectionId, missingFields);
+        } else {
+            // Default: divorce/custody
+            orchestratorState = orchestrateIntake(payload);
+            currentSchemaStep = orchestratorState.currentSchemaStep;
+            currentSectionId = DIVORCE_SCHEMA_STEP_TO_SECTION[currentSchemaStep] || currentSchemaStep;
+            missingFields = orchestratorState.currentStepMissingFields;
+            systemPrompt = transformSchemaToSystemPrompt(GA_DIVORCE_CUSTODY_V1, payload, currentSectionId, missingFields);
+        }
 
         // Log for debugging
         console.log('[ORCHESTRATOR]', {
             intake_id,
+            intakeMode,
             currentSchemaStep,
             currentSectionId,
             missingFields: missingFields.slice(0, 5),
-            gatingValues: orchestratorResult.gatingFieldValues,
         });
-
-        // 4. Generate System Prompt (constrained to current section)
-        const systemPrompt = transformSchemaToSystemPrompt(
-            GA_DIVORCE_CUSTODY_V1,
-            payload,
-            currentSectionId,
-            missingFields
-        );
 
         // 5. Define Tools
         const tools: ChatCompletionTool[] = [
@@ -269,10 +284,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             safetyTrigger,
             // Return orchestrator state for frontend
             orchestrator: {
-                currentStep: orchestratorResult.currentSchemaStep,
-                currentUiStep: orchestratorResult.currentUiStep,
-                completionPercent: orchestratorResult.totalCompletionPercent,
-                readyForReview: orchestratorResult.readyForReview,
+                currentStep: orchestratorState.currentSchemaStep,
+                currentUiStep: orchestratorState.currentUiStep,
+                completionPercent: orchestratorState.totalCompletionPercent,
+                readyForReview: orchestratorState.readyForReview,
             },
         });
     } catch (error: unknown) {
