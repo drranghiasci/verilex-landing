@@ -76,3 +76,22 @@ export {
     type DivorceNoChildrenUiStepStatus,
     type DivorceNoChildrenOrchestratorResult,
 } from './divorceNoChildrenOrchestrator';
+
+// Divorce + Custody (Married Parents) Mode
+export {
+    DIVORCE_WITH_CHILDREN_SCHEMA_STEPS,
+    DIVORCE_WITH_CHILDREN_UI_STEPS,
+    getDivorceWithChildrenSchemaStepConfig,
+    getDivorceWithChildrenUiStepConfig,
+    type DivorceWithChildrenSchemaStepKey,
+    type DivorceWithChildrenUiStepKey,
+} from './divorceWithChildrenStepMap';
+
+export {
+    orchestrateDivorceWithChildrenIntake,
+    getDivorceWithChildrenChatPromptFields,
+    type DivorceWithChildrenStepStatus,
+    type DivorceWithChildrenSchemaStepStatus,
+    type DivorceWithChildrenUiStepStatus,
+    type DivorceWithChildrenOrchestratorResult,
+} from './divorceWithChildrenOrchestrator';

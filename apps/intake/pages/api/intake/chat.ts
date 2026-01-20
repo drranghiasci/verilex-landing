@@ -6,17 +6,26 @@ import { verifyIntakeToken } from '../../../../../lib/server/intakeToken';
 import { transformSchemaToSystemPrompt } from '../../../../../lib/intake/ai/systemPrompt';
 import { transformCustodySchemaToSystemPrompt } from '../../../../../lib/intake/ai/custodySystemPrompt';
 import { transformDivorceNoChildrenSchemaToSystemPrompt } from '../../../../../lib/intake/ai/divorceNoChildrenSystemPrompt';
+import { transformDivorceWithChildrenSchemaToSystemPrompt } from '../../../../../lib/intake/ai/divorceWithChildrenSystemPrompt';
 import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schema/gaDivorceCustodyV1';
 import type { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources/chat/completions';
 import { wrapAssertion } from '../../../../../lib/intake/assertionTypes';
 import { orchestrateIntake, type OrchestratorResult } from '../../../../../lib/intake/orchestrator';
 import { orchestrateCustodyIntake, type CustodyOrchestratorResult } from '../../../../../lib/intake/orchestrator/custodyUnmarriedOrchestrator';
 import { orchestrateDivorceNoChildrenIntake, type DivorceNoChildrenOrchestratorResult } from '../../../../../lib/intake/orchestrator/divorceNoChildrenOrchestrator';
+import { orchestrateDivorceWithChildrenIntake, type DivorceWithChildrenOrchestratorResult } from '../../../../../lib/intake/orchestrator/divorceWithChildrenOrchestrator';
 
 // Intake modes
-type IntakeMode = 'divorce_custody' | 'custody_unmarried' | 'divorce_no_children';
+type IntakeMode = 'divorce_custody' | 'custody_unmarried' | 'divorce_no_children' | 'divorce_with_children';
 
-// Map schema step keys to schema section IDs for system prompt (divorce)
+// Orchestrator result union type
+type AnyOrchestratorResult =
+    | OrchestratorResult
+    | CustodyOrchestratorResult
+    | DivorceNoChildrenOrchestratorResult
+    | DivorceWithChildrenOrchestratorResult;
+
+// Map schema step keys to schema section IDs for system prompt (legacy divorce)
 const DIVORCE_SCHEMA_STEP_TO_SECTION: Record<string, string> = {
     matter_metadata: 'matter_metadata',
     client_identity: 'client_identity',
@@ -42,8 +51,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const { token, message, history } = req.body;
-    // NOTE: sectionId is intentionally NOT read from request body
-    // The orchestrator determines the current section
 
     if (!token || typeof token !== 'string') {
         return res.status(400).json({ error: 'Missing token' });
@@ -82,7 +89,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         let currentSchemaStep: string;
         let currentSectionId: string;
         let missingFields: string[];
-        let orchestratorState: OrchestratorResult | CustodyOrchestratorResult | DivorceNoChildrenOrchestratorResult;
+        let orchestratorState: AnyOrchestratorResult;
         let systemPrompt: string;
         let flowBlocked = false;
         let flowBlockedReason: string | undefined;
@@ -110,8 +117,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 flowBlocked,
                 flowBlockedReason
             );
+        } else if (intakeMode === 'divorce_with_children') {
+            // Mode-locked: divorce with children (full-stack)
+            const fullOrchestrator = orchestrateDivorceWithChildrenIntake(payload);
+            orchestratorState = fullOrchestrator;
+            currentSchemaStep = fullOrchestrator.currentSchemaStep;
+            currentSectionId = fullOrchestrator.currentSchemaStep;
+            missingFields = fullOrchestrator.currentStepMissingFields;
+            flowBlocked = fullOrchestrator.flowBlocked;
+            flowBlockedReason = fullOrchestrator.flowBlockedReason;
+            systemPrompt = transformDivorceWithChildrenSchemaToSystemPrompt(
+                payload,
+                currentSectionId,
+                missingFields,
+                flowBlocked,
+                flowBlockedReason
+            );
         } else {
-            // Default: divorce/custody
+            // Default/legacy: divorce_custody
             orchestratorState = orchestrateIntake(payload);
             currentSchemaStep = orchestratorState.currentSchemaStep;
             currentSectionId = DIVORCE_SCHEMA_STEP_TO_SECTION[currentSchemaStep] || currentSchemaStep;
