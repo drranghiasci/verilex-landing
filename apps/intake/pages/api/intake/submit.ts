@@ -245,25 +245,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(409).json({ ok: false, locked: true, requestId });
   }
 
-  // Create audit event for submission
+  // Create audit event for submission (using service role - bypasses RLS)
+  // This runs under supabaseAdmin which uses the service role key
   try {
     const intakeType = isPlainObject(intake.raw_payload)
       ? (intake.raw_payload as Record<string, unknown>).intake_type ?? 'divorce_custody'
       : 'divorce_custody';
 
-    await supabaseAdmin.from('audit_events').insert({
+    // actor_id: use intake_id as actor since this is client-facing (no user auth)
+    // For client intakes, the intake_id serves as the session identifier
+    const actorId = intakeId;
+
+    const { error: auditError } = await supabaseAdmin.from('audit_events').insert({
       event_type: 'CLIENT_SUBMITTED_INTAKE',
       entity_type: 'intake',
       entity_id: intakeId,
       firm_id: tokenResult.payload.firm_id,
+      actor_id: actorId,
+      source: 'intake_app',
+      created_at: new Date().toISOString(),
       metadata: {
+        intake_id: intakeId,
         intake_type: intakeType,
         submitted_at: updated.submitted_at,
+        request_id: requestId,
       },
     });
+
+    if (auditError) {
+      console.error(`[submit] failed to create audit event intake_id=${intakeId}`, auditError);
+    }
   } catch (auditError) {
-    // Log but don't fail submission
-    console.error(`[submit] failed to create audit event intake_id=${intakeId}`, auditError);
+    // Log but don't fail submission - audit is secondary to core functionality
+    console.error(`[submit] audit event exception intake_id=${intakeId}`, auditError);
   }
 
 
