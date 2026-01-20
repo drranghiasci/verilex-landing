@@ -5,14 +5,16 @@ import { getOpenAIClient } from '../../../../../lib/server/openai';
 import { verifyIntakeToken } from '../../../../../lib/server/intakeToken';
 import { transformSchemaToSystemPrompt } from '../../../../../lib/intake/ai/systemPrompt';
 import { transformCustodySchemaToSystemPrompt } from '../../../../../lib/intake/ai/custodySystemPrompt';
+import { transformDivorceNoChildrenSchemaToSystemPrompt } from '../../../../../lib/intake/ai/divorceNoChildrenSystemPrompt';
 import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schema/gaDivorceCustodyV1';
 import type { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources/chat/completions';
 import { wrapAssertion } from '../../../../../lib/intake/assertionTypes';
 import { orchestrateIntake, type OrchestratorResult } from '../../../../../lib/intake/orchestrator';
 import { orchestrateCustodyIntake, type CustodyOrchestratorResult } from '../../../../../lib/intake/orchestrator/custodyUnmarriedOrchestrator';
+import { orchestrateDivorceNoChildrenIntake, type DivorceNoChildrenOrchestratorResult } from '../../../../../lib/intake/orchestrator/divorceNoChildrenOrchestrator';
 
 // Intake modes
-type IntakeMode = 'divorce_custody' | 'custody_unmarried';
+type IntakeMode = 'divorce_custody' | 'custody_unmarried' | 'divorce_no_children';
 
 // Map schema step keys to schema section IDs for system prompt (divorce)
 const DIVORCE_SCHEMA_STEP_TO_SECTION: Record<string, string> = {
@@ -80,16 +82,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         let currentSchemaStep: string;
         let currentSectionId: string;
         let missingFields: string[];
-        let orchestratorState: OrchestratorResult | CustodyOrchestratorResult;
+        let orchestratorState: OrchestratorResult | CustodyOrchestratorResult | DivorceNoChildrenOrchestratorResult;
         let systemPrompt: string;
+        let flowBlocked = false;
+        let flowBlockedReason: string | undefined;
 
         if (intakeMode === 'custody_unmarried') {
             // Mode-locked: custody unmarried
             orchestratorState = orchestrateCustodyIntake(payload);
             currentSchemaStep = orchestratorState.currentSchemaStep;
-            currentSectionId = orchestratorState.currentSchemaStep; // Same for custody
+            currentSectionId = orchestratorState.currentSchemaStep;
             missingFields = orchestratorState.currentStepMissingFields;
             systemPrompt = transformCustodySchemaToSystemPrompt(payload, currentSectionId, missingFields);
+        } else if (intakeMode === 'divorce_no_children') {
+            // Mode-locked: divorce no children
+            const divorceOrchestrator = orchestrateDivorceNoChildrenIntake(payload);
+            orchestratorState = divorceOrchestrator;
+            currentSchemaStep = divorceOrchestrator.currentSchemaStep;
+            currentSectionId = divorceOrchestrator.currentSchemaStep;
+            missingFields = divorceOrchestrator.currentStepMissingFields;
+            flowBlocked = divorceOrchestrator.flowBlocked;
+            flowBlockedReason = divorceOrchestrator.flowBlockedReason;
+            systemPrompt = transformDivorceNoChildrenSchemaToSystemPrompt(
+                payload,
+                currentSectionId,
+                missingFields,
+                flowBlocked,
+                flowBlockedReason
+            );
         } else {
             // Default: divorce/custody
             orchestratorState = orchestrateIntake(payload);
