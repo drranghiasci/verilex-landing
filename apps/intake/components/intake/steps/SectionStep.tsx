@@ -683,7 +683,7 @@ export function SectionStep({
               );
             }
 
-            if (field.type === 'array' || field.type === 'list') {
+            if (field.type === 'list') {
               const items = getArrayValue(payload[field.key]);
               return renderArrayStringField(field.key, items, field.notes, required);
             }

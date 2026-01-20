@@ -72,7 +72,6 @@ function buildFieldPrompt(field: FieldDef): Omit<FieldPrompt, 'askIfMissing' | '
         helperText,
       };
     case 'list':
-    case 'array':
       return {
         prompt: `Are there any ${label.toLowerCase()} to add?`,
         helperText,
