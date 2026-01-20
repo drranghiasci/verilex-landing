@@ -1,4 +1,4 @@
-import { GA_DIVORCE_CUSTODY_V1 } from './schema/gaDivorceCustodyV1';
+import { GA_DIVORCE_CUSTODY_V1 } from './schemas/ga/family_law/divorce_custody.v1';
 
 type Payload = Record<string, unknown>;
 

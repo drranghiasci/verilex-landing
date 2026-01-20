@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { IntakeDocument } from '../../../../../lib/intake/intakeApi';
 import { createUpload, confirmUpload } from '../../../../../lib/intake/intakeApi';
-import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schema/gaDivorceCustodyV1';
+import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schemas/ga/family_law/divorce_custody.v1';
 import EnumSelect from '../fields/EnumSelect';
 import { formatLabel } from '../../../../../lib/intake/validation';
 import type { StepProps } from './SectionStep';

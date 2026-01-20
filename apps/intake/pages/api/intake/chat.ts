@@ -3,17 +3,17 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseAdmin } from '../../../../../lib/server/supabaseAdmin';
 import { getOpenAIClient } from '../../../../../lib/server/openai';
 import { verifyIntakeToken } from '../../../../../lib/server/intakeToken';
-import { transformSchemaToSystemPrompt } from '../../../../../lib/intake/ai/systemPrompt';
-import { transformCustodySchemaToSystemPrompt } from '../../../../../lib/intake/ai/custodySystemPrompt';
-import { transformDivorceNoChildrenSchemaToSystemPrompt } from '../../../../../lib/intake/ai/divorceNoChildrenSystemPrompt';
-import { transformDivorceWithChildrenSchemaToSystemPrompt } from '../../../../../lib/intake/ai/divorceWithChildrenSystemPrompt';
-import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schema/gaDivorceCustodyV1';
+import { transformSchemaToSystemPrompt } from '../../../../../lib/intake/ai/prompts/divorce_custody.system';
+import { transformCustodySchemaToSystemPrompt } from '../../../../../lib/intake/ai/prompts/custody_unmarried.system';
+import { transformDivorceNoChildrenSchemaToSystemPrompt } from '../../../../../lib/intake/ai/prompts/divorce_no_children.system';
+import { transformDivorceWithChildrenSchemaToSystemPrompt } from '../../../../../lib/intake/ai/prompts/divorce_with_children.system';
+import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schemas/ga/family_law/divorce_custody.v1';
 import type { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources/chat/completions';
 import { wrapAssertion } from '../../../../../lib/intake/assertionTypes';
 import { orchestrateIntake, type OrchestratorResult } from '../../../../../lib/intake/orchestrator';
-import { orchestrateCustodyIntake, type CustodyOrchestratorResult } from '../../../../../lib/intake/orchestrator/custodyUnmarriedOrchestrator';
-import { orchestrateDivorceNoChildrenIntake, type DivorceNoChildrenOrchestratorResult } from '../../../../../lib/intake/orchestrator/divorceNoChildrenOrchestrator';
-import { orchestrateDivorceWithChildrenIntake, type DivorceWithChildrenOrchestratorResult } from '../../../../../lib/intake/orchestrator/divorceWithChildrenOrchestrator';
+import { orchestrateCustodyIntake, type CustodyOrchestratorResult } from '../../../../../lib/intake/orchestrator/core/custody_unmarried.orchestrator';
+import { orchestrateDivorceNoChildrenIntake, type DivorceNoChildrenOrchestratorResult } from '../../../../../lib/intake/orchestrator/core/divorce_no_children.orchestrator';
+import { orchestrateDivorceWithChildrenIntake, type DivorceWithChildrenOrchestratorResult } from '../../../../../lib/intake/orchestrator/core/divorce_with_children.orchestrator';
 
 // Intake modes
 type IntakeMode = 'divorce_custody' | 'custody_unmarried' | 'divorce_no_children' | 'divorce_with_children';

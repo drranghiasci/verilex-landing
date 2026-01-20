@@ -1,6 +1,6 @@
 
-import { SchemaDef, SectionDef } from '../schema/types';
-import { formatLabel } from '../validation';
+import { SchemaDef, SectionDef } from '../../schemas/types';
+import { formatLabel } from '../../validation';
 
 /**
  * transformSchemaToSystemPrompt

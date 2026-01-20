@@ -1,13 +1,17 @@
 /**
- * Georgia Custody (Unmarried / No Divorce) Schema v1.0
+ * Georgia Divorce + Custody (Married Parents) Schema v1.0
  *
- * MODE-LOCKED: This schema explicitly excludes all divorce/marriage fields.
- * This is for clients who were never married and need to establish custody.
+ * FULL-STACK FAMILY LAW INTAKE: Divorce + Children/Custody + Support + Assets/Debts
+ * 
+ * This is the complete combined intake for married parents divorcing with minor children.
+ * - Marriage and grounds are REQUIRED
+ * - Children/custody are REQUIRED (has_minor_children MUST be true)
+ * - Assets/debts are REQUIRED coverage (hard-block)
  */
 
-import type { SchemaDef } from './types';
+import type { SchemaDef } from '../../types';
 
-export const GA_CUSTODY_UNMARRIED_V1: SchemaDef = {
+export const GA_DIVORCE_WITH_CHILDREN_V1: SchemaDef = {
     version: 'v1.0',
     sections: [
         // =========================================================================
@@ -22,7 +26,7 @@ export const GA_CUSTODY_UNMARRIED_V1: SchemaDef = {
                     type: 'text',
                     required: true,
                     isSystem: true,
-                    notes: 'System: custody_unmarried',
+                    notes: 'System: divorce_with_children',
                 },
                 {
                     key: 'practice_area',
@@ -103,11 +107,11 @@ export const GA_CUSTODY_UNMARRIED_V1: SchemaDef = {
         },
 
         // =========================================================================
-        // 3. OTHER PARENT
+        // 3. OPPOSING PARTY (SPOUSE)
         // =========================================================================
         {
-            id: 'other_parent',
-            title: 'OTHER PARENT',
+            id: 'opposing_party',
+            title: 'OPPOSING PARTY (SPOUSE)',
             fields: [
                 { key: 'opposing_first_name', type: 'text', required: true },
                 { key: 'opposing_last_name', type: 'text', required: true },
@@ -139,17 +143,78 @@ export const GA_CUSTODY_UNMARRIED_V1: SchemaDef = {
         },
 
         // =========================================================================
-        // 4. CHILDREN (Required for custody intake)
+        // 4. MARRIAGE DETAILS
         // =========================================================================
         {
-            id: 'children_info',
-            title: 'CHILDREN INFORMATION',
+            id: 'marriage_details',
+            title: 'MARRIAGE DETAILS',
+            fields: [
+                { key: 'date_of_marriage', type: 'date', required: true },
+                { key: 'place_of_marriage', type: 'text', required: true },
+                { key: 'currently_cohabitating', type: 'boolean', required: true },
+                {
+                    key: 'date_of_separation',
+                    type: 'date',
+                    required: false,
+                    notes: 'Required if currently_cohabitating=false',
+                },
+                { key: 'marriage_certificate_available', type: 'boolean', required: false },
+            ],
+        },
+
+        // =========================================================================
+        // 5. SEPARATION & GROUNDS (GEORGIA)
+        // =========================================================================
+        {
+            id: 'separation_grounds',
+            title: 'SEPARATION & GROUNDS',
             fields: [
                 {
-                    key: 'has_children',
+                    key: 'grounds_for_divorce',
+                    type: 'enum',
+                    required: true,
+                    enumValues: [
+                        'irretrievable_breakdown',
+                        'irreconcilable_differences',
+                        'marriage_void_ab_initio',
+                        'adultery',
+                        'desertion',
+                        'conviction_of_crime',
+                        'cruel_treatment',
+                        'habitual_intoxication',
+                        'mental_incapacity',
+                    ],
+                },
+                {
+                    key: 'fault_allegations',
+                    type: 'multiselect',
+                    required: false,
+                    enumValues: [
+                        'adultery',
+                        'desertion',
+                        'cruel_treatment',
+                        'habitual_intoxication',
+                        'drug_addiction',
+                        'conviction_imprisonment',
+                        'mental_incapacity',
+                    ],
+                },
+                { key: 'reconciliation_attempted', type: 'boolean', required: false },
+            ],
+        },
+
+        // =========================================================================
+        // 6. CHILDREN GATE (MUST BE TRUE FOR THIS INTAKE)
+        // =========================================================================
+        {
+            id: 'children_gate',
+            title: 'CHILDREN CONFIRMATION',
+            fields: [
+                {
+                    key: 'has_minor_children',
                     type: 'boolean',
                     required: true,
-                    notes: 'Must be true for custody intake; ask to confirm',
+                    notes: 'GATE: Must be true for divorce_with_children intake. If false, route to divorce_no_children.',
                 },
                 {
                     key: 'children_count',
@@ -160,7 +225,9 @@ export const GA_CUSTODY_UNMARRIED_V1: SchemaDef = {
             ],
         },
 
-        // Child object (repeatable)
+        // =========================================================================
+        // 7. CHILDREN DETAILS (REPEATABLE)
+        // =========================================================================
         {
             id: 'child_object',
             title: 'CHILD DETAILS',
@@ -181,11 +248,30 @@ export const GA_CUSTODY_UNMARRIED_V1: SchemaDef = {
                 },
                 { key: 'special_needs', type: 'boolean', required: false },
                 { key: 'school_district', type: 'text', required: false },
+                {
+                    key: 'child_home_state',
+                    type: 'enum',
+                    required: true,
+                    notes: 'State where child has lived for past 6 months (UCCJEA)',
+                    enumValues: [
+                        'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+                        'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+                        'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+                        'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+                        'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY', 'DC',
+                    ],
+                },
+                {
+                    key: 'time_in_home_state_months',
+                    type: 'number',
+                    required: true,
+                    notes: 'How long child has lived in home state',
+                },
             ],
         },
 
         // =========================================================================
-        // 5. CUSTODY PREFERENCES
+        // 8. CUSTODY PREFERENCES
         // =========================================================================
         {
             id: 'custody_preferences',
@@ -206,32 +292,144 @@ export const GA_CUSTODY_UNMARRIED_V1: SchemaDef = {
                     required: false,
                     notes: 'Optional: describe current schedule if one exists',
                 },
-                // UCCJEA-relevant fields (jurisdiction)
+            ],
+        },
+
+        // =========================================================================
+        // 9. ASSETS & PROPERTY (REQUIRED COVERAGE)
+        // =========================================================================
+        {
+            id: 'assets_property',
+            title: 'ASSETS & PROPERTY',
+            fields: [
                 {
-                    key: 'child_home_state',
+                    key: 'assets_status',
                     type: 'enum',
                     required: true,
-                    notes: 'State where child has lived for past 6 months',
+                    enumValues: ['reported', 'none_reported', 'deferred_to_attorney'],
+                    notes: 'HARD-BLOCK: Must set coverage status before proceeding',
+                },
+            ],
+        },
+        {
+            id: 'asset_object',
+            title: 'ASSET DETAILS',
+            fields: [
+                {
+                    key: 'asset_type',
+                    type: 'enum',
+                    required: true,
                     enumValues: [
-                        'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-                        'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
-                        'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
-                        'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-                        'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY', 'DC',
+                        'real_estate',
+                        'bank_account',
+                        'retirement',
+                        'vehicle',
+                        'business',
+                        'personal_property',
+                        'investment',
+                        'other',
                     ],
                 },
-                { key: 'child_home_county', type: 'text', required: true },
                 {
-                    key: 'time_in_home_state_months',
-                    type: 'number',
+                    key: 'ownership',
+                    type: 'enum',
                     required: true,
-                    notes: 'How long child has lived in home state',
+                    enumValues: ['client', 'spouse', 'joint', 'unknown'],
+                },
+                { key: 'estimated_value', type: 'number', required: true },
+                {
+                    key: 'title_holder',
+                    type: 'enum',
+                    required: true,
+                    enumValues: ['client', 'spouse', 'joint', 'other', 'unknown'],
+                },
+                { key: 'acquired_pre_marriage', type: 'boolean', required: true },
+                { key: 'asset_description', type: 'text', required: false },
+            ],
+        },
+
+        // =========================================================================
+        // 10. LIABILITIES & DEBTS (REQUIRED COVERAGE)
+        // =========================================================================
+        {
+            id: 'liabilities_debts',
+            title: 'LIABILITIES & DEBTS',
+            fields: [
+                {
+                    key: 'debts_status',
+                    type: 'enum',
+                    required: true,
+                    enumValues: ['reported', 'none_reported', 'deferred_to_attorney'],
+                    notes: 'HARD-BLOCK: Must set coverage status before proceeding',
+                },
+            ],
+        },
+        {
+            id: 'debt_object',
+            title: 'DEBT DETAILS',
+            fields: [
+                {
+                    key: 'debt_type',
+                    type: 'enum',
+                    required: true,
+                    enumValues: [
+                        'mortgage',
+                        'car_loan',
+                        'credit_card',
+                        'student_loan',
+                        'personal_loan',
+                        'medical_debt',
+                        'tax_debt',
+                        'other',
+                    ],
+                },
+                { key: 'amount', type: 'number', required: true },
+                {
+                    key: 'responsible_party',
+                    type: 'enum',
+                    required: true,
+                    enumValues: ['client', 'spouse', 'joint', 'unknown'],
+                },
+                { key: 'incurred_during_marriage', type: 'boolean', required: true },
+                { key: 'creditor_name', type: 'text', required: false },
+            ],
+        },
+
+        // =========================================================================
+        // 11. INCOME & SUPPORT (WITH CHILD SUPPORT)
+        // =========================================================================
+        {
+            id: 'income_support',
+            title: 'INCOME & SUPPORT',
+            fields: [
+                { key: 'client_income_monthly', type: 'number', required: true },
+                { key: 'opposing_income_known', type: 'boolean', required: true },
+                {
+                    key: 'opposing_income_monthly_estimate',
+                    type: 'number',
+                    required: false,
+                    notes: 'Optional: if opposing_income_known=true',
+                },
+                { key: 'alimony_requested', type: 'boolean', required: false },
+                {
+                    key: 'support_requested',
+                    type: 'enum',
+                    required: true,
+                    enumValues: ['none', 'child_support_only', 'alimony_only', 'both', 'unsure'],
+                    notes: 'Includes child support options for this intake',
+                },
+                {
+                    key: 'child_support_estimate',
+                    type: 'number',
+                    required: false,
+                    isSystem: true,
+                    notes: 'System: computed later; does not block submission',
                 },
             ],
         },
 
         // =========================================================================
-        // 6. SAFETY & RISK
+        // 12. SAFETY & RISK
         // =========================================================================
         {
             id: 'safety_risk',
@@ -250,7 +448,7 @@ export const GA_CUSTODY_UNMARRIED_V1: SchemaDef = {
         },
 
         // =========================================================================
-        // 7. JURISDICTION & VENUE
+        // 13. JURISDICTION & VENUE
         // =========================================================================
         {
             id: 'jurisdiction_venue',
@@ -266,7 +464,7 @@ export const GA_CUSTODY_UNMARRIED_V1: SchemaDef = {
                     key: 'residency_duration_months',
                     type: 'number',
                     required: true,
-                    notes: 'How long client has lived in GA',
+                    notes: 'How long client has lived in GA (6 months required)',
                 },
                 {
                     key: 'venue_confirmed',
@@ -279,26 +477,21 @@ export const GA_CUSTODY_UNMARRIED_V1: SchemaDef = {
         },
 
         // =========================================================================
-        // 8. PRIOR LEGAL ACTIONS
+        // 14. PRIOR LEGAL ACTIONS
         // =========================================================================
         {
             id: 'prior_legal_actions',
             title: 'PRIOR LEGAL ACTIONS',
             fields: [
+                { key: 'prior_divorce_filings', type: 'boolean', required: true },
                 { key: 'prior_custody_orders', type: 'boolean', required: true },
-                {
-                    key: 'prior_divorce_filings',
-                    type: 'boolean',
-                    required: true,
-                    notes: 'Custody cases can involve prior divorce; still ask',
-                },
                 { key: 'case_numbers', type: 'text', required: false },
                 { key: 'existing_attorney', type: 'boolean', required: true },
             ],
         },
 
         // =========================================================================
-        // 9. DESIRED OUTCOMES
+        // 15. DESIRED OUTCOMES
         // =========================================================================
         {
             id: 'desired_outcomes',
@@ -309,11 +502,13 @@ export const GA_CUSTODY_UNMARRIED_V1: SchemaDef = {
                     type: 'enum',
                     required: true,
                     enumValues: [
-                        'sole_custody',
-                        'parenting_time',
-                        'establish_order',
-                        'emergency_order',
-                        'legitimation',
+                        'quick_resolution',
+                        'fair_custody',
+                        'primary_custody',
+                        'fair_asset_division',
+                        'child_support',
+                        'alimony',
+                        'protect_children',
                         'other',
                     ],
                 },
@@ -334,7 +529,7 @@ export const GA_CUSTODY_UNMARRIED_V1: SchemaDef = {
         },
 
         // =========================================================================
-        // 10. EVIDENCE & DOCUMENTS
+        // 16. EVIDENCE & DOCUMENTS
         // =========================================================================
         {
             id: 'evidence_documents',
@@ -351,26 +546,36 @@ export const GA_CUSTODY_UNMARRIED_V1: SchemaDef = {
                     type: 'enum',
                     required: false,
                     enumValues: [
+                        'marriage_certificate',
                         'birth_certificate',
                         'custody_order',
-                        'paternity_test',
+                        'financial_statement',
+                        'property_deed',
+                        'vehicle_title',
+                        'retirement_statement',
+                        'bank_statement',
+                        'tax_return',
+                        'pay_stub',
+                        'prenuptial_agreement',
+                        'protective_order',
                         'school_record',
                         'medical_record',
-                        'text_message',
-                        'email',
-                        'photo',
-                        'video',
-                        'police_report',
-                        'protective_order',
                         'other',
                     ],
                 },
                 { key: 'uploaded', type: 'boolean', required: false },
+                {
+                    key: 'missing_required_docs',
+                    type: 'list',
+                    required: false,
+                    isSystem: true,
+                    notes: 'System: list of missing required documents',
+                },
             ],
         },
 
         // =========================================================================
-        // 11. FINAL REVIEW
+        // 17. FINAL REVIEW
         // =========================================================================
         {
             id: 'final_review',
@@ -388,9 +593,10 @@ export const GA_CUSTODY_UNMARRIED_V1: SchemaDef = {
 };
 
 // System flags (attorney-only, computed)
-export const GA_CUSTODY_UNMARRIED_V1_FLAGS = [
+export const GA_DIVORCE_WITH_CHILDREN_V1_FLAGS = [
     { key: 'uccjea_risk', trigger: 'child_home_state != GA or time_in_home_state_months < 6' },
     { key: 'interstate_party', trigger: 'opposing address state != GA' },
     { key: 'safety_escalation', trigger: 'dv_present or immediate_safety_concerns' },
+    { key: 'financial_complexity', trigger: 'business asset detected or high values' },
     { key: 'contradiction_detected', trigger: 'Conflicting assertions detected' },
 ];

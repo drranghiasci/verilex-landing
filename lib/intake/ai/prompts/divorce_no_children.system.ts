@@ -5,8 +5,8 @@
  * For married couples divorcing who do NOT have minor children.
  */
 
-import { GA_DIVORCE_NO_CHILDREN_V1 } from '../schema/gaDivorceNoChildrenV1';
-import { formatLabel } from '../validation';
+import { GA_DIVORCE_NO_CHILDREN_V1 } from '../../schemas/ga/family_law/divorce_no_children.v1';
+import { formatLabel } from '../../validation';
 
 export function transformDivorceNoChildrenSchemaToSystemPrompt(
     payload: Record<string, unknown>,

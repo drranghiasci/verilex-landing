@@ -1,4 +1,4 @@
-import type { FieldDef, SchemaDef, SectionDef } from '../schema/types';
+import type { FieldDef, SchemaDef, SectionDef } from '../schemas/types';
 import { formatLabel } from '../validation';
 import type { FieldPrompt, PromptLibrary, SectionPromptSet } from './types';
 

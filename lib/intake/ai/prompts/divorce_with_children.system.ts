@@ -5,8 +5,8 @@
  * This is the complete combined intake for married parents divorcing with children.
  */
 
-import { GA_DIVORCE_WITH_CHILDREN_V1 } from '../schema/gaDivorceWithChildrenV1';
-import { formatLabel } from '../validation';
+import { GA_DIVORCE_WITH_CHILDREN_V1 } from '../../schemas/ga/family_law/divorce_with_children.v1';
+import { formatLabel } from '../../validation';
 
 export function transformDivorceWithChildrenSchemaToSystemPrompt(
     payload: Record<string, unknown>,

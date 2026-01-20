@@ -1,4 +1,4 @@
-import type { FieldDef, SchemaDef } from '../schema/types';
+import type { FieldDef, SchemaDef } from '../schemas/types';
 import { isFieldRequired, isRepeatableSection, shouldShowField } from '../validation';
 
 type Payload = Record<string, unknown>;

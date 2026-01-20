@@ -18,7 +18,7 @@ import {
     UI_STEPS,
     GATING_FIELDS,
     getSchemaStepConfig,
-} from './intakeStepMap';
+} from '../maps/divorce_custody.map';
 
 // ============================================================================
 // TYPES

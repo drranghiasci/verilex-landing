@@ -5,36 +5,36 @@
  * Used for intakes where clients were never married.
  */
 
-import { GA_CUSTODY_UNMARRIED_V1 } from '../schema/gaCustodyUnmarriedV1';
-import { formatLabel } from '../validation';
+import { GA_CUSTODY_UNMARRIED_V1 } from '../../schemas/ga/family_law/custody_unmarried.v1';
+import { formatLabel } from '../../validation';
 
 export function transformCustodySchemaToSystemPrompt(
-    payload: Record<string, unknown>,
-    currentSectionId: string,
-    missingFields: string[] = []
+  payload: Record<string, unknown>,
+  currentSectionId: string,
+  missingFields: string[] = []
 ): string {
-    const sectionsText = GA_CUSTODY_UNMARRIED_V1.sections
-        .map((section) => {
-            const isFocused = section.id === currentSectionId;
-            const fieldsText = section.fields
-                .filter((f) => !f.isSystem)
-                .map((f) => {
-                    const isMissing = missingFields.includes(f.key);
-                    const value = payload[f.key];
-                    const status = value
-                        ? `[Filled: ${JSON.stringify(value)}]`
-                        : isMissing
-                            ? '[MISSING]'
-                            : '[Optional]';
-                    return `  - ${f.key} (${f.type}): ${formatLabel(f.key)} ${status}`;
-                })
-                .join('\n');
-
-            return `Section: ${section.title} (${section.id})${isFocused ? ' *CURRENT FOCUS*' : ''}\n${fieldsText}`;
+  const sectionsText = GA_CUSTODY_UNMARRIED_V1.sections
+    .map((section) => {
+      const isFocused = section.id === currentSectionId;
+      const fieldsText = section.fields
+        .filter((f) => !f.isSystem)
+        .map((f) => {
+          const isMissing = missingFields.includes(f.key);
+          const value = payload[f.key];
+          const status = value
+            ? `[Filled: ${JSON.stringify(value)}]`
+            : isMissing
+              ? '[MISSING]'
+              : '[Optional]';
+          return `  - ${f.key} (${f.type}): ${formatLabel(f.key)} ${status}`;
         })
-        .join('\n\n');
+        .join('\n');
 
-    return `
+      return `Section: ${section.title} (${section.id})${isFocused ? ' *CURRENT FOCUS*' : ''}\n${fieldsText}`;
+    })
+    .join('\n\n');
+
+  return `
 You are the Firm's Intake Coordinator, a neutral, professional assistant for recording client information.
 Your sole purpose is to record the client's statements and assertions. You do not provide legal advice, 
 evaluate claims, interpret law, or make legal determinations of any kind.

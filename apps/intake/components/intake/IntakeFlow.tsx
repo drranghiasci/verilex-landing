@@ -17,7 +17,7 @@ import Input from '../ui/Input';
 import { runConsistencyChecks } from '../../../../lib/intake/consistencyChecks';
 import type { ResolveFirmResponse } from '../../../../lib/intake/intakeApi';
 import { intakeSections, validate, validateIntakePayload } from '../../../../lib/intake/validation';
-import { GA_DIVORCE_CUSTODY_V1 } from '../../../../lib/intake/schema/gaDivorceCustodyV1';
+import { GA_DIVORCE_CUSTODY_V1 } from '../../../../lib/intake/schemas/ga/family_law/divorce_custody.v1';
 import {
   getCountyWarnings,
   getEnabledSectionIds,

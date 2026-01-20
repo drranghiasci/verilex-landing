@@ -11,7 +11,7 @@ import {
     CUSTODY_SCHEMA_STEPS,
     CUSTODY_UI_STEPS,
     getCustodySchemaStepConfig,
-} from './custodyUnmarriedStepMap';
+} from '../maps/custody_unmarried.map';
 
 // ============================================================================
 // TYPES

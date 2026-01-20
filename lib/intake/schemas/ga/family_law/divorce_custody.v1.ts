@@ -1,4 +1,4 @@
-import type { AiFlagDef, SchemaDef } from './types';
+import type { AiFlagDef, SchemaDef } from '../../types';
 
 export const GA_DIVORCE_CUSTODY_V1: SchemaDef = {
   version: 'v1.0',

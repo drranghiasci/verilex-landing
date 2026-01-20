@@ -1,56 +1,56 @@
 /**
- * Divorce + Custody (Married Parents) Orchestrator
+ * Divorce (No Children) Orchestrator
  *
- * Full-stack family law intake orchestrator.
+ * Mode-locked orchestrator for divorce without children.
  * Features:
- * - Children gate: has_minor_children must be true (else flow blocks)
- * - Children loop: requires exactly N child objects
+ * - Children gate: stops flow if has_minor_children=true
  * - Assets/debts hard-block: requires status before proceeding
- * - Marriage/grounds required
+ * - Repeatable items gated by status field
  */
 
 import {
-    type DivorceWithChildrenSchemaStepKey,
-    type DivorceWithChildrenUiStepKey,
-    DIVORCE_WITH_CHILDREN_SCHEMA_STEPS,
-    DIVORCE_WITH_CHILDREN_UI_STEPS,
-    getDivorceWithChildrenSchemaStepConfig,
-} from './divorceWithChildrenStepMap';
+    type DivorceNoChildrenSchemaStepKey,
+    type DivorceNoChildrenUiStepKey,
+    DIVORCE_NO_CHILDREN_SCHEMA_STEPS,
+    DIVORCE_NO_CHILDREN_UI_STEPS,
+    getDivorceNoChildrenSchemaStepConfig,
+} from '../maps/divorce_no_children.map';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export type DivorceWithChildrenStepStatus = 'complete' | 'current' | 'incomplete' | 'skipped' | 'blocked';
+export type DivorceNoChildrenStepStatus = 'complete' | 'current' | 'incomplete' | 'skipped' | 'blocked';
 
-export type DivorceWithChildrenSchemaStepStatus = {
-    key: DivorceWithChildrenSchemaStepKey;
-    status: DivorceWithChildrenStepStatus;
+export type DivorceNoChildrenSchemaStepStatus = {
+    key: DivorceNoChildrenSchemaStepKey;
+    status: DivorceNoChildrenStepStatus;
     isRequired: boolean;
     missingFields: string[];
     validationErrors: { field: string; message: string }[];
     gateError?: string;
 };
 
-export type DivorceWithChildrenUiStepStatus = {
-    key: DivorceWithChildrenUiStepKey;
+export type DivorceNoChildrenUiStepStatus = {
+    key: DivorceNoChildrenUiStepKey;
     label: string;
-    status: DivorceWithChildrenStepStatus;
+    status: DivorceNoChildrenStepStatus;
     isVisible: boolean;
     completionPercent: number;
 };
 
-export type DivorceWithChildrenOrchestratorResult = {
-    schemaSteps: DivorceWithChildrenSchemaStepStatus[];
-    uiSteps: DivorceWithChildrenUiStepStatus[];
-    currentSchemaStep: DivorceWithChildrenSchemaStepKey;
-    currentUiStep: DivorceWithChildrenUiStepKey;
+export type DivorceNoChildrenOrchestratorResult = {
+    schemaSteps: DivorceNoChildrenSchemaStepStatus[];
+    uiSteps: DivorceNoChildrenUiStepStatus[];
+    currentSchemaStep: DivorceNoChildrenSchemaStepKey;
+    currentUiStep: DivorceNoChildrenUiStepKey;
     currentStepMissingFields: string[];
     currentStepValidationErrors: { field: string; message: string }[];
     totalCompletionPercent: number;
-    completedSchemaSteps: DivorceWithChildrenSchemaStepKey[];
+    completedSchemaSteps: DivorceNoChildrenSchemaStepKey[];
     readyForReview: boolean;
-    intakeMode: 'divorce_with_children';
+    intakeMode: 'divorce_no_children';
+    /** If true, flow is blocked and client needs to be routed */
     flowBlocked: boolean;
     flowBlockedReason?: string;
 };
@@ -83,10 +83,10 @@ function toArray(value: unknown): unknown[] {
 // STEP COMPLETION COMPUTATION
 // ============================================================================
 
-function computeSchemaStepStatus(
-    step: typeof DIVORCE_WITH_CHILDREN_SCHEMA_STEPS[number],
+function computeDivorceNoChildrenSchemaStepStatus(
+    step: typeof DIVORCE_NO_CHILDREN_SCHEMA_STEPS[number],
     payload: Payload
-): DivorceWithChildrenSchemaStepStatus {
+): DivorceNoChildrenSchemaStepStatus {
     const missingFields: string[] = [];
     const validationErrors: { field: string; message: string }[] = [];
     let gateError: string | undefined;
@@ -113,49 +113,31 @@ function computeSchemaStepStatus(
         }
     }
 
-    // Check repeatable section requirements
-    if (step.isRepeatable && step.repeatableRequiredFields) {
-        // For children: gated by children_count
-        if (step.repeatableCountField) {
-            const count = (payload[step.repeatableCountField] as number) || 0;
-            if (count > 0) {
+    // Check repeatable section requirements (gated by status)
+    if (step.isRepeatable && step.repeatableRequiredFields && step.gatedByStatus) {
+        const statusValue = payload[step.gatedByStatus.field];
+        if (statusValue === step.gatedByStatus.requiredValue) {
+            // Status indicates items are reported - require at least 1
+            const firstField = step.repeatableRequiredFields[0];
+            const items = toArray(payload[firstField]);
+            if (items.length === 0) {
+                missingFields.push(`${firstField} (at least 1 required)`);
+            } else {
+                // Check each item has required fields
                 for (const fieldKey of step.repeatableRequiredFields) {
                     const fieldItems = toArray(payload[fieldKey]);
-                    if (fieldItems.length < count) {
-                        missingFields.push(`${fieldKey} (need ${count}, have ${fieldItems.length})`);
-                    } else {
-                        for (let i = 0; i < count; i++) {
-                            if (!hasValue(fieldItems[i])) {
-                                missingFields.push(`${fieldKey}[${i}]`);
-                            }
+                    for (let i = 0; i < items.length; i++) {
+                        if (!hasValue(fieldItems[i])) {
+                            missingFields.push(`${fieldKey}[${i}]`);
                         }
                     }
                 }
             }
         }
-        // For assets/debts: gated by status field
-        else if (step.gatedByStatus) {
-            const statusValue = payload[step.gatedByStatus.field];
-            if (statusValue === step.gatedByStatus.requiredValue) {
-                const firstField = step.repeatableRequiredFields[0];
-                const items = toArray(payload[firstField]);
-                if (items.length === 0) {
-                    missingFields.push(`${firstField} (at least 1 required)`);
-                } else {
-                    for (const fieldKey of step.repeatableRequiredFields) {
-                        const fieldItems = toArray(payload[fieldKey]);
-                        for (let i = 0; i < items.length; i++) {
-                            if (!hasValue(fieldItems[i])) {
-                                missingFields.push(`${fieldKey}[${i}]`);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        // If status is 'none_reported' or 'deferred_to_attorney', don't require items
     }
 
-    // Run validations
+    // Run validations (only on fields that have values)
     for (const validation of step.validations) {
         const value = payload[validation.field];
         if (hasValue(value) && !validation.validator(value, payload)) {
@@ -166,7 +148,7 @@ function computeSchemaStepStatus(
         }
     }
 
-    // Determine if step should be skipped
+    // Determine if step should be skipped based on gating
     const isSkipped = step.gatedByStatus
         ? payload[step.gatedByStatus.field] !== step.gatedByStatus.requiredValue
         : false;
@@ -184,23 +166,26 @@ function computeSchemaStepStatus(
     };
 }
 
-function computeUiStepStatus(
-    uiStep: typeof DIVORCE_WITH_CHILDREN_UI_STEPS[number],
-    schemaStatuses: Map<DivorceWithChildrenSchemaStepKey, DivorceWithChildrenSchemaStepStatus>,
-    currentSchemaStep: DivorceWithChildrenSchemaStepKey
-): DivorceWithChildrenUiStepStatus {
+function computeDivorceNoChildrenUiStepStatus(
+    uiStep: typeof DIVORCE_NO_CHILDREN_UI_STEPS[number],
+    schemaStatuses: Map<DivorceNoChildrenSchemaStepKey, DivorceNoChildrenSchemaStepStatus>,
+    currentSchemaStep: DivorceNoChildrenSchemaStepKey
+): DivorceNoChildrenUiStepStatus {
     const schemaStepsForUi = uiStep.schemaSteps.map((key) => schemaStatuses.get(key)!);
 
+    // Check if all steps are skipped
     const allSkipped = schemaStepsForUi.every((s) => s.status === 'skipped');
+
     const requiredSteps = schemaStepsForUi.filter((s) => s.isRequired);
     const completedSteps = requiredSteps.filter((s) => s.status === 'complete');
     const completionPercent = requiredSteps.length > 0
         ? Math.round((completedSteps.length / requiredSteps.length) * 100)
         : 100;
 
+    // Check if any step is blocked
     const hasBlocked = schemaStepsForUi.some((s) => s.status === 'blocked');
 
-    let status: DivorceWithChildrenStepStatus;
+    let status: DivorceNoChildrenStepStatus;
     if (hasBlocked) {
         status = 'blocked';
     } else if (allSkipped) {
@@ -226,13 +211,13 @@ function computeUiStepStatus(
 // MAIN ORCHESTRATOR
 // ============================================================================
 
-export function orchestrateDivorceWithChildrenIntake(payload: Payload): DivorceWithChildrenOrchestratorResult {
+export function orchestrateDivorceNoChildrenIntake(payload: Payload): DivorceNoChildrenOrchestratorResult {
     // 1. Compute status for each schema step
-    const schemaSteps: DivorceWithChildrenSchemaStepStatus[] = DIVORCE_WITH_CHILDREN_SCHEMA_STEPS.map((step) =>
-        computeSchemaStepStatus(step, payload)
+    const schemaSteps: DivorceNoChildrenSchemaStepStatus[] = DIVORCE_NO_CHILDREN_SCHEMA_STEPS.map((step) =>
+        computeDivorceNoChildrenSchemaStepStatus(step, payload)
     );
 
-    const schemaStatusMap = new Map<DivorceWithChildrenSchemaStepKey, DivorceWithChildrenSchemaStepStatus>();
+    const schemaStatusMap = new Map<DivorceNoChildrenSchemaStepKey, DivorceNoChildrenSchemaStepStatus>();
     for (const status of schemaSteps) {
         schemaStatusMap.set(status.key, status);
     }
@@ -242,8 +227,8 @@ export function orchestrateDivorceWithChildrenIntake(payload: Payload): DivorceW
     const flowBlocked = childrenGateStatus?.status === 'blocked';
     const flowBlockedReason = childrenGateStatus?.gateError;
 
-    // 3. Determine current step
-    let currentSchemaStep: DivorceWithChildrenSchemaStepKey = 'final_review';
+    // 3. Determine current step (first incomplete required step, excluding final_review)
+    let currentSchemaStep: DivorceNoChildrenSchemaStepKey = 'final_review';
     for (const status of schemaSteps) {
         if (status.key === 'final_review') continue;
         if (status.status === 'blocked') {
@@ -263,12 +248,12 @@ export function orchestrateDivorceWithChildrenIntake(payload: Payload): DivorceW
     }
 
     // 5. Compute UI step statuses
-    const uiSteps: DivorceWithChildrenUiStepStatus[] = DIVORCE_WITH_CHILDREN_UI_STEPS.map((uiStep) =>
-        computeUiStepStatus(uiStep, schemaStatusMap, currentSchemaStep)
+    const uiSteps: DivorceNoChildrenUiStepStatus[] = DIVORCE_NO_CHILDREN_UI_STEPS.map((uiStep) =>
+        computeDivorceNoChildrenUiStepStatus(uiStep, schemaStatusMap, currentSchemaStep)
     );
 
     // 6. Determine current UI step
-    let currentUiStep: DivorceWithChildrenUiStepKey = 'review';
+    let currentUiStep: DivorceNoChildrenUiStepKey = 'review';
     for (const uiStatus of uiSteps) {
         if (uiStatus.status === 'current' || uiStatus.status === 'blocked') {
             currentUiStep = uiStatus.key;
@@ -304,24 +289,24 @@ export function orchestrateDivorceWithChildrenIntake(payload: Payload): DivorceW
         totalCompletionPercent,
         completedSchemaSteps,
         readyForReview,
-        intakeMode: 'divorce_with_children',
+        intakeMode: 'divorce_no_children',
         flowBlocked,
         flowBlockedReason,
     };
 }
 
 /**
- * Get chat prompt fields for current step.
+ * Get the list of fields the chat should ask about for the current step.
  */
-export function getDivorceWithChildrenChatPromptFields(result: DivorceWithChildrenOrchestratorResult): {
-    stepKey: DivorceWithChildrenSchemaStepKey;
+export function getDivorceNoChildrenChatPromptFields(result: DivorceNoChildrenOrchestratorResult): {
+    stepKey: DivorceNoChildrenSchemaStepKey;
     stepLabel: string;
     missingFields: string[];
     validationErrors: { field: string; message: string }[];
     flowBlocked: boolean;
     flowBlockedReason?: string;
 } {
-    const stepConfig = getDivorceWithChildrenSchemaStepConfig(result.currentSchemaStep);
+    const stepConfig = getDivorceNoChildrenSchemaStepConfig(result.currentSchemaStep);
     return {
         stepKey: result.currentSchemaStep,
         stepLabel: stepConfig?.key ?? result.currentSchemaStep,

@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { GA_DIVORCE_CUSTODY_V1 } from '../../../lib/intake/schema/gaDivorceCustodyV1';
+import { GA_DIVORCE_CUSTODY_V1 } from '../../../lib/intake/schemas/ga/family_law/divorce_custody.v1';
 import { loadWf4Counties } from './counties';
 import { loadWf4TaskCatalog } from './taskCatalog';
 import { validateEvidencePointers } from './evidence';

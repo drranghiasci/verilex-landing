@@ -13,7 +13,7 @@ import {
     validateZip,
     validateEmail,
     validatePhone,
-} from './intakeStepMap';
+} from './divorce_custody.map';
 
 // ============================================================================
 // TYPES

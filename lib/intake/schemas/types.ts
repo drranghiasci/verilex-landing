@@ -1,21 +1,15 @@
-export type FieldType =
-  | 'text'
-  | 'number'
-  | 'date'
-  | 'boolean'
-  | 'enum'
-  | 'multiselect'
-  | 'structured'
-  | 'list'
-  | 'array';
+/**
+ * Schema Types
+ */
+export type FieldType = 'text' | 'number' | 'date' | 'boolean' | 'enum' | 'multiselect' | 'structured' | 'list';
 
 export type FieldDef = {
   key: string;
   type: FieldType;
   required: boolean;
+  isSystem?: boolean;
   notes?: string;
   enumValues?: string[];
-  isSystem?: boolean;
 };
 
 export type SectionDef = {
@@ -33,3 +27,4 @@ export type AiFlagDef = {
   key: string;
   trigger: string;
 };
+

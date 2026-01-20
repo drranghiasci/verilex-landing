@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { IntakeRecord } from '../../../../lib/intake/intakeApi';
-import { SchemaDef } from '../../../../lib/intake/schema/types';
+import { SchemaDef } from '../../../../lib/intake/schemas/types';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 

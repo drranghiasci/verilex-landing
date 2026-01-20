@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseAdmin } from '../../../../../lib/server/supabaseAdmin';
 import { verifyIntakeToken } from '../../../../../lib/server/intakeToken';
-import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schema/gaDivorceCustodyV1';
+import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schemas/ga/family_law/divorce_custody.v1';
 import { normalizePayloadToDocxV1 } from '../../../../../lib/intake/normalizePayload';
 import { runWorkflow3Rules } from '../../../../../src/workflow3/runWorkflow3Rules';
 import { runWf4 } from '../../../../../src/workflows/wf4/runWf4';

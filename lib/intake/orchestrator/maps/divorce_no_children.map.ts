@@ -1,27 +1,35 @@
 /**
- * Custody (Unmarried) Step Map Configuration
+ * Divorce (No Children) Step Map Configuration
  *
- * Mode-locked step map for custody intake (no divorce/marriage questions).
- * 11 steps matching the gaCustodyUnmarriedV1 schema.
+ * Mode-locked step map for divorce intake without children.
+ * Key features:
+ * - Children gate: has_minor_children MUST be false
+ * - Assets hard-block: assets_status required
+ * - Debts hard-block: debts_status required
  */
 
 import {
     validateZip,
     validateEmail,
     validatePhone,
-} from './intakeStepMap';
+} from './divorce_custody.map';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export type CustodySchemaStepKey =
+export type DivorceNoChildrenSchemaStepKey =
     | 'intake_metadata'
     | 'client_identity'
-    | 'other_parent'
-    | 'children_info'
-    | 'child_object'
-    | 'custody_preferences'
+    | 'opposing_party'
+    | 'marriage_details'
+    | 'separation_grounds'
+    | 'children_gate'
+    | 'assets_property'
+    | 'asset_object'
+    | 'liabilities_debts'
+    | 'debt_object'
+    | 'income_support'
     | 'safety_risk'
     | 'jurisdiction_venue'
     | 'prior_legal_actions'
@@ -29,12 +37,16 @@ export type CustodySchemaStepKey =
     | 'evidence_documents'
     | 'final_review';
 
-export type CustodyUiStepKey =
+export type DivorceNoChildrenUiStepKey =
     | 'basics'
     | 'client'
-    | 'other_parent'
-    | 'children'
-    | 'custody'
+    | 'other_party'
+    | 'marriage'
+    | 'grounds'
+    | 'children_gate'
+    | 'assets'
+    | 'debts'
+    | 'income_support'
     | 'safety'
     | 'venue'
     | 'legal_history'
@@ -53,26 +65,30 @@ type FieldValidation = {
     errorMessage: string;
 };
 
-type CustodySchemaStepConfig = {
-    key: CustodySchemaStepKey;
+type DivorceNoChildrenSchemaStepConfig = {
+    key: DivorceNoChildrenSchemaStepKey;
     requiredFields: string[];
     conditionalRequired: ConditionalRequirement[];
     validations: FieldValidation[];
+    /** If set, this step requires specific gating to pass */
+    gateCheck?: (payload: Record<string, unknown>) => { pass: boolean; errorMessage?: string };
     isRepeatable?: boolean;
     repeatableRequiredFields?: string[];
+    /** If true, step is gated by a status field */
+    gatedByStatus?: { field: string; requiredValue: string };
 };
 
-type CustodyUiStepConfig = {
-    key: CustodyUiStepKey;
+type DivorceNoChildrenUiStepConfig = {
+    key: DivorceNoChildrenUiStepKey;
     label: string;
-    schemaSteps: CustodySchemaStepKey[];
+    schemaSteps: DivorceNoChildrenSchemaStepKey[];
 };
 
 // ============================================================================
-// SCHEMA STEPS for Custody (Unmarried)
+// SCHEMA STEPS for Divorce (No Children)
 // ============================================================================
 
-export const CUSTODY_SCHEMA_STEPS: CustodySchemaStepConfig[] = [
+export const DIVORCE_NO_CHILDREN_SCHEMA_STEPS: DivorceNoChildrenSchemaStepConfig[] = [
     {
         key: 'intake_metadata',
         requiredFields: ['urgency_level', 'intake_channel'],
@@ -114,7 +130,7 @@ export const CUSTODY_SCHEMA_STEPS: CustodySchemaStepConfig[] = [
         ],
     },
     {
-        key: 'other_parent',
+        key: 'opposing_party',
         requiredFields: ['opposing_first_name', 'opposing_last_name', 'opposing_address_known', 'service_concerns'],
         conditionalRequired: [
             {
@@ -131,57 +147,81 @@ export const CUSTODY_SCHEMA_STEPS: CustodySchemaStepConfig[] = [
                     const addr = value as Record<string, unknown>;
                     return validateZip(addr.zip || addr.zipCode || addr.postal_code);
                 },
-                errorMessage: 'Please enter a valid 5-digit ZIP code for other parent address.',
+                errorMessage: 'Please enter a valid 5-digit ZIP code for spouse address.',
             },
         ],
     },
     {
-        key: 'children_info',
-        requiredFields: ['has_children', 'children_count'],
+        key: 'marriage_details',
+        requiredFields: ['date_of_marriage', 'place_of_marriage', 'currently_cohabitating'],
+        conditionalRequired: [
+            {
+                field: 'date_of_separation',
+                condition: (payload) => payload.currently_cohabitating === false,
+            },
+        ],
+        validations: [],
+    },
+    {
+        key: 'separation_grounds',
+        requiredFields: ['grounds_for_divorce'],
+        conditionalRequired: [],
+        validations: [],
+    },
+    {
+        key: 'children_gate',
+        requiredFields: ['has_minor_children'],
         conditionalRequired: [],
         validations: [
             {
-                field: 'has_children',
-                validator: (value) => value === true,
-                errorMessage: 'This intake requires children. If no children, use a different intake type.',
-            },
-            {
-                field: 'children_count',
-                validator: (value) => typeof value === 'number' && value >= 1,
-                errorMessage: 'Please enter at least 1 child.',
+                field: 'has_minor_children',
+                validator: (value) => value === false,
+                errorMessage: 'This intake is for divorces without minor children. If you have minor children, please use the appropriate intake.',
             },
         ],
+        gateCheck: (payload) => {
+            if (payload.has_minor_children === true) {
+                return {
+                    pass: false,
+                    errorMessage: 'This intake is for divorces without minor children. We will route you to the correct intake for matters involving children.',
+                };
+            }
+            return { pass: true };
+        },
     },
     {
-        key: 'child_object',
+        key: 'assets_property',
+        requiredFields: ['assets_status'],
+        conditionalRequired: [],
+        validations: [],
+    },
+    {
+        key: 'asset_object',
         requiredFields: [],
         conditionalRequired: [],
-        validations: [
-            {
-                field: 'child_full_name',
-                validator: (value, payload) => {
-                    const count = payload.children_count as number || 0;
-                    if (count === 0) return true;
-                    const names = Array.isArray(payload.child_full_name) ? payload.child_full_name : [];
-                    return names.length >= count && names.every((n) => typeof n === 'string' && n.trim().length > 0);
-                },
-                errorMessage: 'Please provide names for all children.',
-            },
-        ],
+        validations: [],
         isRepeatable: true,
-        repeatableRequiredFields: ['child_full_name', 'child_dob', 'child_current_residence', 'biological_relation'],
+        repeatableRequiredFields: ['asset_type', 'ownership', 'estimated_value', 'title_holder', 'acquired_pre_marriage'],
+        gatedByStatus: { field: 'assets_status', requiredValue: 'reported' },
     },
     {
-        key: 'custody_preferences',
-        requiredFields: [
-            'existing_order',
-            'seeking_modification',
-            'custody_type_requested',
-            'parenting_plan_exists',
-            'child_home_state',
-            'child_home_county',
-            'time_in_home_state_months',
-        ],
+        key: 'liabilities_debts',
+        requiredFields: ['debts_status'],
+        conditionalRequired: [],
+        validations: [],
+    },
+    {
+        key: 'debt_object',
+        requiredFields: [],
+        conditionalRequired: [],
+        validations: [],
+        isRepeatable: true,
+        repeatableRequiredFields: ['debt_type', 'amount', 'responsible_party', 'incurred_during_marriage'],
+        gatedByStatus: { field: 'debts_status', requiredValue: 'reported' },
+    },
+    {
+        key: 'income_support',
+        requiredFields: ['client_income_monthly', 'opposing_income_known', 'support_requested'],
         conditionalRequired: [],
         validations: [],
     },
@@ -204,7 +244,7 @@ export const CUSTODY_SCHEMA_STEPS: CustodySchemaStepConfig[] = [
     },
     {
         key: 'prior_legal_actions',
-        requiredFields: ['prior_custody_orders', 'prior_divorce_filings', 'existing_attorney'],
+        requiredFields: ['prior_divorce_filings', 'existing_attorney'],
         conditionalRequired: [],
         validations: [],
     },
@@ -229,10 +269,10 @@ export const CUSTODY_SCHEMA_STEPS: CustodySchemaStepConfig[] = [
 ];
 
 // ============================================================================
-// UI STEPS for Custody (Unmarried)
+// UI STEPS for Divorce (No Children)
 // ============================================================================
 
-export const CUSTODY_UI_STEPS: CustodyUiStepConfig[] = [
+export const DIVORCE_NO_CHILDREN_UI_STEPS: DivorceNoChildrenUiStepConfig[] = [
     {
         key: 'basics',
         label: 'Basics',
@@ -244,19 +284,39 @@ export const CUSTODY_UI_STEPS: CustodyUiStepConfig[] = [
         schemaSteps: ['client_identity'],
     },
     {
-        key: 'other_parent',
-        label: 'Other Parent',
-        schemaSteps: ['other_parent'],
+        key: 'other_party',
+        label: 'Spouse',
+        schemaSteps: ['opposing_party'],
     },
     {
-        key: 'children',
+        key: 'marriage',
+        label: 'Marriage',
+        schemaSteps: ['marriage_details'],
+    },
+    {
+        key: 'grounds',
+        label: 'Grounds',
+        schemaSteps: ['separation_grounds'],
+    },
+    {
+        key: 'children_gate',
         label: 'Children',
-        schemaSteps: ['children_info', 'child_object'],
+        schemaSteps: ['children_gate'],
     },
     {
-        key: 'custody',
-        label: 'Custody',
-        schemaSteps: ['custody_preferences'],
+        key: 'assets',
+        label: 'Assets',
+        schemaSteps: ['assets_property', 'asset_object'],
+    },
+    {
+        key: 'debts',
+        label: 'Debts',
+        schemaSteps: ['liabilities_debts', 'debt_object'],
+    },
+    {
+        key: 'income_support',
+        label: 'Income & Support',
+        schemaSteps: ['income_support'],
     },
     {
         key: 'safety',
@@ -291,11 +351,15 @@ export const CUSTODY_UI_STEPS: CustodyUiStepConfig[] = [
 ];
 
 // Helper to get schema step config by key
-export function getCustodySchemaStepConfig(key: CustodySchemaStepKey): CustodySchemaStepConfig | undefined {
-    return CUSTODY_SCHEMA_STEPS.find((step) => step.key === key);
+export function getDivorceNoChildrenSchemaStepConfig(
+    key: DivorceNoChildrenSchemaStepKey
+): DivorceNoChildrenSchemaStepConfig | undefined {
+    return DIVORCE_NO_CHILDREN_SCHEMA_STEPS.find((step) => step.key === key);
 }
 
 // Helper to get UI step config by key
-export function getCustodyUiStepConfig(key: CustodyUiStepKey): CustodyUiStepConfig | undefined {
-    return CUSTODY_UI_STEPS.find((step) => step.key === key);
+export function getDivorceNoChildrenUiStepConfig(
+    key: DivorceNoChildrenUiStepKey
+): DivorceNoChildrenUiStepConfig | undefined {
+    return DIVORCE_NO_CHILDREN_UI_STEPS.find((step) => step.key === key);
 }
