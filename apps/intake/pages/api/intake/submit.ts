@@ -245,6 +245,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(409).json({ ok: false, locked: true, requestId });
   }
 
+  // Create audit event for submission
+  try {
+    const intakeType = isPlainObject(intake.raw_payload)
+      ? (intake.raw_payload as Record<string, unknown>).intake_type ?? 'divorce_custody'
+      : 'divorce_custody';
+
+    await supabaseAdmin.from('audit_events').insert({
+      event_type: 'CLIENT_SUBMITTED_INTAKE',
+      entity_type: 'intake',
+      entity_id: intakeId,
+      firm_id: tokenResult.payload.firm_id,
+      metadata: {
+        intake_type: intakeType,
+        submitted_at: updated.submitted_at,
+      },
+    });
+  } catch (auditError) {
+    // Log but don't fail submission
+    console.error(`[submit] failed to create audit event intake_id=${intakeId}`, auditError);
+  }
+
+
   let wf3Result: { extraction_id?: string } | null = null;
   try {
     wf3Result = await runWorkflow3Rules({ intake_id: intakeId, firm_id: tokenResult.payload.firm_id });
