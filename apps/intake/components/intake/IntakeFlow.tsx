@@ -141,13 +141,14 @@ export default function IntakeFlow({
     }));
   }, [orchestratorSteps.hasIntakeType, orchestratorSteps.steps, enabledSectionIds, currentStepIndex]);
 
-  // Use orchestrator completion when available
-  const totalCompletion = orchestratorSteps.hasIntakeType
-    ? orchestratorSteps.completionPercent
-    : useMemo(() => {
-      if (!visibleSteps.length) return 0;
-      return Math.round((currentStepIndex / visibleSteps.length) * 100);
-    }, [currentStepIndex, visibleSteps.length]);
+  // Calculate total completion - use orchestrator when available, else legacy calculation
+  const totalCompletion = useMemo(() => {
+    if (orchestratorSteps.hasIntakeType) {
+      return orchestratorSteps.completionPercent;
+    }
+    if (!visibleSteps.length) return 0;
+    return Math.round((currentStepIndex / visibleSteps.length) * 100);
+  }, [orchestratorSteps.hasIntakeType, orchestratorSteps.completionPercent, currentStepIndex, visibleSteps.length]);
 
   const stepIndexById = useMemo(() => {
     const map = new Map<string, number>();
