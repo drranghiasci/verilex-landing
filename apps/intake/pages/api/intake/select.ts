@@ -127,6 +127,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { error: updateError } = await supabaseAdmin
         .from('intakes')
         .update({
+            intake_type: intakeType,  // Set column directly
             raw_payload: newPayload,
             current_step_key: firstStep,
             completed_step_keys: [],
