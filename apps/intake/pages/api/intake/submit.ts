@@ -6,6 +6,7 @@ import { normalizePayloadToDocxV1 } from '../../../../../lib/intake/normalizePay
 import { runWorkflow3Rules } from '../../../../../src/workflow3/runWorkflow3Rules';
 import { runWf4 } from '../../../../../src/workflows/wf4/runWf4';
 import { createWf4OpenAiProvider } from '../../../../../src/workflows/wf4/openaiProvider';
+import { validateIntakeTypePosture, isValidIntakeType } from '../../../../../lib/intake/orchestrator/registry';
 import {
   getRequestId,
   logRequestStart,
@@ -193,6 +194,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (qError) {
       console.error(`[submit] failed to save questions intake_id=${intakeId}`, qError);
       // We log but proceed with submission
+    }
+  }
+
+  // Posture validation: ensure children status matches intake_type
+  const existingPayload = isPlainObject(intake.raw_payload) ? intake.raw_payload : {};
+  const intakeType = existingPayload.intake_type;
+  if (isValidIntakeType(intakeType)) {
+    const postureCheck = validateIntakeTypePosture(intakeType, existingPayload);
+    if (!postureCheck.valid) {
+      return res.status(400).json({
+        ok: false,
+        error: 'INTAKE_TYPE_MISMATCH',
+        message: postureCheck.reason,
+        suggestedType: postureCheck.suggestedType,
+        requestId,
+      });
     }
   }
 

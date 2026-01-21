@@ -16,7 +16,7 @@
  * - Outcome predictions
  */
 
-import { GA_DIVORCE_CUSTODY_V1 } from './schema/gaDivorceCustodyV1';
+import { GA_DIVORCE_CUSTODY_V1 } from './schemas/ga/family_law/divorce_custody.v1';
 import { getEnabledSectionIds } from './gating';
 import { unwrapAssertion, isAssertionMetadata, type AssertionMetadata } from './assertionTypes';
 

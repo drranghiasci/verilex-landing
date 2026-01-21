@@ -198,7 +198,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (message !== 'START_CONVERSATION') {
             messages.push({ role: 'user', content: message });
         } else {
-            messages.push({ role: 'system', content: 'The user has opened the chat. Please provide your Phase 1 Greeting.' });
+            // Include handoff sentence acknowledging intake type selection
+            const intakeTypeLabel = intakeMode === 'custody_unmarried'
+                ? 'child custody'
+                : intakeMode === 'divorce_no_children'
+                    ? 'divorce without children'
+                    : intakeMode === 'divorce_with_children'
+                        ? 'divorce with children'
+                        : 'your matter';
+            messages.push({
+                role: 'system',
+                content: `The user has opened the chat after selecting "${intakeTypeLabel}" as their intake type. Begin with a brief handoff: "Thanks — I'll ask only the questions relevant to this type of matter." Then provide your Phase 1 Greeting and ask the first required question.`
+            });
         }
 
         // 7. Call OpenAI
@@ -325,12 +336,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             updates,
             documentRequest,
             safetyTrigger,
-            // Return orchestrator state for frontend
+            // Return orchestrator state for frontend sidebar sync
             orchestrator: {
+                intakeType: intakeMode,
                 currentStep: orchestratorState.currentSchemaStep,
                 currentUiStep: orchestratorState.currentUiStep,
+                completedSteps: orchestratorState.completedSchemaSteps,
                 completionPercent: orchestratorState.totalCompletionPercent,
                 readyForReview: orchestratorState.readyForReview,
+                stepStatus: Object.fromEntries(
+                    orchestratorState.schemaSteps.map((s) => [s.key, {
+                        status: s.status,
+                        missing: s.missingFields,
+                    }])
+                ),
             },
         });
     } catch (error: unknown) {

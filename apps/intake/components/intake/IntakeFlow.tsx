@@ -33,6 +33,7 @@ import IntakeLayout from './IntakeLayout';
 import { X } from 'lucide-react'; // Import the new component
 
 import { getFriendlyStepLabel } from './progressConfig';
+import { useIntakeSteps } from './useIntakeSteps';
 
 const fieldToSectionId = new Map<string, string>();
 for (const section of intakeSections) {
@@ -90,9 +91,22 @@ export default function IntakeFlow({
   const matterType = payload.matter_type;
   const enabledSectionIds = useMemo(() => getEnabledSectionIds(payload), [payload]);
 
+  // Use orchestrator-driven steps when intake_type is set (new registry-based flow)
+  const orchestratorSteps = useIntakeSteps({
+    intakeType: intake?.intake_type,
+    currentStepKey: intake?.current_step_key,
+    stepStatus: intake?.step_status as Record<string, { status: string }> | undefined,
+  });
+
+  // Derive visibleSteps: use orchestrator steps if available, else fall back to legacy
   const visibleSteps = useMemo(() => {
+    // If we have orchestrator steps from the registry, use them
+    if (orchestratorSteps.hasIntakeType && orchestratorSteps.steps.length > 0) {
+      return orchestratorSteps.steps;
+    }
+
+    // Legacy fallback for old divorce_custody intakes without intake_type
     const rawIds = Array.from(enabledSectionIds);
-    // Explicit Order for display
     const outputOrder = [
       'matter_metadata',
       'client_identity',
@@ -125,13 +139,15 @@ export default function IntakeFlow({
       isCompleted: index < currentStepIndex,
       isActive: index === currentStepIndex,
     }));
-  }, [enabledSectionIds, currentStepIndex]);
+  }, [orchestratorSteps.hasIntakeType, orchestratorSteps.steps, enabledSectionIds, currentStepIndex]);
 
-  // Calculate total percentage for SideNav
-  const totalCompletion = useMemo(() => {
-    if (!visibleSteps.length) return 0;
-    return Math.round((currentStepIndex / visibleSteps.length) * 100);
-  }, [currentStepIndex, visibleSteps.length]);
+  // Use orchestrator completion when available
+  const totalCompletion = orchestratorSteps.hasIntakeType
+    ? orchestratorSteps.completionPercent
+    : useMemo(() => {
+      if (!visibleSteps.length) return 0;
+      return Math.round((currentStepIndex / visibleSteps.length) * 100);
+    }, [currentStepIndex, visibleSteps.length]);
 
   const stepIndexById = useMemo(() => {
     const map = new Map<string, number>();

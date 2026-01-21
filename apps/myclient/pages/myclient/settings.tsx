@@ -328,15 +328,29 @@ export default function FirmSettingsPage() {
           )}
         </section>
 
+        <section className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8 shadow-2xl">
+          <h2 className="text-lg font-semibold text-white">Intake Branding</h2>
+          <p className="mt-2 text-sm text-[color:var(--text-2)]">
+            Customize how your intake portal appears to clients.
+          </p>
+          <div className="mt-6">
+            <Link
+              href="/myclient/settings/intake-branding"
+              className="inline-flex items-center gap-2 rounded-lg bg-[color:var(--accent-light)] px-4 py-2 text-sm font-semibold text-white hover:bg-[color:var(--accent)] transition"
+            >
+              Configure Intake Branding →
+            </Link>
+          </div>
+        </section>
+
         <section className="rounded-3xl border border-white/10 bg-[var(--surface-1)] p-8">
           <h2 className="text-lg font-semibold text-white">Coming soon</h2>
           <p className="mt-2 text-sm text-[color:var(--text-2)]">
-            Defaults and presets will land here next.
+            Additional settings will land here next.
           </p>
           <ul className="mt-4 grid gap-3 text-sm text-[color:var(--text-2)]">
             <li>Default jurisdiction</li>
             <li>Document type presets</li>
-            <li>Firm branding</li>
           </ul>
         </section>
       </div>

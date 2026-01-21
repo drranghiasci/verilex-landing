@@ -19,6 +19,7 @@ export type IntakeRecord = {
   submitted_at: string | null;
   intake_started_at?: string | null;
   raw_payload: Record<string, unknown>;
+  intake_type?: 'custody_unmarried' | 'divorce_no_children' | 'divorce_with_children' | null;
   matter_type?: string | null;
   urgency_level?: string | null;
   has_children?: boolean | null;
@@ -30,6 +31,10 @@ export type IntakeRecord = {
   language_preference?: string | null;
   updated_at?: string | null;
   created_at?: string | null;
+  // Orchestrator state for sidebar sync
+  current_step_key?: string | null;
+  completed_step_keys?: string[];
+  step_status?: Record<string, { status: string; missing?: string[] }>;
 };
 
 export type IntakeMessage = {
@@ -88,6 +93,14 @@ export type CreateUploadResult = {
 };
 
 export type ConfirmUploadResult = IntakeDocument;
+
+export type IntakeTypeValue = 'custody_unmarried' | 'divorce_no_children' | 'divorce_with_children';
+
+export type SelectIntakeTypeResponse = {
+  intake_id: string;
+  intake_type: IntakeTypeValue;
+  current_step_key: string;
+};
 
 type ApiError = Error & { status?: number; requestId?: string; data?: unknown };
 
@@ -153,6 +166,22 @@ export async function loadIntake(params: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({}),
+  });
+}
+
+export async function selectIntakeType(params: {
+  token: string;
+  intake_type: IntakeTypeValue;
+}): Promise<SelectIntakeTypeResponse> {
+  return requestJson<SelectIntakeTypeResponse>('/api/intake/select', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${params.token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      intake_type: params.intake_type,
+    }),
   });
 }
 
