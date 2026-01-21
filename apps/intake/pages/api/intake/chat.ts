@@ -81,9 +81,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(403).json({ error: 'Intake is locked' });
         }
 
-        // 3. Determine intake mode
+        // 3. Determine intake mode - prefer column, fall back to raw_payload
         const payload = (intake.raw_payload ?? {}) as Record<string, unknown>;
-        const intakeMode: IntakeMode = (payload.intake_type as IntakeMode) || 'divorce_custody';
+        const intakeTypeFromColumn = intake.intake_type as IntakeMode | null;
+        const intakeTypeFromPayload = payload.intake_type as IntakeMode | undefined;
+        const intakeMode: IntakeMode = intakeTypeFromColumn || intakeTypeFromPayload || 'divorce_custody';
 
         // 4. Run appropriate orchestrator (SINGLE SOURCE OF TRUTH)
         let currentSchemaStep: string;
