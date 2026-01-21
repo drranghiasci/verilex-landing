@@ -150,7 +150,8 @@ export function findUiStepForSchemaStep(intakeType: IntakeType, schemaStepKey: s
 
 /**
  * Determine if a UI step is complete based on step_status.
- * A UI step is complete only if ALL of its underlying schema steps are complete.
+ * A UI step is complete only if ALL of its underlying schema steps are marked 'complete'.
+ * Returns false if any schema step has no entry in step_status.
  */
 export function isUiStepComplete(
     intakeType: IntakeType,
@@ -161,9 +162,14 @@ export function isUiStepComplete(
     const uiStep = uiSteps.find(s => s.key === uiStepKey);
     if (!uiStep) return false;
 
+    // Must have at least one schema step to check
+    if (uiStep.schemaSteps.length === 0) return false;
+
     return uiStep.schemaSteps.every(schemaKey => {
-        const status = stepStatus[schemaKey];
-        return status?.status === 'complete';
+        const entry = stepStatus[schemaKey];
+        // No entry means step hasn't been visited/completed
+        if (!entry) return false;
+        return entry.status === 'complete';
     });
 }
 

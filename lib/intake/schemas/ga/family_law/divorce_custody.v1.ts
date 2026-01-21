@@ -18,8 +18,8 @@ export const GA_DIVORCE_CUSTODY_V1: SchemaDef = {
           key: 'urgency_level',
           type: 'enum',
           required: true,
-          notes: 'routine, urgent, emergency',
-          enumValues: ['routine', 'urgent', 'emergency'],
+          notes: 'standard, urgent, emergency',
+          enumValues: ['standard', 'urgent', 'emergency'],
         },
         {
           key: 'intake_channel',

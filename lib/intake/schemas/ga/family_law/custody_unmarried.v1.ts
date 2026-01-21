@@ -42,7 +42,7 @@ export const GA_CUSTODY_UNMARRIED_V1: SchemaDef = {
                     key: 'urgency_level',
                     type: 'enum',
                     required: true,
-                    enumValues: ['routine', 'urgent', 'emergency'],
+                    enumValues: ['standard', 'urgent', 'emergency'],
                 },
                 {
                     key: 'intake_channel',

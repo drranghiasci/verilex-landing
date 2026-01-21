@@ -46,7 +46,7 @@ export const GA_DIVORCE_WITH_CHILDREN_V1: SchemaDef = {
                     key: 'urgency_level',
                     type: 'enum',
                     required: true,
-                    enumValues: ['routine', 'urgent', 'emergency'],
+                    enumValues: ['standard', 'urgent', 'emergency'],
                 },
                 {
                     key: 'intake_channel',
