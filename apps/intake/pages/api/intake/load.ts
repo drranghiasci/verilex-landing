@@ -85,7 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { data, error } = await supabaseAdmin
     .from('intakes')
-    .select('id, firm_id, status, submitted_at, raw_payload, updated_at, created_at, matter_type, urgency_level, intake_channel, language_preference, current_step_key, completed_step_keys, step_status')
+    .select('id, firm_id, status, submitted_at, raw_payload, updated_at, created_at, matter_type, urgency_level, intake_channel, language_preference, current_step_key, completed_step_keys, step_status, intake_type')
     .eq('id', intakeId)
     .eq('firm_id', tokenResult.payload.firm_id)
     .maybeSingle();
@@ -132,7 +132,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const normalizedPayload = normalizePayloadToDocxV1(data.raw_payload ?? {});
   const rawPayload = (data.raw_payload ?? {}) as Record<string, unknown>;
-  const intakeType = typeof rawPayload.intake_type === 'string' ? rawPayload.intake_type : null;
+  // Prefer column value, fall back to raw_payload for legacy data
+  const intakeType = data.intake_type ?? (typeof rawPayload.intake_type === 'string' ? rawPayload.intake_type : null);
 
   return res.status(200).json({
     ok: true,
