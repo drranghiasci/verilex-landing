@@ -83,9 +83,10 @@ export default function IntakeStartPage() {
     }
   }, [firmSlug, router.isReady, router.query.new, configLoaded]);
 
-  // When we have a token, load intake to check phase
+  // When we have a token during loading, check intake state to determine phase
   useEffect(() => {
-    if (!activeToken || phase === 'landing') return;
+    // Only run during initial loading phase
+    if (phase !== 'loading' || !activeToken) return;
 
     async function checkIntakeState() {
       try {
