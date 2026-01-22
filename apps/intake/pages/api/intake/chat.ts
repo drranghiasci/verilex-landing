@@ -170,6 +170,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             missingFields: missingFields.slice(0, 5),
         });
 
+        // Log which section has CURRENT FOCUS in the prompt
+        const focusMatch = systemPrompt.match(/Section: ([^\n]+) \*CURRENT FOCUS\*/);
+        console.log('[PROMPT FOCUS]', focusMatch ? focusMatch[1] : 'NO FOCUS FOUND');
+
         // 5. Define Tools
         const tools: ChatCompletionTool[] = [
             {

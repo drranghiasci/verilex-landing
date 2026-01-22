@@ -46,6 +46,11 @@ export function useIntakeSteps(state: OrchestratorState): {
 
     const steps = useMemo(() => {
         if (!hasIntakeType) return [];
+        // DEBUG: Log client_identity status specifically
+        const clientStatus = stepStatus?.['client_identity'] as { status: string; missing?: string[] } | undefined;
+        if (clientStatus) {
+            console.log('[useIntakeSteps] client_identity status:', clientStatus.status, 'missing:', clientStatus.missing ?? []);
+        }
         return buildSidebarSteps(
             intakeType as IntakeType,
             currentStepKey ?? '',
