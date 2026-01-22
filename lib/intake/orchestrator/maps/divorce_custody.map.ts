@@ -9,6 +9,8 @@
  * then derives UI step completion from the mapping.
  */
 
+import { extractZipFromAddress } from '../../validation';
+
 // ============================================================================
 // VALIDATION RULES
 // ============================================================================
@@ -138,9 +140,8 @@ export const SCHEMA_STEPS: SchemaStepConfig[] = [
             {
                 field: 'client_address',
                 validator: (value) => {
-                    if (!value || typeof value !== 'object') return false;
-                    const addr = value as Record<string, unknown>;
-                    return validateZip(addr.zip || addr.zipCode || addr.postal_code);
+                    const zip = extractZipFromAddress(value);
+                    return zip !== undefined && validateZip(zip);
                 },
                 errorMessage: 'Please enter a valid 5-digit ZIP code.',
             },
@@ -160,9 +161,8 @@ export const SCHEMA_STEPS: SchemaStepConfig[] = [
                 field: 'opposing_last_known_address',
                 validator: (value, payload) => {
                     if (payload.opposing_address_known !== true) return true;
-                    if (!value || typeof value !== 'object') return false;
-                    const addr = value as Record<string, unknown>;
-                    return validateZip(addr.zip || addr.zipCode || addr.postal_code);
+                    const zip = extractZipFromAddress(value);
+                    return zip !== undefined && validateZip(zip);
                 },
                 errorMessage: 'Please enter a valid 5-digit ZIP code for opposing party address.',
             },

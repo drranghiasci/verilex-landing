@@ -80,6 +80,34 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
+/**
+ * Extract ZIP code from an address object, handling various field name conventions.
+ * AI may store ZIP under different keys (zip, zipCode, zipcode, postal_code, postalCode).
+ * Also handles string addresses by extracting a 5-digit ZIP pattern.
+ */
+export function extractZipFromAddress(value: unknown): string | undefined {
+  // Handle string address - try to extract 5-digit ZIP
+  if (typeof value === 'string') {
+    const match = value.match(/\b(\d{5})(?:-\d{4})?\b/);
+    return match ? match[1] : undefined;
+  }
+
+  // Handle object address - check all common field name variations
+  if (isPlainObject(value)) {
+    const zipKeys = ['zip', 'zipCode', 'zipcode', 'ZIP', 'Zip', 'postal_code', 'postalCode', 'postal'];
+    for (const key of zipKeys) {
+      const zipValue = value[key];
+      if (typeof zipValue === 'string' && zipValue.trim().length > 0) {
+        // Extract just the 5-digit portion if it includes extended ZIP
+        const match = zipValue.match(/^(\d{5})(?:-\d{4})?$/);
+        return match ? match[1] : zipValue.trim();
+      }
+    }
+  }
+
+  return undefined;
+}
+
 function hasObjectValue(value: unknown): boolean {
   if (!isPlainObject(value)) return false;
   return Object.values(value).some((entry) => {
