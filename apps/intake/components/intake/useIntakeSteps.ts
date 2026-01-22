@@ -46,15 +46,11 @@ export function useIntakeSteps(state: OrchestratorState): {
 
     const steps = useMemo(() => {
         if (!hasIntakeType) return [];
-        const result = buildSidebarSteps(
+        return buildSidebarSteps(
             intakeType as IntakeType,
             currentStepKey ?? '',
             stepStatus ?? {},
         );
-        // Debug: log step completion state
-        console.log('[useIntakeSteps] stepStatus:', stepStatus);
-        console.log('[useIntakeSteps] steps:', result.map(s => ({ id: s.id, isCompleted: s.isCompleted })));
-        return result;
     }, [hasIntakeType, intakeType, currentStepKey, stepStatus]);
 
     const currentStepIndex = useMemo(() => {

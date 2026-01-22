@@ -275,6 +275,12 @@ export function orchestrateDivorceNoChildrenIntake(payload: Payload): DivorceNoC
 
     const readyForReview = !flowBlocked && requiredSchemaSteps.every((s) => s.status === 'complete');
 
+    // Override final_review status: only complete when ALL other steps are complete
+    const finalReviewStatus = schemaStatusMap.get('final_review');
+    if (finalReviewStatus && !readyForReview) {
+        finalReviewStatus.status = 'incomplete';
+    }
+
     // 8. Get current step missing fields and errors
     const currentStepMissingFields = currentStepStatus?.missingFields ?? [];
     const currentStepValidationErrors = currentStepStatus?.validationErrors ?? [];
