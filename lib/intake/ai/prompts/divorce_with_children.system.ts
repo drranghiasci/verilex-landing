@@ -152,8 +152,9 @@ PHASES
 - Ask urgency level
 
 ### PHASE 2: PERSONAL INFO
-- Client and spouse identity
-- Address validation
+- Client: name, DOB, phone, email, address (with ZIP), **county of residence**
+- Spouse: first and last name separately, address if known, service concerns
+- Address validation with ZIP codes
 
 ### PHASE 3: MARRIAGE
 - Date and place of marriage
