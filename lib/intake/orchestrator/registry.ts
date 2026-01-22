@@ -150,13 +150,16 @@ export function findUiStepForSchemaStep(intakeType: IntakeType, schemaStepKey: s
 
 /**
  * Determine if a UI step is complete based on step_status.
- * A UI step is complete only if ALL of its underlying schema steps are marked 'complete'.
+ * A UI step is complete only if ALL of its underlying schema steps are complete.
+ * A schema step is complete when:
+ * - status === 'complete', OR
+ * - status === 'current' AND missing array is empty (no missing fields)
  * Returns false if any schema step has no entry in step_status.
  */
 export function isUiStepComplete(
     intakeType: IntakeType,
     uiStepKey: string,
-    stepStatus: Record<string, { status: string }>
+    stepStatus: Record<string, { status: string; missing?: string[]; errors?: unknown[] }>
 ): boolean {
     const uiSteps = getUiSteps(intakeType);
     const uiStep = uiSteps.find(s => s.key === uiStepKey);
@@ -169,7 +172,18 @@ export function isUiStepComplete(
         const entry = stepStatus[schemaKey];
         // No entry means step hasn't been visited/completed
         if (!entry) return false;
-        return entry.status === 'complete';
+
+        // Explicit complete status
+        if (entry.status === 'complete') return true;
+
+        // Current step with no missing fields and no errors = effectively complete
+        if (entry.status === 'current') {
+            const hasMissing = entry.missing && entry.missing.length > 0;
+            const hasErrors = entry.errors && Array.isArray(entry.errors) && entry.errors.length > 0;
+            return !hasMissing && !hasErrors;
+        }
+
+        return false;
     });
 }
 
@@ -179,7 +193,7 @@ export function isUiStepComplete(
 export function buildSidebarSteps(
     intakeType: IntakeType,
     currentSchemaStep: string,
-    stepStatus: Record<string, { status: string }>
+    stepStatus: Record<string, { status: string; missing?: string[]; errors?: unknown[] }>
 ): Array<{ id: string; label: string; isCompleted: boolean; isActive: boolean }> {
     const uiSteps = getUiSteps(intakeType);
     const currentUiStepIndex = findUiStepForSchemaStep(intakeType, currentSchemaStep);
