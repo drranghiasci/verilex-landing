@@ -71,14 +71,30 @@ export type OrchestratorResult = {
 
 type Payload = Record<string, unknown>;
 
+/**
+ * Extract the assertion_value from wrapped assertion objects.
+ * Returns the raw value if not wrapped.
+ */
+function unwrapValue(value: unknown): unknown {
+    if (
+        value !== null &&
+        typeof value === 'object' &&
+        'assertion_value' in (value as Record<string, unknown>)
+    ) {
+        return (value as Record<string, unknown>).assertion_value;
+    }
+    return value;
+}
+
 function hasValue(value: unknown): boolean {
-    if (value === undefined || value === null) return false;
-    if (typeof value === 'string') return value.trim().length > 0;
-    if (typeof value === 'number') return !Number.isNaN(value);
-    if (typeof value === 'boolean') return true;
-    if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === 'object') {
-        return Object.values(value).some((v) => hasValue(v));
+    const unwrapped = unwrapValue(value);
+    if (unwrapped === undefined || unwrapped === null) return false;
+    if (typeof unwrapped === 'string') return unwrapped.trim().length > 0;
+    if (typeof unwrapped === 'number') return !Number.isNaN(unwrapped);
+    if (typeof unwrapped === 'boolean') return true;
+    if (Array.isArray(unwrapped)) return unwrapped.length > 0;
+    if (typeof unwrapped === 'object') {
+        return Object.values(unwrapped).some((v) => hasValue(v));
     }
     return false;
 }
@@ -168,9 +184,11 @@ function computeSchemaStepStatus(step: typeof SCHEMA_STEPS[number], payload: Pay
     }
 
     // Run validations (only on fields that have values)
+    // IMPORTANT: Unwrap assertion objects before validation
     for (const validation of step.validations) {
-        const value = payload[validation.field];
-        if (hasValue(value) && !validation.validator(value, payload)) {
+        const rawValue = payload[validation.field];
+        const value = unwrapValue(rawValue);
+        if (hasValue(rawValue) && !validation.validator(value, payload)) {
             validationErrors.push({
                 field: validation.field,
                 message: validation.errorMessage,

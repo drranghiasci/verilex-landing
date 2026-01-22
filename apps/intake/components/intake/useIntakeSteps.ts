@@ -48,9 +48,9 @@ export function useIntakeSteps(state: OrchestratorState): {
         if (!hasIntakeType) return [];
         // DEBUG: Always log stepStatus to verify it's populated
         console.log('[useIntakeSteps] hasIntakeType:', hasIntakeType, 'stepStatus keys:', Object.keys(stepStatus ?? {}));
-        const clientStatus = stepStatus?.['client_identity'] as { status: string; missing?: string[] } | undefined;
+        const clientStatus = stepStatus?.['client_identity'] as { status: string; missing?: string[]; errors?: unknown[] } | undefined;
         if (clientStatus) {
-            console.log('[useIntakeSteps] client_identity:', clientStatus.status, clientStatus.missing ?? []);
+            console.log('[useIntakeSteps] client_identity:', clientStatus.status, 'missing:', clientStatus.missing ?? [], 'errors:', clientStatus.errors ?? []);
         }
         return buildSidebarSteps(
             intakeType as IntakeType,
