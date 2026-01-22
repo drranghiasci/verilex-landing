@@ -12,13 +12,18 @@
     "build:landing": "npm run build --workspace apps/landing",
     "build:intake": "npm run build --workspace apps/intake",
     "build:myclient": "npm run build --workspace apps/myclient",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
     "test:intake": "playwright test tests/intake/intake-smoke.spec.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",
     "@supabase/supabase-js": "^2.90.1",
     "@types/dotenv": "^6.1.1",
-    "supabase": "^2.20.12"
+    "@vitest/ui": "^4.0.17",
+    "supabase": "^2.20.12",
+    "vitest": "^4.0.17"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.2",
