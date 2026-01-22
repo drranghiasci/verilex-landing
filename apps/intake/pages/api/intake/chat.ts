@@ -200,17 +200,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (message !== 'START_CONVERSATION') {
             messages.push({ role: 'user', content: message });
         } else {
-            // Include handoff sentence acknowledging intake type selection
-            const intakeTypeLabel = intakeMode === 'custody_unmarried'
-                ? 'child custody'
-                : intakeMode === 'divorce_no_children'
-                    ? 'divorce without children'
-                    : intakeMode === 'divorce_with_children'
-                        ? 'divorce with children'
-                        : 'your matter';
+            // Start conversation - instruct AI to begin with Phase 1 greeting
             messages.push({
                 role: 'system',
-                content: `The user has opened the chat after selecting "${intakeTypeLabel}" as their intake type. Begin with a brief handoff: "Thanks — I'll ask only the questions relevant to this type of matter." Then provide your Phase 1 Greeting and ask the first required question.`
+                content: `The user has opened the chat. Provide your Phase 1 Greeting and ask the first required question.`
             });
         }
 
