@@ -45,6 +45,23 @@ const DIVORCE_SCHEMA_STEP_TO_SECTION: Record<string, string> = {
     final_review: 'final_review',
 };
 
+/**
+ * Run the correct orchestrator based on intake mode.
+ * This ensures mode-locked logic (like final_review gating) is applied consistently.
+ */
+function runOrchestrator(intakeMode: IntakeMode, payload: Record<string, unknown>): AnyOrchestratorResult {
+    switch (intakeMode) {
+        case 'custody_unmarried':
+            return orchestrateCustodyIntake(payload);
+        case 'divorce_no_children':
+            return orchestrateDivorceNoChildrenIntake(payload);
+        case 'divorce_with_children':
+            return orchestrateDivorceWithChildrenIntake(payload);
+        default:
+            return orchestrateIntake(payload);
+    }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -268,8 +285,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             if (Object.keys(updates).length > 0) {
                 const newPayload = { ...payload, ...updates };
 
-                // Re-run orchestrator with new payload to get new state
-                const newOrchestratorResult = orchestrateIntake(newPayload);
+                // Re-run orchestrator with new payload to get new state (mode-specific!)
+                const newOrchestratorResult = runOrchestrator(intakeMode, newPayload);
 
                 // Update DB with new payload AND orchestrator state
                 await supabaseAdmin
