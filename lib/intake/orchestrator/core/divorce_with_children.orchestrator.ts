@@ -61,14 +61,34 @@ export type DivorceWithChildrenOrchestratorResult = {
 
 type Payload = Record<string, unknown>;
 
+/**
+ * Unwrap assertion value from wrapped objects.
+ */
+function unwrapValue(value: unknown): unknown {
+    if (value === undefined || value === null) return value;
+    if (typeof value === 'object' && !Array.isArray(value)) {
+        const obj = value as Record<string, unknown>;
+        if ('assertion_value' in obj) {
+            return obj.assertion_value;
+        }
+        const unwrapped: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(obj)) {
+            unwrapped[k] = unwrapValue(v);
+        }
+        return unwrapped;
+    }
+    return value;
+}
+
 function hasValue(value: unknown): boolean {
-    if (value === undefined || value === null) return false;
-    if (typeof value === 'string') return value.trim().length > 0;
-    if (typeof value === 'number') return !Number.isNaN(value);
-    if (typeof value === 'boolean') return true;
-    if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === 'object') {
-        return Object.values(value).some((v) => hasValue(v));
+    const unwrapped = unwrapValue(value);
+    if (unwrapped === undefined || unwrapped === null) return false;
+    if (typeof unwrapped === 'string') return unwrapped.trim().length > 0;
+    if (typeof unwrapped === 'number') return !Number.isNaN(unwrapped);
+    if (typeof unwrapped === 'boolean') return true;
+    if (Array.isArray(unwrapped)) return unwrapped.length > 0;
+    if (typeof unwrapped === 'object') {
+        return Object.values(unwrapped).some((v) => hasValue(v));
     }
     return false;
 }
@@ -158,7 +178,8 @@ function computeSchemaStepStatus(
     // Run validations
     for (const validation of step.validations) {
         const value = payload[validation.field];
-        if (hasValue(value) && !validation.validator(value, payload)) {
+        const unwrapped = unwrapValue(value);
+        if (hasValue(value) && !validation.validator(unwrapped, payload)) {
             validationErrors.push({
                 field: validation.field,
                 message: validation.errorMessage,
