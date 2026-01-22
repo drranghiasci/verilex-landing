@@ -57,7 +57,7 @@ export default function SideNav({ steps, currentStepIndex, completionPercentage,
                                         <div
                                             className={[
                                                 'absolute top-8 left-1/2 -translate-x-1/2',
-                                                index < currentStepIndex
+                                                isCompleted
                                                     ? 'bg-[color:var(--accent)]'
                                                     : 'bg-[color:var(--border)]',
                                             ].join(' ')}
