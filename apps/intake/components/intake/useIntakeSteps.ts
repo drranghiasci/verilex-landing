@@ -46,6 +46,9 @@ export function useIntakeSteps(state: OrchestratorState): {
 
     const steps = useMemo(() => {
         if (!hasIntakeType) return [];
+        // DEBUG: Log incoming step_status
+        console.log('[useIntakeSteps] intakeType:', intakeType);
+        console.log('[useIntakeSteps] stepStatus:', JSON.stringify(stepStatus, null, 2));
         return buildSidebarSteps(
             intakeType as IntakeType,
             currentStepKey ?? '',
