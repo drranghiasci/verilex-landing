@@ -103,6 +103,13 @@ function computeCustodySchemaStepStatus(
     const missingFields: string[] = [];
     const validationErrors: { field: string; message: string }[] = [];
 
+    // Create unwrapped payload for condition checks
+    // Condition functions expect raw values, not wrapped assertions
+    const unwrappedPayload: Payload = {};
+    for (const [key, value] of Object.entries(payload)) {
+        unwrappedPayload[key] = unwrapValue(value);
+    }
+
     // Check required fields
     for (const fieldKey of step.requiredFields) {
         if (!hasValue(payload[fieldKey])) {
@@ -110,16 +117,16 @@ function computeCustodySchemaStepStatus(
         }
     }
 
-    // Check conditional required fields
+    // Check conditional required fields (using unwrapped payload for condition)
     for (const cond of step.conditionalRequired) {
-        if (cond.condition(payload) && !hasValue(payload[cond.field])) {
+        if (cond.condition(unwrappedPayload) && !hasValue(payload[cond.field])) {
             missingFields.push(cond.field);
         }
     }
 
     // Check repeatable section requirements (children)
     if (step.isRepeatable && step.repeatableRequiredFields && step.repeatableRequiredFields.length > 0) {
-        const childrenCount = (payload.children_count as number) || 0;
+        const childrenCount = (unwrappedPayload.children_count as number) || 0;
         if (childrenCount > 0) {
             for (const fieldKey of step.repeatableRequiredFields) {
                 const fieldItems = toArray(payload[fieldKey]);

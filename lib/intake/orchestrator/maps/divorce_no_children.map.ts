@@ -300,7 +300,7 @@ export const DIVORCE_NO_CHILDREN_UI_STEPS: DivorceNoChildrenUiStepConfig[] = [
     },
     {
         key: 'children_gate',
-        label: 'Children',
+        label: 'Confirm No Children',
         schemaSteps: ['children_gate'],
     },
     {

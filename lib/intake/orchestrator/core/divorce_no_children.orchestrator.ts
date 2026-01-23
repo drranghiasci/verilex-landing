@@ -116,9 +116,16 @@ function computeDivorceNoChildrenSchemaStepStatus(
     const validationErrors: { field: string; message: string }[] = [];
     let gateError: string | undefined;
 
-    // Check gate first
+    // Create unwrapped payload for condition/gate checks
+    // Gate checks and condition functions expect raw values, not wrapped assertions
+    const unwrappedPayload: Payload = {};
+    for (const [key, value] of Object.entries(payload)) {
+        unwrappedPayload[key] = unwrapValue(value);
+    }
+
+    // Check gate first (using unwrapped payload)
     if (step.gateCheck) {
-        const gateResult = step.gateCheck(payload);
+        const gateResult = step.gateCheck(unwrappedPayload);
         if (!gateResult.pass) {
             gateError = gateResult.errorMessage;
         }
@@ -131,16 +138,16 @@ function computeDivorceNoChildrenSchemaStepStatus(
         }
     }
 
-    // Check conditional required fields
+    // Check conditional required fields (using unwrapped payload for condition)
     for (const cond of step.conditionalRequired) {
-        if (cond.condition(payload) && !hasValue(payload[cond.field])) {
+        if (cond.condition(unwrappedPayload) && !hasValue(payload[cond.field])) {
             missingFields.push(cond.field);
         }
     }
 
     // Check repeatable section requirements (gated by status)
     if (step.isRepeatable && step.repeatableRequiredFields && step.gatedByStatus) {
-        const statusValue = payload[step.gatedByStatus.field];
+        const statusValue = unwrappedPayload[step.gatedByStatus.field];
         if (statusValue === step.gatedByStatus.requiredValue) {
             // Status indicates items are reported - require at least 1
             const firstField = step.repeatableRequiredFields[0];
@@ -176,7 +183,7 @@ function computeDivorceNoChildrenSchemaStepStatus(
 
     // Determine if step should be skipped based on gating
     const isSkipped = step.gatedByStatus
-        ? payload[step.gatedByStatus.field] !== step.gatedByStatus.requiredValue
+        ? unwrappedPayload[step.gatedByStatus.field] !== step.gatedByStatus.requiredValue
         : false;
 
     const isBlocked = !!gateError;

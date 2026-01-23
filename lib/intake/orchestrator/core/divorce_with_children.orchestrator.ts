@@ -111,9 +111,16 @@ function computeSchemaStepStatus(
     const validationErrors: { field: string; message: string }[] = [];
     let gateError: string | undefined;
 
-    // Check gate first
+    // Create unwrapped payload for condition/gate checks
+    // Gate checks and condition functions expect raw values, not wrapped assertions
+    const unwrappedPayload: Payload = {};
+    for (const [key, value] of Object.entries(payload)) {
+        unwrappedPayload[key] = unwrapValue(value);
+    }
+
+    // Check gate first (using unwrapped payload)
     if (step.gateCheck) {
-        const gateResult = step.gateCheck(payload);
+        const gateResult = step.gateCheck(unwrappedPayload);
         if (!gateResult.pass) {
             gateError = gateResult.errorMessage;
         }
@@ -126,9 +133,9 @@ function computeSchemaStepStatus(
         }
     }
 
-    // Check conditional required fields
+    // Check conditional required fields (using unwrapped payload for condition)
     for (const cond of step.conditionalRequired) {
-        if (cond.condition(payload) && !hasValue(payload[cond.field])) {
+        if (cond.condition(unwrappedPayload) && !hasValue(payload[cond.field])) {
             missingFields.push(cond.field);
         }
     }
@@ -137,7 +144,7 @@ function computeSchemaStepStatus(
     if (step.isRepeatable && step.repeatableRequiredFields) {
         // For children: gated by children_count
         if (step.repeatableCountField) {
-            const count = (payload[step.repeatableCountField] as number) || 0;
+            const count = (unwrappedPayload[step.repeatableCountField] as number) || 0;
             if (count > 0) {
                 for (const fieldKey of step.repeatableRequiredFields) {
                     const fieldItems = toArray(payload[fieldKey]);
@@ -155,7 +162,7 @@ function computeSchemaStepStatus(
         }
         // For assets/debts: gated by status field
         else if (step.gatedByStatus) {
-            const statusValue = payload[step.gatedByStatus.field];
+            const statusValue = unwrappedPayload[step.gatedByStatus.field];
             if (statusValue === step.gatedByStatus.requiredValue) {
                 const firstField = step.repeatableRequiredFields[0];
                 const items = toArray(payload[firstField]);
@@ -189,7 +196,7 @@ function computeSchemaStepStatus(
 
     // Determine if step should be skipped
     const isSkipped = step.gatedByStatus
-        ? payload[step.gatedByStatus.field] !== step.gatedByStatus.requiredValue
+        ? unwrappedPayload[step.gatedByStatus.field] !== step.gatedByStatus.requiredValue
         : false;
 
     const isBlocked = !!gateError;

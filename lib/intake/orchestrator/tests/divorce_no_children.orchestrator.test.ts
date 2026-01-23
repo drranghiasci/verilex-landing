@@ -166,5 +166,37 @@ describe('Divorce No Children Orchestrator', () => {
             expect(finalReview!.status).toBe('incomplete');
             expect(result.readyForReview).toBe(false);
         });
+
+        it('should require date_of_separation when currently_cohabitating is wrapped false', () => {
+            const payload = {
+                urgency_level: wrapAssertion('standard'),
+                intake_channel: wrapAssertion('web'),
+                date_of_marriage: wrapAssertion('2015-06-15'),
+                place_of_marriage: wrapAssertion('Atlanta, GA'),
+                currently_cohabitating: wrapAssertion(false), // Wrapped boolean
+                // Missing date_of_separation
+            };
+
+            const result = orchestrateDivorceNoChildrenIntake(payload);
+
+            const marriageStep = result.schemaSteps.find(s => s.key === 'marriage_details');
+            expect(marriageStep).toBeDefined();
+            expect(marriageStep!.missingFields).toContain('date_of_separation');
+        });
+
+        it('should mark children_gate as complete when has_minor_children is wrapped false', () => {
+            const payload = {
+                urgency_level: wrapAssertion('standard'),
+                intake_channel: wrapAssertion('web'),
+                has_minor_children: wrapAssertion(false), // Wrapped boolean - should pass validation
+            };
+
+            const result = orchestrateDivorceNoChildrenIntake(payload);
+
+            const childrenGate = result.schemaSteps.find(s => s.key === 'children_gate');
+            expect(childrenGate).toBeDefined();
+            expect(childrenGate!.validationErrors).toEqual([]);
+            expect(childrenGate!.missingFields).toEqual([]);
+        });
     });
 });

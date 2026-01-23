@@ -107,7 +107,7 @@ function toArray(value: unknown): unknown[] {
 
 function getGatingFieldValue(gatingKey: keyof typeof GATING_FIELDS, payload: Payload): boolean | undefined {
     const fieldKey = GATING_FIELDS[gatingKey].field;
-    const value = payload[fieldKey];
+    const value = unwrapValue(payload[fieldKey]); // Unwrap assertion object first
     if (typeof value === 'boolean') return value;
     return undefined;
 }
@@ -142,6 +142,12 @@ function computeSchemaStepStatus(step: typeof SCHEMA_STEPS[number], payload: Pay
     const missingFields: string[] = [];
     const validationErrors: { field: string; message: string }[] = [];
 
+    // Create unwrapped payload for condition checks
+    const unwrappedPayload: Payload = {};
+    for (const [key, value] of Object.entries(payload)) {
+        unwrappedPayload[key] = unwrapValue(value);
+    }
+
     // Check required fields
     for (const fieldKey of step.requiredFields) {
         if (!hasValue(payload[fieldKey])) {
@@ -149,9 +155,9 @@ function computeSchemaStepStatus(step: typeof SCHEMA_STEPS[number], payload: Pay
         }
     }
 
-    // Check conditional required fields
+    // Check conditional required fields (using unwrapped payload for condition)
     for (const cond of step.conditionalRequired) {
-        if (cond.condition(payload) && !hasValue(payload[cond.field])) {
+        if (cond.condition(unwrappedPayload) && !hasValue(payload[cond.field])) {
             missingFields.push(cond.field);
         }
     }
@@ -196,13 +202,14 @@ function computeSchemaStepStatus(step: typeof SCHEMA_STEPS[number], payload: Pay
         }
     }
 
-    // Also check conditional validations
+    // Also check conditional validations (using unwrapped payload for condition)
     for (const cond of step.conditionalRequired) {
-        if (cond.condition(payload)) {
+        if (cond.condition(unwrappedPayload)) {
             const matchingValidation = step.validations.find((v) => v.field === cond.field);
             if (matchingValidation) {
                 const value = payload[cond.field];
-                if (hasValue(value) && !matchingValidation.validator(value, payload)) {
+                const unwrappedValue = unwrapValue(value);
+                if (hasValue(value) && !matchingValidation.validator(unwrappedValue, payload)) {
                     if (!validationErrors.some((e) => e.field === cond.field)) {
                         validationErrors.push({
                             field: cond.field,
