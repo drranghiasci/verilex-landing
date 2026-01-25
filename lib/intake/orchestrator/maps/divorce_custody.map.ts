@@ -21,19 +21,31 @@ export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const PHONE_REGEX = /^\+?[\d\s\-()]{7,}$/;
 
 export function validateZip(zip: unknown): boolean {
-    if (typeof zip !== 'string') return false;
-    const trimmed = zip.trim();
+    // Unwrap assertion_value if present
+    const unwrapped = (typeof zip === 'object' && zip !== null && 'assertion_value' in zip)
+        ? (zip as { assertion_value: unknown }).assertion_value
+        : zip;
+    if (typeof unwrapped !== 'string') return false;
+    const trimmed = unwrapped.trim();
     return ZIP_REGEX_5.test(trimmed) || ZIP_REGEX_9.test(trimmed);
 }
 
 export function validateEmail(email: unknown): boolean {
-    if (typeof email !== 'string') return false;
-    return EMAIL_REGEX.test(email.trim());
+    // Unwrap assertion_value if present
+    const unwrapped = (typeof email === 'object' && email !== null && 'assertion_value' in email)
+        ? (email as { assertion_value: unknown }).assertion_value
+        : email;
+    if (typeof unwrapped !== 'string') return false;
+    return EMAIL_REGEX.test(unwrapped.trim());
 }
 
 export function validatePhone(phone: unknown): boolean {
-    if (typeof phone !== 'string') return false;
-    return PHONE_REGEX.test(phone.trim());
+    // Unwrap assertion_value if present
+    const unwrapped = (typeof phone === 'object' && phone !== null && 'assertion_value' in phone)
+        ? (phone as { assertion_value: unknown }).assertion_value
+        : phone;
+    if (typeof unwrapped !== 'string') return false;
+    return PHONE_REGEX.test(unwrapped.trim());
 }
 
 // ============================================================================
