@@ -41,9 +41,17 @@ export default function GuidedChatPanel({
   const section = library.sections[sectionId];
   // Scroll to bottom on new message
   const bottomRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [transcript.length, isAiTyping]);
+
+  // Refocus input when AI finishes typing
+  useEffect(() => {
+    if (!isAiTyping) {
+      textareaRef.current?.focus();
+    }
+  }, [isAiTyping]);
 
   // Initial Seeding: If chat is empty, AI should speak first
   const didInitRef = useRef(false);
@@ -175,7 +183,6 @@ export default function GuidedChatPanel({
     }
   };
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -256,6 +263,11 @@ export default function GuidedChatPanel({
           height: 100%;
           width: 100%;
           overflow: hidden;
+          background: var(--bg);
+        }
+
+        :global([data-theme="light"]) .chat-stream {
+          background: var(--bg, #ffffff);
         }
 
         .resume-container {
