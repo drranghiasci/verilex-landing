@@ -649,7 +649,7 @@ export default function IntakeFlow({
     >
       <div className="flex h-full relative">
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col relative min-w-0 bg-bg">
+        <div className="flex-1 flex flex-col relative min-w-0" style={{ backgroundColor: 'var(--bg)' }}>
           <AnimatePresence mode="wait">
             {/* REVIEW SCREEN */}
             {status === 'ready_for_review' || status === 'submitted' ? (
@@ -658,7 +658,8 @@ export default function IntakeFlow({
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="absolute inset-0 z-10 bg-bg overflow-y-auto"
+                className="absolute inset-0 z-10 overflow-y-auto"
+                style={{ backgroundColor: 'var(--bg)' }}
               >
                 <IntakeReview
                   intake={intake!}
