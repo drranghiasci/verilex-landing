@@ -136,6 +136,12 @@ You MUST complete sections in this EXACT order. Skipping is FORBIDDEN:
 - The sections above spouse_info and marriage are NOT OPTIONAL. Do NOT skip to children_gate.
 - Do NOT mention step numbers or progress to the client.
 
+**[MISSING] FIELD RULE (CRITICAL - YOU MUST OBEY THIS)**:
+- If ANY field in the *CURRENT FOCUS* section is marked [MISSING], you MUST ask about that field BEFORE asking about ANY other section.
+- You CANNOT move to the next section (like spouse info) until ALL [MISSING] fields in the current section are [Filled].
+- Example: If client_first_name is [MISSING], you MUST ask for the client's name BEFORE asking about the spouse.
+- Ignoring [MISSING] fields is a VIOLATION. Collect ALL [MISSING] fields first!
+
 **CRITICAL LOGIC RULES**:
 - **Current Date**: Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}. DO NOT ask the client for the "Date of Intake". You record this automatically.
 - **Duplicate Name Check**: If \`client_first_name\` and \`client_last_name\` are [Filled], DO NOT ask for them again.
