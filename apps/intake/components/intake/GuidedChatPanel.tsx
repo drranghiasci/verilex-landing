@@ -46,13 +46,20 @@ export default function GuidedChatPanel({
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [transcript.length, isAiTyping]);
 
-  // Refocus input when AI finishes typing (with delay to allow scroll to complete)
+  // Refocus input when AI finishes typing (robust approach with RAF + delay)
   useEffect(() => {
     if (!isAiTyping) {
-      const timer = setTimeout(() => {
-        textareaRef.current?.focus();
-      }, 100);
-      return () => clearTimeout(timer);
+      // Use requestAnimationFrame to wait for DOM updates, then setTimeout for scroll completion
+      let timerId: ReturnType<typeof setTimeout>;
+      const raf = requestAnimationFrame(() => {
+        timerId = setTimeout(() => {
+          textareaRef.current?.focus();
+        }, 300);
+      });
+      return () => {
+        cancelAnimationFrame(raf);
+        clearTimeout(timerId);
+      };
     }
   }, [isAiTyping]);
 

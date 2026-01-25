@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import {
     getAccentCssVars,
-    getThemeCssVars,
     type AccentPreset,
     type ThemeMode
 } from '../lib/themePresets';
@@ -57,16 +56,18 @@ export function ThemeProvider({
 
         const root = document.documentElement;
 
-        // Apply theme colors
-        const themeVars = getThemeCssVars(theme);
-        for (const [key, value] of Object.entries(themeVars)) {
-            root.style.setProperty(key, value);
-        }
-
-        // Apply accent colors
+        // CSS handles theme colors via .dark class - no need to apply inline
+        // Only apply accent colors (firm-specific, not in base CSS)
         const accentVars = getAccentCssVars(accentPreset);
         for (const [key, value] of Object.entries(accentVars)) {
             root.style.setProperty(key, value);
+        }
+
+        // Toggle dark class for CSS selectors
+        if (theme === 'dark') {
+            root.classList.add('dark');
+        } else {
+            root.classList.remove('dark');
         }
 
         // Set data attribute for CSS selectors

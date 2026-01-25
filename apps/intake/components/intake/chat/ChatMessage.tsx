@@ -66,8 +66,8 @@ export default function ChatMessage({ message, isLatest, token, intakeId, firmNa
           width: 32px;
           height: 32px;
           border-radius: 50%;
-          background: rgba(139, 92, 246, 0.1); /* accent-glow */
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: var(--accent-glow);
+          border: 1px solid var(--border);
           display: flex;
           align-items: center;
           justify-content: center;
