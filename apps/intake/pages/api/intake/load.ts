@@ -10,6 +10,50 @@ import {
   sendError,
 } from '@/lib/apiUtils';
 
+// Import orchestrators to compute step_status live
+import { orchestrateDivorceNoChildrenIntake } from '../../../../../lib/intake/orchestrator/core/divorce_no_children.orchestrator';
+import { orchestrateDivorceWithChildrenIntake } from '../../../../../lib/intake/orchestrator/core/divorce_with_children.orchestrator';
+import { orchestrateCustodyIntake } from '../../../../../lib/intake/orchestrator/core/custody_unmarried.orchestrator';
+
+type IntakeMode = 'divorce_no_children' | 'divorce_with_children' | 'custody_unmarried';
+
+/**
+ * Run the orchestrator to compute current step status
+ */
+function computeStepStatus(
+  intakeType: IntakeMode | null,
+  payload: Record<string, unknown>
+): { stepStatus: Record<string, { status: string; missing: string[]; errors: unknown[] }>; currentStepKey: string } {
+  if (!intakeType) {
+    return { stepStatus: {}, currentStepKey: '' };
+  }
+
+  let result;
+  switch (intakeType) {
+    case 'divorce_no_children':
+      result = orchestrateDivorceNoChildrenIntake(payload);
+      break;
+    case 'divorce_with_children':
+      result = orchestrateDivorceWithChildrenIntake(payload);
+      break;
+    case 'custody_unmarried':
+      result = orchestrateCustodyIntake(payload);
+      break;
+    default:
+      return { stepStatus: {}, currentStepKey: '' };
+  }
+
+  const stepStatus = Object.fromEntries(
+    result.schemaSteps.map((s) => [s.key, {
+      status: s.status,
+      missing: s.missingFields,
+      errors: s.validationErrors,
+    }])
+  );
+
+  return { stepStatus, currentStepKey: result.currentSchemaStep };
+}
+
 function extractToken(req: NextApiRequest, body?: { token?: string } | null): string {
   const authHeader = req.headers.authorization;
   if (authHeader?.startsWith('Bearer ')) {
@@ -135,6 +179,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Prefer column value, fall back to raw_payload for legacy data
   const intakeType = data.intake_type ?? (typeof rawPayload.intake_type === 'string' ? rawPayload.intake_type : null);
 
+  // Compute step_status fresh using the orchestrator (not stale DB value)
+  // This ensures sidebar checkboxes always reflect current state
+  const { stepStatus: computedStepStatus, currentStepKey: computedCurrentStep } = computeStepStatus(
+    intakeType as IntakeMode | null,
+    rawPayload
+  );
+
   return res.status(200).json({
     ok: true,
     intake: {
@@ -149,10 +200,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       language_preference: data.language_preference,
       updated_at: data.updated_at,
       created_at: data.created_at,
-      // Orchestrator state for sidebar
-      current_step_key: data.current_step_key ?? null,
+      // Orchestrator state for sidebar - computed fresh, not from stale DB
+      current_step_key: computedCurrentStep || data.current_step_key || null,
       completed_step_keys: data.completed_step_keys ?? [],
-      step_status: data.step_status ?? {},
+      step_status: computedStepStatus,
     },
     messages: messagesResult.data ?? [],
     documents: documentsResult.data ?? [],
