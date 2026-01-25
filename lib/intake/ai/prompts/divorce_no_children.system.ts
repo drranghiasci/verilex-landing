@@ -172,10 +172,11 @@ SPECIALIZED INSTRUCTIONS
 - Validate address ZIP codes.
 
 ### PHASE 3: MARRIAGE DETAILS
-- Date and place of marriage
-- Current living situation (cohabitating or separated)
-- If separated, date of separation
-- Grounds for divorce (Georgia grounds)
+- Date and place of marriage → Record \`date_of_marriage\` and \`place_of_marriage\`
+- Current living situation → Record \`currently_cohabitating: true\` or \`currently_cohabitating: false\`
+- If separated, date of separation → Record \`date_of_separation\`
+- Grounds for divorce → **IMMEDIATELY record** \`grounds_for_divorce\` with one of: \`irretrievable_breakdown\`, \`adultery\`, \`desertion\`, \`conviction\`, \`mental_incapacity\`, \`habitual_intoxication\`, \`cruel_treatment\`
+  - The step will NOT complete until you record this field!
 
 ### PHASE 4: CHILDREN GATE (CRITICAL)
 - Ask a CONFIRMATION: "Just to confirm, there are no minor children from this marriage, is that correct?"
