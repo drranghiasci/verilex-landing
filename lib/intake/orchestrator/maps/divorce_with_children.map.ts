@@ -133,10 +133,15 @@ export const DIVORCE_WITH_CHILDREN_SCHEMA_STEPS: DivorceWithChildrenSchemaStepCo
             {
                 field: 'client_address',
                 validator: (value) => {
+                    // Accept any non-empty address, only validate ZIP if present
+                    if (!value) return false;
                     const zip = extractZipFromAddress(value);
-                    return zip !== undefined && validateZip(zip);
+                    // If no ZIP found, accept the address (user can add ZIP later)
+                    if (zip === undefined) return true;
+                    // If ZIP found, validate format
+                    return validateZip(zip);
                 },
-                errorMessage: 'Please enter a valid 5-digit ZIP code.',
+                errorMessage: 'If including a ZIP code, please ensure it is a valid 5-digit format.',
             },
         ],
     },

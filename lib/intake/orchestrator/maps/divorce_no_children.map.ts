@@ -123,10 +123,12 @@ export const DIVORCE_NO_CHILDREN_SCHEMA_STEPS: DivorceNoChildrenSchemaStepConfig
             {
                 field: 'client_address',
                 validator: (value) => {
+                    if (!value) return false;
                     const zip = extractZipFromAddress(value);
-                    return zip !== undefined && validateZip(zip);
+                    if (zip === undefined) return true;
+                    return validateZip(zip);
                 },
-                errorMessage: 'Please enter a valid 5-digit ZIP code.',
+                errorMessage: 'If including a ZIP code, please ensure it is a valid 5-digit format.',
             },
         ],
     },
