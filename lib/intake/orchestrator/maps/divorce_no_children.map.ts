@@ -106,7 +106,6 @@ export const DIVORCE_NO_CHILDREN_SCHEMA_STEPS: DivorceNoChildrenSchemaStepConfig
             'client_phone',
             'client_email',
             'client_address',
-            'client_county',
         ],
         conditionalRequired: [],
         validations: [

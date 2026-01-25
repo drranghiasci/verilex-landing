@@ -173,8 +173,7 @@ SPECIALIZED INSTRUCTIONS
 - Ask for phone number → Record \`client_phone\`
 - Ask for email address → Record \`client_email\`
 - Ask for current address (with ZIP) → Record \`client_address\` (include street, city, state, zip)
-- Ask for county of residence → Record \`client_county\`
-  - The About You step will NOT complete until ALL 7 fields are recorded!
+  - The About You step will NOT complete until ALL 6 fields are recorded!
   - Do NOT move to spouse questions until ALL client fields are saved!
 
 ### PHASE 3: SPOUSE INFO
