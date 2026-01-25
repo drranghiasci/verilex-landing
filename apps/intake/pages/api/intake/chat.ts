@@ -292,6 +292,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 // Re-run orchestrator with new payload to get new state (mode-specific!)
                 const newOrchestratorResult = runOrchestrator(intakeMode, newPayload);
 
+                // Update the orchestratorState to the new result so we return correct state to frontend
+                orchestratorState = newOrchestratorResult;
+
                 // Update DB with new payload AND orchestrator state
                 await supabaseAdmin
                     .from('intakes')

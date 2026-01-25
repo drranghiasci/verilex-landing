@@ -27,7 +27,7 @@ function getSystemTheme(): 'light' | 'dark' {
 
 function getInitialTheme(): 'light' | 'dark' {
     if (typeof window === 'undefined') return 'dark';
-    const stored = localStorage.getItem('intake-theme');
+    const stored = localStorage.getItem('verilex-theme');
     if (stored === 'light' || stored === 'dark') return stored;
     // Default to dark mode or system preference
     return getSystemTheme();
@@ -45,17 +45,15 @@ export function ThemeProvider({
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
-        const storedTheme = localStorage.getItem('intake-theme');
+        const storedTheme = localStorage.getItem('verilex-theme');
 
         if (storedTheme === 'light' || storedTheme === 'dark') {
             // User has explicit preference
             setThemeState(storedTheme);
-        } else if (defaultTheme === 'system') {
-            // Use system preference
-            setThemeState(getSystemTheme());
         } else {
-            // Use firm default
-            setThemeState(defaultTheme);
+            // No stored preference - always default to dark to avoid flash
+            // The user can manually switch to light if they want
+            setThemeState('dark');
         }
     }, [defaultTheme]);
 
@@ -90,7 +88,7 @@ export function ThemeProvider({
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
         const handleChange = () => {
-            const storedTheme = localStorage.getItem('intake-theme');
+            const storedTheme = localStorage.getItem('verilex-theme');
             if (!storedTheme && defaultTheme === 'system') {
                 setThemeState(getSystemTheme());
             }
@@ -103,7 +101,7 @@ export function ThemeProvider({
     const setTheme = useCallback((newTheme: 'light' | 'dark') => {
         setThemeState(newTheme);
         if (typeof window !== 'undefined') {
-            localStorage.setItem('intake-theme', newTheme);
+            localStorage.setItem('verilex-theme', newTheme);
         }
     }, []);
 

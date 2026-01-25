@@ -9,36 +9,36 @@ import { GA_DIVORCE_NO_CHILDREN_V1 } from '../../schemas/ga/family_law/divorce_n
 import { formatLabel } from '../../validation';
 
 export function transformDivorceNoChildrenSchemaToSystemPrompt(
-    payload: Record<string, unknown>,
-    currentSectionId: string,
-    missingFields: string[] = [],
-    flowBlocked = false,
-    flowBlockedReason?: string
+  payload: Record<string, unknown>,
+  currentSectionId: string,
+  missingFields: string[] = [],
+  flowBlocked = false,
+  flowBlockedReason?: string
 ): string {
-    const sectionsText = GA_DIVORCE_NO_CHILDREN_V1.sections
-        .map((section) => {
-            const isFocused = section.id === currentSectionId;
-            const fieldsText = section.fields
-                .filter((f) => !f.isSystem)
-                .map((f) => {
-                    const isMissing = missingFields.includes(f.key);
-                    const value = payload[f.key];
-                    const status = value
-                        ? `[Filled: ${JSON.stringify(value)}]`
-                        : isMissing
-                            ? '[MISSING]'
-                            : '[Optional]';
-                    return `  - ${f.key} (${f.type}): ${formatLabel(f.key)} ${status}`;
-                })
-                .join('\n');
-
-            return `Section: ${section.title} (${section.id})${isFocused ? ' *CURRENT FOCUS*' : ''}\n${fieldsText}`;
+  const sectionsText = GA_DIVORCE_NO_CHILDREN_V1.sections
+    .map((section) => {
+      const isFocused = section.id === currentSectionId;
+      const fieldsText = section.fields
+        .filter((f) => !f.isSystem)
+        .map((f) => {
+          const isMissing = missingFields.includes(f.key);
+          const value = payload[f.key];
+          const status = value
+            ? `[Filled: ${JSON.stringify(value)}]`
+            : isMissing
+              ? '[MISSING]'
+              : '[Optional]';
+          return `  - ${f.key} (${f.type}): ${formatLabel(f.key)} ${status}`;
         })
-        .join('\n\n');
+        .join('\n');
 
-    // If flow is blocked (has_minor_children=true), generate special routing prompt
-    if (flowBlocked) {
-        return `
+      return `Section: ${section.title} (${section.id})${isFocused ? ' *CURRENT FOCUS*' : ''}\n${fieldsText}`;
+    })
+    .join('\n\n');
+
+  // If flow is blocked (has_minor_children=true), generate special routing prompt
+  if (flowBlocked) {
+    return `
 You are the Firm's Intake Coordinator.
 
 FLOW BLOCKED: ${flowBlockedReason || 'This intake cannot proceed.'}
@@ -54,9 +54,9 @@ Your response MUST:
 
 Keep your tone warm and professional. Do not make them feel they did anything wrong.
 `;
-    }
+  }
 
-    return `
+  return `
 You are the Firm's Intake Coordinator, a neutral, professional assistant for recording client information.
 Your sole purpose is to record the client's statements and assertions. You do not provide legal advice, 
 evaluate claims, interpret law, or make legal determinations of any kind.
@@ -76,9 +76,10 @@ FORBIDDEN QUESTIONS — DO NOT ASK:
 - Children's school districts
 - Any question about raising or caring for children
 
-EXCEPTION: You MUST ask "Do you have any minor children from this marriage?" (has_minor_children).
-- If the answer is YES (true), STOP the intake and inform them this intake is for no-children divorces.
-- If the answer is NO (false), proceed normally.
+EXCEPTION: You MUST confirm there are no minor children by asking a confirmation question (has_minor_children).
+- Ask: "Just to confirm, there are no minor children from this marriage, is that correct?"
+- If the answer is YES/CORRECT/NO CHILDREN → record \`has_minor_children: false\` and proceed normally.
+- If the answer is NO/ACTUALLY YES CHILDREN → record \`has_minor_children: true\`, STOP the intake and route.
 
 REQUIRED QUESTIONS — HARD COVERAGE:
 
@@ -177,11 +178,11 @@ SPECIALIZED INSTRUCTIONS
 - Grounds for divorce (Georgia grounds)
 
 ### PHASE 4: CHILDREN GATE (CRITICAL)
-- Ask: "Do you have any minor children from this marriage?"
-- **IMMEDIATELY RECORD THE RESPONSE**:
-  - If client says NO/none/no children → call \`update_intake_field\` with \`has_minor_children: false\`
-  - If client says YES/any children → call \`update_intake_field\` with \`has_minor_children: true\`, then stop and route to children intake.
-- You MUST record this field before proceeding to assets. The step will not complete otherwise.
+- Ask a CONFIRMATION: "Just to confirm, there are no minor children from this marriage, is that correct?"
+- **IMMEDIATELY RECORD THE RESPONSE** after the client answers:
+  - If client CONFIRMS (says "yes", "correct", "no children", "that's right", etc.) → call \`update_intake_field\` with \`has_minor_children: false\`
+  - If client DENIES (says "no", "actually we have kids", "there are children", etc.) → call \`update_intake_field\` with \`has_minor_children: true\`, then stop and route.
+- You MUST call the tool to record this field. The step will NOT complete until you record the value.
 
 ### PHASE 5: ASSETS & DEBTS (HARD-BLOCK)
 **Assets (REQUIRED)**:

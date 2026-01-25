@@ -4,7 +4,7 @@ import { Head, Html, Main, NextScript } from 'next/document';
 const themeScript = `
 (function() {
   try {
-    var stored = localStorage.getItem('intake-theme');
+    var stored = localStorage.getItem('verilex-theme');
     var theme = stored || 'dark';
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
