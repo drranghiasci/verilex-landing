@@ -41,12 +41,15 @@ export function validateEmail(email: unknown): boolean {
 
 export function validatePhone(phone: unknown): boolean {
     // Unwrap assertion_value if present
-    const unwrapped = (typeof phone === 'object' && phone !== null && 'assertion_value' in phone)
+    let unwrapped = (typeof phone === 'object' && phone !== null && 'assertion_value' in phone)
         ? (phone as { assertion_value: unknown }).assertion_value
         : phone;
-    const typeInfo = `type=${typeof unwrapped} length=${typeof unwrapped === 'string' ? unwrapped.length : 'N/A'}`;
-    const regexResult = typeof unwrapped === 'string' && PHONE_REGEX.test(unwrapped.trim());
-    console.log('[validatePhone]', typeInfo, 'value=', JSON.stringify(unwrapped), 'regex=', regexResult);
+
+    // Convert numbers to strings (phone numbers can be passed as numbers)
+    if (typeof unwrapped === 'number') {
+        unwrapped = String(unwrapped);
+    }
+
     if (typeof unwrapped !== 'string') return false;
     return PHONE_REGEX.test(unwrapped.trim());
 }
