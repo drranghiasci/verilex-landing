@@ -46,10 +46,13 @@ export default function GuidedChatPanel({
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [transcript.length, isAiTyping]);
 
-  // Refocus input when AI finishes typing
+  // Refocus input when AI finishes typing (with delay to allow scroll to complete)
   useEffect(() => {
     if (!isAiTyping) {
-      textareaRef.current?.focus();
+      const timer = setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isAiTyping]);
 
@@ -263,11 +266,7 @@ export default function GuidedChatPanel({
           height: 100%;
           width: 100%;
           overflow: hidden;
-          background: var(--bg);
-        }
-
-        :global([data-theme="light"]) .chat-stream {
-          background: var(--bg, #ffffff);
+          background-color: var(--bg);
         }
 
         .resume-container {
