@@ -307,23 +307,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 // Update the orchestratorState to the new result so we return correct state to frontend
                 orchestratorState = newOrchestratorResult;
 
+                // Determine if we should transition to review
+                // This triggers the review screen in the frontend
+                const shouldTransitionToReview = newOrchestratorResult.readyForReview;
+                const newStatus = shouldTransitionToReview ? 'ready_for_review' : undefined;
+
                 // Update DB with new payload AND orchestrator state
+                const updateData: Record<string, unknown> = {
+                    raw_payload: newPayload,
+                    updated_at: new Date().toISOString(),
+                    current_step_key: newOrchestratorResult.currentSchemaStep,
+                    completed_step_keys: newOrchestratorResult.completedSchemaSteps,
+                    step_status: Object.fromEntries(
+                        newOrchestratorResult.schemaSteps.map((s) => [s.key, {
+                            status: s.status,
+                            missing: s.missingFields,
+                            errors: s.validationErrors,
+                        }])
+                    ),
+                    last_orchestrated_at: new Date().toISOString(),
+                };
+
+                // Auto-transition to review when all steps complete
+                if (newStatus) {
+                    updateData.status = newStatus;
+                    console.log('[ORCHESTRATOR] Auto-transitioning to ready_for_review');
+                }
+
                 await supabaseAdmin
                     .from('intakes')
-                    .update({
-                        raw_payload: newPayload,
-                        updated_at: new Date().toISOString(),
-                        current_step_key: newOrchestratorResult.currentSchemaStep,
-                        completed_step_keys: newOrchestratorResult.completedSchemaSteps,
-                        step_status: Object.fromEntries(
-                            newOrchestratorResult.schemaSteps.map((s) => [s.key, {
-                                status: s.status,
-                                missing: s.missingFields,
-                                errors: s.validationErrors,
-                            }])
-                        ),
-                        last_orchestrated_at: new Date().toISOString(),
-                    })
+                    .update(updateData)
                     .eq('id', intake_id)
                     .eq('firm_id', firm_id);
 
@@ -332,6 +345,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     previousStep: currentSchemaStep,
                     newStep: newOrchestratorResult.currentSchemaStep,
                     updatedFields: Object.keys(updates),
+                    readyForReview: newOrchestratorResult.readyForReview,
                 });
             }
 
