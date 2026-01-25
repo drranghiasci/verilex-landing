@@ -206,9 +206,16 @@ export const DIVORCE_WITH_CHILDREN_SCHEMA_STEPS: DivorceWithChildrenSchemaStepCo
     },
     {
         key: 'child_object',
-        requiredFields: [],
+        // Require children_count so this step won't be complete until children_gate passes
+        requiredFields: ['children_count'],
         conditionalRequired: [],
-        validations: [],
+        validations: [
+            {
+                field: 'children_count',
+                validator: (value) => typeof value === 'number' && value >= 1,
+                errorMessage: 'At least one child must be specified.',
+            },
+        ],
         isRepeatable: true,
         repeatableCountField: 'children_count',
         repeatableRequiredFields: [
