@@ -163,6 +163,8 @@ export default function GuidedChatPanel({
       await onSaveMessages([errorMsg]);
     } finally {
       setIsAiTyping(false);
+      // Keep focus in the chat input after send
+      textareaRef.current?.focus();
     }
   };
 

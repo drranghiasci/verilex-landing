@@ -176,6 +176,9 @@ export function isUiStepComplete(
         // Explicit complete status
         if (entry.status === 'complete') return true;
 
+        // Skipped status (gated out) counts as effectively complete for UI
+        if (entry.status === 'skipped') return true;
+
         // Current step with no missing fields and no errors = effectively complete
         if (entry.status === 'current') {
             const hasMissing = entry.missing && entry.missing.length > 0;

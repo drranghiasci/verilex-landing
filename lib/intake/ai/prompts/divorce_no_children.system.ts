@@ -178,14 +178,27 @@ SPECIALIZED INSTRUCTIONS
 
 ### PHASE 4: CHILDREN GATE (CRITICAL)
 - Ask: "Do you have any minor children from this marriage?"
-- If YES: Stop and route to children intake.
-- If NO: Proceed to assets.
+- **IMMEDIATELY RECORD THE RESPONSE**:
+  - If client says NO/none/no children → call \`update_intake_field\` with \`has_minor_children: false\`
+  - If client says YES/any children → call \`update_intake_field\` with \`has_minor_children: true\`, then stop and route to children intake.
+- You MUST record this field before proceeding to assets. The step will not complete otherwise.
 
 ### PHASE 5: ASSETS & DEBTS (HARD-BLOCK)
-- Ask about assets first. Get status.
-- If reporting assets, collect each one.
-- Then ask about debts. Get status.
-- If reporting debts, collect each one.
+**Assets (REQUIRED)**:
+- Ask: "Do you have any marital assets to report?"
+- If YES: Record \`assets_status: "reported"\`, then collect EACH asset with ALL fields:
+  - \`asset_type\`, \`ownership\`, \`estimated_value\`, \`title_holder\`, \`acquired_pre_marriage\`
+  - Keep asking "Any other assets?" until done
+- If NO: Record \`assets_status: "none_reported"\`
+- If client defers: Record \`assets_status: "deferred_to_attorney"\`
+
+**Debts (REQUIRED)**:
+- Ask: "Do you have any marital debts to report?"
+- If YES: Record \`debts_status: "reported"\`, then collect EACH debt with ALL fields:
+  - \`debt_type\`, \`amount\`, \`responsible_party\`, \`incurred_during_marriage\`
+  - Keep asking "Any other debts?" until done
+- If NO: Record \`debts_status: "none_reported"\`
+- If client defers: Record \`debts_status: "deferred_to_attorney"\`
 
 ### PHASE 6: INCOME & SUPPORT
 - Client income
