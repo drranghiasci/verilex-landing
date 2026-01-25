@@ -266,8 +266,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         const name = tc.function.name;
 
                         if (name === 'update_intake_field') {
+                            // Parse string values to proper types
+                            // AI sends "true"/"false" as strings, but validators expect booleans
+                            let parsedValue: unknown = args.value;
+                            if (args.value === 'true') {
+                                parsedValue = true;
+                            } else if (args.value === 'false') {
+                                parsedValue = false;
+                            } else if (typeof args.value === 'string' && /^\d+$/.test(args.value)) {
+                                // Parse numeric strings to numbers
+                                parsedValue = parseInt(args.value, 10);
+                            }
+
                             // Wrap with assertion metadata for provenance
-                            updates[args.field] = wrapAssertion(args.value, {
+                            updates[args.field] = wrapAssertion(parsedValue, {
                                 source_type: 'chat',
                                 transcript_reference: null,
                                 evidence_support_level: 'none',
