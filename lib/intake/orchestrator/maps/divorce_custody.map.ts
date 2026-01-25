@@ -44,7 +44,9 @@ export function validatePhone(phone: unknown): boolean {
     const unwrapped = (typeof phone === 'object' && phone !== null && 'assertion_value' in phone)
         ? (phone as { assertion_value: unknown }).assertion_value
         : phone;
-    console.log('[validatePhone] input:', JSON.stringify(phone), 'unwrapped:', unwrapped, 'result:', typeof unwrapped === 'string' && PHONE_REGEX.test(unwrapped.trim()));
+    const typeInfo = `type=${typeof unwrapped} length=${typeof unwrapped === 'string' ? unwrapped.length : 'N/A'}`;
+    const regexResult = typeof unwrapped === 'string' && PHONE_REGEX.test(unwrapped.trim());
+    console.log('[validatePhone]', typeInfo, 'value=', JSON.stringify(unwrapped), 'regex=', regexResult);
     if (typeof unwrapped !== 'string') return false;
     return PHONE_REGEX.test(unwrapped.trim());
 }
