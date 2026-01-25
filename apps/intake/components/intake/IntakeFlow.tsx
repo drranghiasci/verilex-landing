@@ -664,6 +664,7 @@ export default function IntakeFlow({
                 <IntakeReview
                   intake={intake!}
                   schema={GA_DIVORCE_CUSTODY_V1}
+                  intakeType={intake?.intake_type as 'custody_unmarried' | 'divorce_no_children' | 'divorce_with_children' | null}
                   onSubmit={async (q) => {
                     // Adapting to IntakeReview which returns questions string
                     // But we need to call submit API? 

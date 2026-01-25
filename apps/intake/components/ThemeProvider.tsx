@@ -25,11 +25,20 @@ function getSystemTheme(): 'light' | 'dark' {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
+function getInitialTheme(): 'light' | 'dark' {
+    if (typeof window === 'undefined') return 'dark';
+    const stored = localStorage.getItem('intake-theme');
+    if (stored === 'light' || stored === 'dark') return stored;
+    // Default to dark mode or system preference
+    return getSystemTheme();
+}
+
 export function ThemeProvider({
     children,
-    defaultTheme = 'system',
+    defaultTheme = 'dark',  // Changed default from 'system' to 'dark'
     accentPreset = 'verilex_default',
 }: ThemeProviderProps) {
+    // Initialize with dark to avoid hydration mismatch, then sync on mount
     const [theme, setThemeState] = useState<'light' | 'dark'>('dark');
 
     // Initialize theme based on defaultTheme prop and stored preference

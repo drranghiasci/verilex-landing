@@ -1,17 +1,40 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { IntakeRecord } from '../../../../lib/intake/intakeApi';
 import { SchemaDef } from '../../../../lib/intake/schemas/types';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
+
+type IntakeType = 'custody_unmarried' | 'divorce_no_children' | 'divorce_with_children' | null;
 
 type IntakeReviewProps = {
     intake: IntakeRecord;
     schema: SchemaDef;
     onSubmit: (questions: string) => Promise<void>;
     disabled?: boolean;
+    intakeType?: IntakeType;
 };
 
-export default function IntakeReview({ intake, schema, onSubmit, disabled }: IntakeReviewProps) {
+// Sections to exclude by intake type
+const EXCLUDED_SECTIONS: Record<string, string[]> = {
+    custody_unmarried: [
+        'marriage_details',
+        'separation_grounds',
+        'marriage',
+        'grounds',
+        'asset_object',
+        'debt_object',
+    ],
+    divorce_no_children: [
+        'child_object',
+        'children_custody',
+        'children_gate',
+        'children_details',
+        'custody_preferences',
+        'custody',
+    ],
+};
+
+export default function IntakeReview({ intake, schema, onSubmit, disabled, intakeType }: IntakeReviewProps) {
     const [questions, setQuestions] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -38,6 +61,14 @@ export default function IntakeReview({ intake, schema, onSubmit, disabled }: Int
 
     const payload = intake.raw_payload || {};
 
+    // Filter sections based on intake type
+    const visibleSections = useMemo(() => {
+        const excluded = intakeType ? (EXCLUDED_SECTIONS[intakeType] || []) : [];
+        return schema.sections.filter(s =>
+            s.id !== 'final_review' && !excluded.includes(s.id)
+        );
+    }, [schema.sections, intakeType]);
+
     return (
         <div className="review-container">
             <div className="review-header">
@@ -51,28 +82,28 @@ export default function IntakeReview({ intake, schema, onSubmit, disabled }: Int
             </div>
 
             <div className="review-sections">
-                {schema.sections
-                    .filter(s => s.id !== 'final_review') // Don't show the review section itself
-                    .map(section => {
-                        // Check if section is relevant (simplified logic for now)
-                        // In reality, we could use the same visibility logic as proper step indicators
-                        return (
-                            <Card key={section.id} className="review-section-card">
-                                <h3>{section.title}</h3>
-                                <div className="field-grid">
-                                    {section.fields.filter(f => !f.isSystem).map(field => {
-                                        const val = payload[field.key];
-                                        return (
-                                            <div key={field.key} className="field-row">
-                                                <span className="field-label">{field.key.replace(/_/g, ' ')}</span>
-                                                <span className="field-value">{renderValue(val)}</span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </Card>
-                        );
-                    })}
+                {visibleSections.map(section => {
+                    // Only show sections that have data
+                    const hasData = section.fields.some(f => !f.isSystem && payload[f.key] !== undefined);
+                    if (!hasData) return null;
+
+                    return (
+                        <Card key={section.id} className="review-section-card">
+                            <h3>{section.title}</h3>
+                            <div className="field-grid">
+                                {section.fields.filter(f => !f.isSystem && payload[f.key] !== undefined).map(field => {
+                                    const val = payload[field.key];
+                                    return (
+                                        <div key={field.key} className="field-row">
+                                            <span className="field-label">{field.key.replace(/_/g, ' ')}</span>
+                                            <span className="field-value">{renderValue(val)}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </Card>
+                    );
+                })}
             </div>
 
             <div className="final-actions">
