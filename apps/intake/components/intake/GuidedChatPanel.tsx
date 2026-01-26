@@ -2,10 +2,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUp } from 'lucide-react';
 import ChatMessage from './chat/ChatMessage';
 import VoiceInput from './chat/VoiceInput';
-import type { IntakeMessage } from '../../../../lib/intake/intakeApi';
+import ChatReviewMessage from './ChatReviewMessage';
+import type { IntakeMessage, IntakeRecord } from '../../../../lib/intake/intakeApi';
 import { PromptLibrary } from '../../../../lib/intake/guidedChat/promptLibrary';
+import { SchemaDef } from '../../../../lib/intake/schemas/types';
+
 
 type ChatStatus = 'idle' | 'saving' | 'saved' | 'error';
+
+type IntakeType = 'custody_unmarried' | 'divorce_no_children' | 'divorce_with_children' | null;
 
 type GuidedChatPanelProps = {
   sectionId: string;
@@ -19,6 +24,14 @@ type GuidedChatPanelProps = {
   onSaveMessages: (messages: IntakeMessage[]) => Promise<void>;
   onJumpToField: (fieldKey: string) => void;
   onRefresh?: () => void;
+  // Review mode props
+  reviewMode?: boolean;
+  intake?: IntakeRecord | null;
+  schema?: SchemaDef;
+  intakeType?: IntakeType;
+  onSubmit?: () => void;
+  submitting?: boolean;
+  submitted?: boolean;
 };
 
 export default function GuidedChatPanel({
@@ -31,6 +44,14 @@ export default function GuidedChatPanel({
   disabled,
   onSaveMessages,
   onRefresh,
+  // Review mode props
+  reviewMode = false,
+  intake,
+  schema,
+  intakeType,
+  onSubmit,
+  submitting = false,
+  submitted = false,
 }: GuidedChatPanelProps) {
   const [inputText, setInputText] = useState('');
   const [status, setStatus] = useState<ChatStatus>('idle');
@@ -223,48 +244,66 @@ export default function GuidedChatPanel({
             <span className="dot"></span>
           </div>
         )}
+
+        {/* Chat-native review message */}
+        {reviewMode && intake && schema && onSubmit && (
+          <div className="review-message-container" style={{ padding: '0 16px', marginBottom: '20px' }}>
+            <ChatReviewMessage
+              intake={intake}
+              schema={schema}
+              intakeType={intakeType}
+              onSubmit={onSubmit}
+              submitting={submitting}
+              submitted={submitted}
+            />
+          </div>
+        )}
+
         <div ref={bottomRef} style={{ minHeight: '1px' }} />
       </div>
 
-      <div className="input-area">
-        <div className="input-wrapper">
-          <textarea
-            ref={textareaRef}
-            className="chat-input"
-            rows={1}
-            placeholder="Type your answer..."
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={disabled}
-          />
-          <div className="actions-area">
-            <VoiceInput
-              onTextReady={(text) => {
-                const newValue = inputText ? `${inputText} ${text}` : text;
-                setInputText(newValue);
-                textareaRef.current?.focus();
-              }}
+      {/* Hide input when submitted */}
+      {!submitted && (
+        <div className="input-area">
+          <div className="input-wrapper">
+            <textarea
+              ref={textareaRef}
+              className="chat-input"
+              rows={1}
+              placeholder="Type your answer..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={handleKeyDown}
               disabled={disabled}
             />
+            <div className="actions-area">
+              <VoiceInput
+                onTextReady={(text) => {
+                  const newValue = inputText ? `${inputText} ${text}` : text;
+                  setInputText(newValue);
+                  textareaRef.current?.focus();
+                }}
+                disabled={disabled}
+              />
+              <button
+                onClick={() => handleSend()}
+                disabled={!inputText.trim() || disabled}
+                className="send-btn"
+              >
+                <ArrowUp size={20} />
+              </button>
+            </div>
+          </div>
+          <div className="resume-container">
             <button
-              onClick={() => handleSend()}
-              disabled={!inputText.trim() || disabled}
-              className="send-btn"
+              className="resume-link"
+              onClick={() => handleSend('RESUME_INTAKE')}
             >
-              <ArrowUp size={20} />
+              Stuck? Resume Intake
             </button>
           </div>
         </div>
-        <div className="resume-container">
-          <button
-            className="resume-link"
-            onClick={() => handleSend('RESUME_INTAKE')}
-          >
-            Stuck? Resume Intake
-          </button>
-        </div>
-      </div>
+      )}
 
       <style jsx>{`
         .chat-stream {

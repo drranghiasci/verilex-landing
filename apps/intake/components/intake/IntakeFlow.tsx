@@ -651,68 +651,50 @@ export default function IntakeFlow({
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col relative min-w-0" style={{ backgroundColor: 'var(--bg)' }}>
           <AnimatePresence mode="wait">
-            {/* REVIEW SCREEN */}
-            {status === 'ready_for_review' || status === 'submitted' ? (
-              <motion.div
-                key="review"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="absolute inset-0 z-10 overflow-y-auto"
-                style={{ backgroundColor: 'var(--bg)' }}
-              >
-                <IntakeReview
-                  intake={intake!}
-                  schema={GA_DIVORCE_CUSTODY_V1}
-                  intakeType={intake?.intake_type as 'custody_unmarried' | 'divorce_no_children' | 'divorce_with_children' | null}
-                  onSubmit={async (q) => {
-                    // Adapting to IntakeReview which returns questions string
-                    // But we need to call submit API? 
-                    // IntakeReview expects onSubmit to be async (questions) => void.
-                    // We can define a local wrapper or use the one we have?
-                    // Existing 'handleSubmit' is argumentless and submits the WHOLE payload.
-                    // IntakeReview seems to want to submit final questions.
-
-                    // Let's us inline implementation for now to match Review's expectation:
-                    const res = await fetch('/api/intake/submit', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ token, questions: q })
-                    });
-                    if (!res.ok) throw new Error('Submission failed');
-                    await load(token!);
-                  }}
-                />
-              </motion.div>
-            ) : (
-              /* CHAT SCREEN */
-              <motion.div
-                key="chat"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex flex-col h-full"
-              >
-                <GuidedChatPanel
-                  messages={messages}
-                  onSaveMessages={async (newMessages) => {
-                    if (isLocked) return;
-                    setUiError(null);
-                    queueMessages(newMessages);
-                    await flushPending();
-                  }}
-                  onJumpToField={() => { }}
-                  sectionId={step?.id}
-                  library={GUIDED_PROMPT_LIBRARY}
-                  missingFields={missingFields}
-                  token={token}
-                  intakeId={intakeId}
-                  firmName={firm?.firm_name}
-                  disabled={isLocked || loading}
-                  onRefresh={() => load(token!)}
-                />
-              </motion.div>
-            )}
+            {/* Always show chat, with review rendered inline when ready */}
+            <motion.div
+              key="chat"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col h-full"
+            >
+              <GuidedChatPanel
+                messages={messages}
+                onSaveMessages={async (newMessages) => {
+                  if (isLocked) return;
+                  setUiError(null);
+                  queueMessages(newMessages);
+                  await flushPending();
+                }}
+                onJumpToField={() => { }}
+                sectionId={step?.id}
+                library={GUIDED_PROMPT_LIBRARY}
+                missingFields={missingFields}
+                token={token}
+                intakeId={intakeId}
+                firmName={firm?.firm_name}
+                disabled={isLocked || loading}
+                onRefresh={() => load(token!)}
+                // Chat-native review props
+                reviewMode={status === 'ready_for_review' || status === 'submitted'}
+                intake={intake}
+                schema={GA_DIVORCE_CUSTODY_V1}
+                intakeType={intake?.intake_type as 'custody_unmarried' | 'divorce_no_children' | 'divorce_with_children' | null}
+                onSubmit={async () => {
+                  // Call submit API
+                  const res = await fetch('/api/intake/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, intakeId })
+                  });
+                  if (!res.ok) throw new Error('Submission failed');
+                  await load(token!);
+                }}
+                submitting={loading}
+                submitted={status === 'submitted'}
+              />
+            </motion.div>
           </AnimatePresence>
 
           {/* Overlays */}
