@@ -108,27 +108,38 @@ const FIELD_LABELS: Record<string, string> = {
     debts_status: 'Debts Status',
 };
 
-// Helper to extract display value from payload (unwrap assertion_value)
-function extractDisplayValue(val: unknown): string {
-    if (val === null || val === undefined) return '—';
+// Helper to extract display value from payload (unwrap assertion_value, never show JSON)
+function extractDisplayValue(val: unknown, fieldKey?: string): string {
+    if (val === null || val === undefined) return 'Not provided';
     if (typeof val === 'boolean') return val ? 'Yes' : 'No';
     if (typeof val === 'number') return String(val);
-    if (typeof val === 'string') return val || '—';
+    if (typeof val === 'string') return val.trim() || 'Not provided';
 
-    // Handle wrapped assertion values
-    if (typeof val === 'object' && 'assertion_value' in val) {
-        return extractDisplayValue((val as { assertion_value: unknown }).assertion_value);
+    // Handle wrapped assertion values - ALWAYS extract assertion_value
+    if (typeof val === 'object' && val !== null && 'assertion_value' in val) {
+        return extractDisplayValue((val as { assertion_value: unknown }).assertion_value, fieldKey);
     }
 
-    // For other objects, show summary
-    if (typeof val === 'object') {
-        if (Array.isArray(val)) {
-            return val.length > 0 ? `${val.length} item(s)` : '—';
-        }
-        return 'See details';
+    // Handle arrays (like children, assets, debts)
+    if (Array.isArray(val)) {
+        if (val.length === 0) return 'None';
+        // For child_object, asset_object, debt_object - summarize
+        return `${val.length} item(s)`;
     }
 
-    return String(val);
+    // For other objects - try to extract meaningful value or show "Not provided"
+    if (typeof val === 'object' && val !== null) {
+        // Check for common display value patterns
+        const obj = val as Record<string, unknown>;
+        if ('value' in obj) return extractDisplayValue(obj.value, fieldKey);
+        if ('name' in obj) return extractDisplayValue(obj.name, fieldKey);
+        if ('label' in obj) return extractDisplayValue(obj.label, fieldKey);
+
+        // Don't show raw JSON - return a placeholder
+        return 'Provided';
+    }
+
+    return String(val) || 'Not provided';
 }
 
 export default function ChatReviewMessage({
