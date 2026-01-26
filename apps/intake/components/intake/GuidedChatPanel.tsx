@@ -137,6 +137,13 @@ export default function GuidedChatPanel({
 
     if (!trimmed || !token) return;
 
+    // Handle submit command when in review mode
+    if (reviewMode && onSubmit && /^submit$/i.test(trimmed)) {
+      setInputText('');
+      onSubmit();
+      return;
+    }
+
     setStatus('saving');
     setInputText('');
 
@@ -270,7 +277,7 @@ export default function GuidedChatPanel({
               ref={textareaRef}
               className="chat-input"
               rows={1}
-              placeholder="Type your answer..."
+              placeholder={reviewMode ? "Type 'Submit' or describe what needs to be changed..." : "Type your answer..."}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
