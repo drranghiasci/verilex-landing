@@ -9,36 +9,36 @@ import { GA_DIVORCE_WITH_CHILDREN_V1 } from '../../schemas/ga/family_law/divorce
 import { formatLabel } from '../../validation';
 
 export function transformDivorceWithChildrenSchemaToSystemPrompt(
-    payload: Record<string, unknown>,
-    currentSectionId: string,
-    missingFields: string[] = [],
-    flowBlocked = false,
-    flowBlockedReason?: string
+  payload: Record<string, unknown>,
+  currentSectionId: string,
+  missingFields: string[] = [],
+  flowBlocked = false,
+  flowBlockedReason?: string
 ): string {
-    const sectionsText = GA_DIVORCE_WITH_CHILDREN_V1.sections
-        .map((section) => {
-            const isFocused = section.id === currentSectionId;
-            const fieldsText = section.fields
-                .filter((f) => !f.isSystem)
-                .map((f) => {
-                    const isMissing = missingFields.includes(f.key);
-                    const value = payload[f.key];
-                    const status = value
-                        ? `[Filled: ${JSON.stringify(value)}]`
-                        : isMissing
-                            ? '[MISSING]'
-                            : '[Optional]';
-                    return `  - ${f.key} (${f.type}): ${formatLabel(f.key)} ${status}`;
-                })
-                .join('\n');
-
-            return `Section: ${section.title} (${section.id})${isFocused ? ' *CURRENT FOCUS*' : ''}\n${fieldsText}`;
+  const sectionsText = GA_DIVORCE_WITH_CHILDREN_V1.sections
+    .map((section) => {
+      const isFocused = section.id === currentSectionId;
+      const fieldsText = section.fields
+        .filter((f) => !f.isSystem)
+        .map((f) => {
+          const isMissing = missingFields.includes(f.key);
+          const value = payload[f.key];
+          const status = value
+            ? `[Filled: ${JSON.stringify(value)}]`
+            : isMissing
+              ? '[MISSING]'
+              : '[Optional]';
+          return `  - ${f.key} (${f.type}): ${formatLabel(f.key)} ${status}`;
         })
-        .join('\n\n');
+        .join('\n');
 
-    // If flow is blocked (has_minor_children=false), generate routing prompt
-    if (flowBlocked) {
-        return `
+      return `Section: ${section.title} (${section.id})${isFocused ? ' *CURRENT FOCUS*' : ''}\n${fieldsText}`;
+    })
+    .join('\n\n');
+
+  // If flow is blocked (has_minor_children=false), generate routing prompt
+  if (flowBlocked) {
+    return `
 You are the Firm's Intake Coordinator.
 
 FLOW BLOCKED: ${flowBlockedReason || 'This intake cannot proceed.'}
@@ -54,9 +54,9 @@ Your response MUST:
 
 Keep your tone warm and professional.
 `;
-    }
+  }
 
-    return `
+  return `
 You are the Firm's Intake Coordinator, a neutral, professional assistant for recording client information.
 Your sole purpose is to record the client's statements and assertions. You do not provide legal advice.
 
@@ -144,6 +144,15 @@ CRITICAL RULES
 **SAFETY TRIGGER**:
 - If immediate danger mentioned, output "WARNING: 911" and advise to call 911.
 
+**NO DATE MATH (CRITICAL)**:
+- NEVER calculate or state a computed duration based on child's DOB.
+- NEVER say "Since [Child] was born on X, that's approximately Y months."
+- The user must provide time_in_home_state_months as their own estimate.
+- If user says "his whole life" or "since birth", ask: "About how many months would you estimate that is?"
+- Only record a numeric value when the user provides one.
+- When capturing, use this format:
+  "About how long has [Child] lived in [State]? Please answer in months (for example: 6, 12, 24). If you're unsure, give your best estimate."
+
 ================================================================================
 CURRENT FORM STATE
 ================================================================================
@@ -180,8 +189,10 @@ PHASES
   - child_current_residence (with you, with other parent, split, or other)
 - Then for each child, collect DETAIL fields:
   - biological_relation (biological, adopted, step, other)
-  - child_home_state
-  - time_in_home_state_months
+  - child_home_state: "What state does [Child] consider home right now?"
+  - time_in_home_state_months: "About how long has [Child] lived in [State]? Please answer in months (e.g., 6, 12, 24)."
+- If user gives non-numeric answer (e.g., "his whole life"), ask: "About how many months would you estimate?"
+- NEVER compute months from DOB. Only record what the user provides.
 - Complete all seed fields for ALL children before moving to detail fields.
 - Custody preferences come AFTER all child info is complete.
 
