@@ -185,14 +185,11 @@ export const DIVORCE_WITH_CHILDREN_SCHEMA_STEPS: DivorceWithChildrenSchemaStepCo
     },
     {
         key: 'children_gate',
-        requiredFields: ['has_minor_children', 'children_count'],
+        // has_minor_children is IMPLIED by intake_type=divorce_with_children (auto-set on frontend)
+        // Only children_count needs to be captured here
+        requiredFields: ['children_count'],
         conditionalRequired: [],
         validations: [
-            {
-                field: 'has_minor_children',
-                validator: (value) => value === true,
-                errorMessage: 'This intake is for divorces with minor children. If no children, use divorce_no_children intake.',
-            },
             {
                 field: 'children_count',
                 validator: (value) => typeof value === 'number' && value >= 1,
@@ -200,6 +197,7 @@ export const DIVORCE_WITH_CHILDREN_SCHEMA_STEPS: DivorceWithChildrenSchemaStepCo
             },
         ],
         gateCheck: (payload) => {
+            // Safety valve: if somehow has_minor_children=false, reroute
             if (payload.has_minor_children === false) {
                 return {
                     pass: false,
