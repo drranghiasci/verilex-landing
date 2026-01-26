@@ -179,7 +179,7 @@ export const DIVORCE_WITH_CHILDREN_SCHEMA_STEPS: DivorceWithChildrenSchemaStepCo
     },
     {
         key: 'separation_grounds',
-        requiredFields: ['grounds_for_divorce'],
+        requiredFields: ['grounds_for_divorce', 'reconciliation_attempted'],
         conditionalRequired: [],
         validations: [],
     },
@@ -208,10 +208,18 @@ export const DIVORCE_WITH_CHILDREN_SCHEMA_STEPS: DivorceWithChildrenSchemaStepCo
             }
             return { pass: true };
         },
+        // Seed fields: basic info for each child (name, DOB, residence)
+        isRepeatable: true,
+        repeatableCountField: 'children_count',
+        repeatableRequiredFields: [
+            'child_full_name',
+            'child_dob',
+            'child_current_residence',
+        ],
     },
     {
         key: 'child_object',
-        // Require children_count so this step won't be complete until children_gate passes
+        // Detail fields: additional info for each child (relation, home state, time in state)
         requiredFields: ['children_count'],
         conditionalRequired: [],
         validations: [
@@ -224,9 +232,6 @@ export const DIVORCE_WITH_CHILDREN_SCHEMA_STEPS: DivorceWithChildrenSchemaStepCo
         isRepeatable: true,
         repeatableCountField: 'children_count',
         repeatableRequiredFields: [
-            'child_full_name',
-            'child_dob',
-            'child_current_residence',
             'biological_relation',
             'child_home_state',
             'time_in_home_state_months',
