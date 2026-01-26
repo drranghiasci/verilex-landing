@@ -15,7 +15,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:intake": "playwright test tests/intake/intake-smoke.spec.ts"
+    "test:intake": "playwright test tests/intake/intake-smoke.spec.ts",
+    "test:intake-rc": "npx tsx scripts/rcSmokeTest.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",
