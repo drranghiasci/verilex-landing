@@ -30,7 +30,7 @@ describe('Divorce With Children Orchestrator', () => {
                 client_county: 'Fulton',
                 opposing_first_name: 'Other',
                 opposing_last_name: 'Party',
-                opposing_address_known: false,
+                opposing_address_same_as_client: true,
                 service_concerns: 'none',
                 date_of_marriage: '2015-06-15',
                 place_of_marriage: 'Atlanta, GA',
@@ -56,7 +56,7 @@ describe('Divorce With Children Orchestrator', () => {
                 client_county: 'Fulton',
                 opposing_first_name: 'Other',
                 opposing_last_name: 'Party',
-                opposing_address_known: false,
+                opposing_address_same_as_client: true,
                 service_concerns: 'none',
                 date_of_marriage: '2015-06-15',
                 place_of_marriage: 'Atlanta, GA',
@@ -66,6 +66,81 @@ describe('Divorce With Children Orchestrator', () => {
             const marriageStep = result.schemaSteps.find(s => s.key === 'marriage_details');
             expect(marriageStep?.missingFields).toContain('date_of_separation');
             expect(result.currentSchemaStep).toBe('marriage_details');
+        });
+    });
+
+    // =========================================================================
+    // Fix #1b: Spouse Address Same-as-Client Conditional
+    // =========================================================================
+    describe('Fix #1b: Spouse Address Same-as-Client', () => {
+        it('should NOT require opposing_address_known when opposing_address_same_as_client=true', () => {
+            const result = orchestrateDivorceWithChildrenIntake({
+                urgency_level: 'standard',
+                intake_channel: 'chat',
+                client_first_name: 'Test',
+                client_last_name: 'Client',
+                client_dob: '1990-01-01',
+                client_phone: '555-123-4567',
+                client_email: 'test@example.com',
+                client_address: '123 Main St, Atlanta, GA 30301',
+                client_county: 'Fulton',
+                opposing_first_name: 'Other',
+                opposing_last_name: 'Party',
+                opposing_address_same_as_client: true, // Lives at same address
+                service_concerns: 'none',
+            });
+
+            // Should NOT be stuck on opposing_party for opposing_address_known
+            const opposingStep = result.schemaSteps.find(s => s.key === 'opposing_party');
+            expect(opposingStep?.missingFields).not.toContain('opposing_address_known');
+            expect(opposingStep?.status).toBe('complete');
+        });
+
+        it('should REQUIRE opposing_address_known when opposing_address_same_as_client=false', () => {
+            const result = orchestrateDivorceWithChildrenIntake({
+                urgency_level: 'standard',
+                intake_channel: 'chat',
+                client_first_name: 'Test',
+                client_last_name: 'Client',
+                client_dob: '1990-01-01',
+                client_phone: '555-123-4567',
+                client_email: 'test@example.com',
+                client_address: '123 Main St, Atlanta, GA 30301',
+                client_county: 'Fulton',
+                opposing_first_name: 'Other',
+                opposing_last_name: 'Party',
+                opposing_address_same_as_client: false, // Lives at different address
+                service_concerns: 'none',
+            });
+
+            // Should be stuck on opposing_party for opposing_address_known
+            const opposingStep = result.schemaSteps.find(s => s.key === 'opposing_party');
+            expect(opposingStep?.missingFields).toContain('opposing_address_known');
+            expect(result.currentSchemaStep).toBe('opposing_party');
+        });
+
+        it('should REQUIRE opposing_last_known_address when different address AND address is known', () => {
+            const result = orchestrateDivorceWithChildrenIntake({
+                urgency_level: 'standard',
+                intake_channel: 'chat',
+                client_first_name: 'Test',
+                client_last_name: 'Client',
+                client_dob: '1990-01-01',
+                client_phone: '555-123-4567',
+                client_email: 'test@example.com',
+                client_address: '123 Main St, Atlanta, GA 30301',
+                client_county: 'Fulton',
+                opposing_first_name: 'Other',
+                opposing_last_name: 'Party',
+                opposing_address_same_as_client: false,
+                opposing_address_known: true, // Knows address but hasn't provided it
+                service_concerns: 'none',
+            });
+
+            // Should require the actual address
+            const opposingStep = result.schemaSteps.find(s => s.key === 'opposing_party');
+            expect(opposingStep?.missingFields).toContain('opposing_last_known_address');
+            expect(result.currentSchemaStep).toBe('opposing_party');
         });
     });
 
@@ -86,7 +161,7 @@ describe('Divorce With Children Orchestrator', () => {
                 client_county: 'Fulton',
                 opposing_first_name: 'Other',
                 opposing_last_name: 'Party',
-                opposing_address_known: false,
+                opposing_address_same_as_client: true,
                 service_concerns: 'none',
                 date_of_marriage: '2015-06-15',
                 place_of_marriage: 'Atlanta, GA',
@@ -112,7 +187,7 @@ describe('Divorce With Children Orchestrator', () => {
                 client_county: 'Fulton',
                 opposing_first_name: 'Other',
                 opposing_last_name: 'Party',
-                opposing_address_known: false,
+                opposing_address_same_as_client: true,
                 service_concerns: 'none',
                 date_of_marriage: '2015-06-15',
                 place_of_marriage: 'Atlanta, GA',
@@ -142,7 +217,7 @@ describe('Divorce With Children Orchestrator', () => {
                 client_county: 'Fulton',
                 opposing_first_name: 'Other',
                 opposing_last_name: 'Party',
-                opposing_address_known: false,
+                opposing_address_same_as_client: true,
                 service_concerns: 'none',
                 date_of_marriage: '2015-06-15',
                 place_of_marriage: 'Atlanta, GA',
@@ -177,7 +252,7 @@ describe('Divorce With Children Orchestrator', () => {
                 client_county: 'Fulton',
                 opposing_first_name: 'Other',
                 opposing_last_name: 'Party',
-                opposing_address_known: false,
+                opposing_address_same_as_client: true,
                 service_concerns: 'none',
                 date_of_marriage: '2015-06-15',
                 place_of_marriage: 'Atlanta, GA',
@@ -211,7 +286,7 @@ describe('Divorce With Children Orchestrator', () => {
                 client_county: 'Fulton',
                 opposing_first_name: 'Other',
                 opposing_last_name: 'Party',
-                opposing_address_known: false,
+                opposing_address_same_as_client: true,
                 service_concerns: 'none',
                 date_of_marriage: '2015-06-15',
                 place_of_marriage: 'Atlanta, GA',
@@ -255,7 +330,7 @@ describe('Divorce With Children Orchestrator', () => {
                 client_county: 'Fulton',
                 opposing_first_name: 'Other',
                 opposing_last_name: 'Party',
-                opposing_address_known: false,
+                opposing_address_same_as_client: true,
                 service_concerns: 'none',
                 date_of_marriage: '2015-06-15',
                 place_of_marriage: 'Atlanta, GA',
@@ -303,7 +378,7 @@ describe('Divorce With Children Orchestrator', () => {
                 client_county: 'Fulton',
                 opposing_first_name: 'Other',
                 opposing_last_name: 'Party',
-                opposing_address_known: false,
+                opposing_address_same_as_client: true,
                 service_concerns: 'none',
                 date_of_marriage: '2015-06-15',
                 place_of_marriage: 'Atlanta, GA',

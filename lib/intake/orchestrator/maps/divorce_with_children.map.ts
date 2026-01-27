@@ -147,17 +147,27 @@ export const DIVORCE_WITH_CHILDREN_SCHEMA_STEPS: DivorceWithChildrenSchemaStepCo
     },
     {
         key: 'opposing_party',
-        requiredFields: ['opposing_first_name', 'opposing_last_name', 'opposing_address_known', 'service_concerns'],
+        requiredFields: ['opposing_first_name', 'opposing_last_name', 'opposing_address_same_as_client', 'service_concerns'],
         conditionalRequired: [
             {
+                // If same as client, don't ask for address_known or address
+                field: 'opposing_address_known',
+                condition: (payload) => payload.opposing_address_same_as_client === false,
+            },
+            {
+                // If different address AND address is known, require the address
                 field: 'opposing_last_known_address',
-                condition: (payload) => payload.opposing_address_known === true,
+                condition: (payload) =>
+                    payload.opposing_address_same_as_client === false &&
+                    payload.opposing_address_known === true,
             },
         ],
         validations: [
             {
                 field: 'opposing_last_known_address',
                 validator: (value, payload) => {
+                    // Skip validation if same as client or address not known
+                    if (payload.opposing_address_same_as_client === true) return true;
                     if (payload.opposing_address_known !== true) return true;
                     const zip = extractZipFromAddress(value);
                     return zip !== undefined && validateZip(zip);
