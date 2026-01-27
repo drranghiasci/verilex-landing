@@ -1,15 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import IntakeFlow from '../../../components/intake/IntakeFlow';
-import IntakeLanding from '../../../components/intake/IntakeLanding';
 import IntakeSelector from '../../../components/intake/IntakeSelector';
 import type { IntakeType, IntakeSettings, FirmInfo } from '../../../components/intake/IntakeSelector';
 import { ThemeProvider } from '../../../components/ThemeProvider';
 import type { AccentPreset, ThemeMode } from '../../../lib/themePresets';
-import { loadIntake, selectIntakeType } from '../../../../../lib/intake/intakeApi';
+import { loadIntake, selectIntakeType, startIntake } from '../../../../../lib/intake/intakeApi';
 import { globalStyles } from '../../../components/intake/styles';
 
-type FlowPhase = 'landing' | 'loading' | 'selector' | 'chat';
+// Removed 'landing' phase - selector IS now the landing page
+type FlowPhase = 'loading' | 'selector' | 'chat';
 
 type FirmConfig = {
   firm: FirmInfo & { id: string };
@@ -71,15 +71,18 @@ export default function IntakeStartPage() {
     if (forceNew) {
       window.localStorage.removeItem(storageKey);
       setResumeToken(null);
-      setPhase('landing');
+      // Will trigger intake creation in next effect
+      setPhase('selector');
       return;
     }
 
     const stored = window.localStorage.getItem(storageKey);
     if (stored) {
       setResumeToken(stored);
+      // Will check intake state in next effect
     } else {
-      setPhase('landing');
+      // No token - will create intake in next effect
+      setPhase('selector');
     }
   }, [firmSlug, router.isReady, router.query.new, configLoaded]);
 
@@ -102,24 +105,35 @@ export default function IntakeStartPage() {
         }
       } catch (err) {
         console.error('Failed to load intake:', err);
-        // Token might be invalid, go to landing
+        // Token might be invalid, clear and show selector
         const storageKey = `intake:token:${firmSlug}`;
         window.localStorage.removeItem(storageKey);
         setResumeToken(null);
-        setPhase('landing');
+        setPhase('selector');
       }
     }
 
     checkIntakeState();
   }, [activeToken, firmSlug, phase]);
 
-  // Handle start from landing
-  const handleStart = useCallback((token: string) => {
-    const storageKey = `intake:token:${firmSlug}`;
-    window.localStorage.setItem(storageKey, token);
-    setResumeToken(token);
-    setPhase('selector');
-  }, [firmSlug]);
+  // Auto-create intake when in selector phase without token
+  useEffect(() => {
+    if (phase !== 'selector' || activeToken) return;
+
+    async function createIntake() {
+      try {
+        const result = await startIntake({ firmSlug });
+        const storageKey = `intake:token:${firmSlug}`;
+        window.localStorage.setItem(storageKey, result.token);
+        setResumeToken(result.token);
+      } catch (err) {
+        console.error('Failed to create intake:', err);
+        setError('Unable to start intake. Please try again.');
+      }
+    }
+
+    createIntake();
+  }, [phase, activeToken, firmSlug]);
 
   // Handle intake type selection
   const handleSelectType = useCallback(async (intakeType: IntakeType) => {
@@ -180,15 +194,7 @@ export default function IntakeStartPage() {
   // Wrap content with ThemeProvider
   return (
     <ThemeProvider defaultTheme={themeDefault} accentPreset={accentPreset}>
-      {/* Landing Phase (No token) */}
-      {phase === 'landing' && (
-        <IntakeLanding
-          firmSlug={firmSlug}
-          firmName={firmConfig?.firm?.name}
-          onStart={handleStart}
-        />
-      )}
-
+      {/* Selector is now the landing page - no separate landing phase */}
       {/* Loading Phase */}
       {phase === 'loading' && (
         <>
