@@ -109,14 +109,14 @@ export function useIntakeSession(options: UseIntakeSessionOptions) {
         applyLoad(loaded);
         return startResult;
       } catch (err) {
-      if (err && typeof err === 'object' && 'requestId' in err && typeof err.requestId === 'string') {
-        setError({ message: 'Unable to start intake. Please try again.', requestId: err.requestId });
-      } else {
-        setError({ message: err instanceof Error ? err.message : 'Unable to start intake' });
-      }
-      throw err;
-    } finally {
-      setLoading(false);
+        if (err && typeof err === 'object' && 'requestId' in err && typeof err.requestId === 'string') {
+          setError({ message: 'Unable to start intake. Please try again.', requestId: err.requestId });
+        } else {
+          setError({ message: err instanceof Error ? err.message : 'Unable to start intake' });
+        }
+        throw err;
+      } finally {
+        setLoading(false);
       }
     },
     [applyLoad, firmSlug],
@@ -192,7 +192,7 @@ export function useIntakeSession(options: UseIntakeSessionOptions) {
     }
 
     setLoading(true);
-      setError(null);
+    setError(null);
     try {
       const result = await saveIntake({
         token,
@@ -306,6 +306,27 @@ export function useIntakeSession(options: UseIntakeSessionOptions) {
     }
   }, [intake, payload, token]);
 
+  // Update orchestrator state from chat API response (immediate, no DB reload)
+  const updateOrchestratorState = useCallback((orchestrator: {
+    intakeType: string;
+    currentStep: string;
+    completedSteps: string[];
+    completionPercent: number;
+    readyForReview: boolean;
+    stepStatus: Record<string, { status: string; missing?: string[] }>;
+  }) => {
+    setIntake((prev) => {
+      if (!prev) return prev;
+      // Create new object reference to trigger React re-render
+      return {
+        ...prev,
+        current_step_key: orchestrator.currentStep,
+        completed_step_keys: orchestrator.completedSteps,
+        step_status: orchestrator.stepStatus,
+      };
+    });
+  }, []);
+
   return {
     token,
     setToken,
@@ -326,5 +347,6 @@ export function useIntakeSession(options: UseIntakeSessionOptions) {
     queueMessages,
     queueDocuments,
     flushPending,
+    updateOrchestratorState,
   };
 }

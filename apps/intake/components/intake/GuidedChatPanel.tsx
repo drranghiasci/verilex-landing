@@ -24,6 +24,14 @@ type GuidedChatPanelProps = {
   onSaveMessages: (messages: IntakeMessage[]) => Promise<void>;
   onJumpToField: (fieldKey: string) => void;
   onRefresh?: () => void;
+  onOrchestratorUpdate?: (orchestrator: {
+    intakeType: string;
+    currentStep: string;
+    completedSteps: string[];
+    completionPercent: number;
+    readyForReview: boolean;
+    stepStatus: Record<string, { status: string; missing?: string[] }>;
+  }) => void;
   // Review mode props
   reviewMode?: boolean;
   intake?: IntakeRecord | null;
@@ -44,6 +52,7 @@ export default function GuidedChatPanel({
   disabled,
   onSaveMessages,
   onRefresh,
+  onOrchestratorUpdate,
   // Review mode props
   reviewMode = false,
   intake,
@@ -193,6 +202,11 @@ export default function GuidedChatPanel({
 
       if (data.updates && Object.keys(data.updates).length > 0) {
         onRefresh?.();
+      }
+
+      // Update orchestrator state for sidebar (immediate, no reload)
+      if (data.orchestrator) {
+        onOrchestratorUpdate?.(data.orchestrator);
       }
 
       setStatus('saved');

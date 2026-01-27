@@ -82,6 +82,7 @@ export default function IntakeFlow({
     updateField,
     queueMessages,
     flushPending,
+    updateOrchestratorState,
   } = useIntakeSession({
     firmSlug,
     token: initialToken,
@@ -676,6 +677,7 @@ export default function IntakeFlow({
                 firmName={firm?.firm_name}
                 disabled={isLocked || loading}
                 onRefresh={() => load(token!)}
+                onOrchestratorUpdate={updateOrchestratorState}
                 // Chat-native review props
                 reviewMode={status === 'ready_for_review' || status === 'submitted'}
                 intake={intake}
