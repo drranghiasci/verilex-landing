@@ -10,6 +10,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { orchestrateDivorceWithChildrenIntake } from '../core/divorce_with_children.orchestrator';
+import { buildSidebarSteps } from '../registry';
 
 describe('Divorce With Children Orchestrator', () => {
     // =========================================================================
@@ -281,6 +282,80 @@ describe('Divorce With Children Orchestrator', () => {
             expect(childDetailsUi?.status).toBe('complete');
             // Custody should be current
             expect(custodyUi?.status).toBe('current');
+        });
+    });
+
+    // =========================================================================
+    // Fix #5: Registry Sidebar Step Building (Frontend Path)
+    // =========================================================================
+    describe('Fix #5: Registry Sidebar Building', () => {
+        it('should build correct sidebar steps from orchestrator output', () => {
+
+            const result = orchestrateDivorceWithChildrenIntake({
+                urgency_level: 'standard',
+                intake_channel: 'chat',
+                client_first_name: 'Test',
+                client_last_name: 'Client',
+                client_dob: '1990-01-01',
+                client_phone: '555-123-4567',
+                client_email: 'test@example.com',
+                client_address: '123 Main St, Atlanta, GA 30301',
+                client_county: 'Fulton',
+                opposing_first_name: 'Other',
+                opposing_last_name: 'Party',
+                opposing_address_known: false,
+                service_concerns: 'none',
+                date_of_marriage: '2015-06-15',
+                place_of_marriage: 'Atlanta, GA',
+                currently_cohabitating: true,
+                grounds_for_divorce: 'irreconcilable',
+                reconciliation_attempted: false,
+                has_minor_children: true,
+                children_count: 1,
+                child_full_name: ['Teddy Smith'],
+                child_dob: ['2020-01-01'],
+                child_current_residence: ['with_client'],
+                // Detail fields missing - should be on child_object
+            });
+
+            // Build stepStatus record from schemaSteps (same as load.ts does)
+            const stepStatus = Object.fromEntries(
+                result.schemaSteps.map((s) => [s.key, {
+                    status: s.status,
+                    missing: s.missingFields,
+                    errors: s.validationErrors,
+                }])
+            );
+
+            // Build sidebar steps (same as frontend does)
+            const sidebarSteps = buildSidebarSteps(
+                'divorce_with_children',
+                result.currentSchemaStep,
+                stepStatus
+            );
+
+            // Find Children and Child Details steps
+            const childrenStep = sidebarSteps.find((s: { id: string }) => s.id === 'children_gate');
+            const childDetailsStep = sidebarSteps.find((s: { id: string }) => s.id === 'children_details');
+            const custodyStep = sidebarSteps.find((s: { id: string }) => s.id === 'custody');
+
+            console.log('[Test] stepStatus children_gate:', stepStatus['children_gate']);
+            console.log('[Test] stepStatus child_object:', stepStatus['child_object']);
+            console.log('[Test] sidebarSteps Children:', childrenStep);
+            console.log('[Test] sidebarSteps Child Details:', childDetailsStep);
+
+            // Children step should be complete (seed fields provided)
+            expect(childrenStep?.isCompleted).toBe(true);
+            expect(childrenStep?.label).toBe('Children');
+
+            // Child Details step should NOT be complete (detail fields missing)
+            expect(childDetailsStep?.isCompleted).toBe(false);
+            expect(childDetailsStep?.isActive).toBe(true); // Current step
+            expect(childDetailsStep?.label).toBe('Child Details');
+
+            // Custody should not be active yet
+            expect(custodyStep?.isActive).toBe(false);
+            expect(custodyStep?.isCompleted).toBe(false);
         });
     });
 });
