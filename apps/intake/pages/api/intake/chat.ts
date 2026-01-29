@@ -285,6 +285,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                 evidence_support_level: 'none',
                                 contradiction_flag: false,
                             });
+
+                            // DEBUG: Log spouse address fields to diagnose completion issues
+                            if (args.field.startsWith('opposing_')) {
+                                console.log('[CHAT] Spouse field recorded:', {
+                                    field: args.field,
+                                    rawValue: args.value,
+                                    parsedValue,
+                                });
+                            }
                         } else if (name === 'request_document_upload') {
                             documentRequest = {
                                 type: args.documentType,
@@ -347,6 +356,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     updatedFields: Object.keys(updates),
                     readyForReview: newOrchestratorResult.readyForReview,
                 });
+
+                // DEBUG: Log opposing_party step status for spouse completion diagnosis
+                const opposingPartyStep = newOrchestratorResult.schemaSteps.find(s => s.key === 'opposing_party');
+                if (opposingPartyStep) {
+                    console.log('[ORCHESTRATOR] opposing_party status:', {
+                        status: opposingPartyStep.status,
+                        missing: opposingPartyStep.missingFields,
+                    });
+                }
             }
 
             // 10. If no text response, do second turn for tool confirmation
