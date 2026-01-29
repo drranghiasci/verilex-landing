@@ -142,6 +142,66 @@ describe('Divorce With Children Orchestrator', () => {
             expect(opposingStep?.missingFields).toContain('opposing_last_known_address');
             expect(result.currentSchemaStep).toBe('opposing_party');
         });
+
+        it('should complete Spouse sidebar step when opposing_party completes with same-address=true', () => {
+            // Helper to simulate assertion wrapping like the chat API does
+            const wrap = (value: unknown) => ({
+                assertion_value: value,
+                asserted_by: 'client',
+                source_type: 'chat',
+                transcript_reference: null,
+                evidence_support_level: 'none',
+                contradiction_flag: false,
+                recorded_at: new Date().toISOString(),
+            });
+
+            // Simulate what the chat API actually saves (with assertion wrappers)
+            const result = orchestrateDivorceWithChildrenIntake({
+                urgency_level: wrap('standard'),
+                intake_channel: wrap('chat'),
+                client_first_name: wrap('Test'),
+                client_last_name: wrap('Client'),
+                client_dob: wrap('1990-01-01'),
+                client_phone: wrap('555-123-4567'),
+                client_email: wrap('test@example.com'),
+                client_address: wrap('123 Main St, Atlanta, GA 30301'),
+                client_county: wrap('Fulton'),
+                opposing_first_name: wrap('Other'),
+                opposing_last_name: wrap('Party'),
+                opposing_address_same_as_client: wrap(true), // WRAPPED boolean
+                service_concerns: wrap('none'),
+            });
+
+            // Verify opposing_party step is complete
+            const opposingStep = result.schemaSteps.find(s => s.key === 'opposing_party');
+            console.log('[Test] opposing_party step:', {
+                status: opposingStep?.status,
+                missing: opposingStep?.missingFields,
+            });
+
+            expect(opposingStep?.status).toBe('complete');
+            expect(opposingStep?.missingFields).toHaveLength(0);
+
+            // Build sidebar and verify "Spouse" step is complete
+            const stepStatus = Object.fromEntries(
+                result.schemaSteps.map(s => [s.key, {
+                    status: s.status,
+                    missing: s.missingFields,
+                    errors: s.validationErrors,
+                }])
+            );
+
+            const sidebarSteps = buildSidebarSteps(
+                'divorce_with_children',
+                result.currentSchemaStep,
+                stepStatus
+            );
+
+            const spouseStep = sidebarSteps.find(s => s.label === 'Spouse');
+            console.log('[Test] Spouse sidebar step:', spouseStep);
+
+            expect(spouseStep?.isCompleted).toBe(true);
+        });
     });
 
     // =========================================================================
