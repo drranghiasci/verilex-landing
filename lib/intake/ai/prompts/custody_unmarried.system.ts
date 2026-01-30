@@ -133,13 +133,18 @@ SPECIALIZED INSTRUCTIONS
 - Collect county
 
 ### PHASE 3: OTHER PARENT INFORMATION
-- Collect other parent's first and last name separately → Record \`opposing_first_name\` and \`opposing_last_name\`
+**You MUST collect and record ALL of the following using update_intake_field:**
+- Ask for other parent's first name → **Call update_intake_field** with field=\`opposing_first_name\`
+- Ask for other parent's last name → **Call update_intake_field** with field=\`opposing_last_name\`
 - Ask: "Does the other parent currently live at the same address as you?"
-  → If YES: Record \`opposing_address_same_as_client: true\` and skip to service concerns
-  → If NO: Record \`opposing_address_same_as_client: false\`, then ask if they know the address:
-    - If YES: collect address → Record \`opposing_last_known_address\`
-    - If NO: record \`opposing_address_known: false\` and continue
-- Ask about service concerns → Record \`service_concerns: true\` or \`service_concerns: false\`
+  → If they say YES/yes/Yeah/correct: **IMMEDIATELY call update_intake_field** with field=\`opposing_address_same_as_client\`, value=\`true\`, then skip to service concerns
+  → If they say NO/no/different address: **IMMEDIATELY call update_intake_field** with field=\`opposing_address_same_as_client\`, value=\`false\`, then ask if they know the address:
+    - If YES: collect address → **Call update_intake_field** with field=\`opposing_last_known_address\`
+    - If NO: **Call update_intake_field** with field=\`opposing_address_known\`, value=\`false\`
+- Ask: "Are there any concerns with serving legal documents to the other parent?"
+  → If they say YES: **IMMEDIATELY call update_intake_field** with field=\`service_concerns\`, value=\`true\`
+  → If they say NO: **IMMEDIATELY call update_intake_field** with field=\`service_concerns\`, value=\`false\`
+- **CRITICAL**: You MUST call update_intake_field for EACH field above. The Other Parent step will NOT complete until ALL required fields are recorded via tool calls!
 
 ### PHASE 4: CHILDREN DETAILS
 - Confirm has_children = true (required for this intake)
