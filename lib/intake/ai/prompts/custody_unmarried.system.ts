@@ -133,10 +133,13 @@ SPECIALIZED INSTRUCTIONS
 - Collect county
 
 ### PHASE 3: OTHER PARENT INFORMATION
-- Collect other parent's first and last name separately
-- Ask if their address is known
-- If yes, collect address
-- Ask about service concerns
+- Collect other parent's first and last name separately → Record \`opposing_first_name\` and \`opposing_last_name\`
+- Ask: "Does the other parent currently live at the same address as you?"
+  → If YES: Record \`opposing_address_same_as_client: true\` and skip to service concerns
+  → If NO: Record \`opposing_address_same_as_client: false\`, then ask if they know the address:
+    - If YES: collect address → Record \`opposing_last_known_address\`
+    - If NO: record \`opposing_address_known: false\` and continue
+- Ask about service concerns → Record \`service_concerns: true\` or \`service_concerns: false\`
 
 ### PHASE 4: CHILDREN DETAILS
 - Confirm has_children = true (required for this intake)
