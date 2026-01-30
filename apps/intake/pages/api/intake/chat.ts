@@ -278,6 +278,48 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                 parsedValue = parseInt(args.value, 10);
                             }
 
+                            // STATE CODE NORMALIZATION for child_home_state
+                            // Convert full state names to 2-letter codes (Georgia → GA)
+                            if (args.field === 'child_home_state' && typeof parsedValue === 'string') {
+                                const stateCodeMap: Record<string, string> = {
+                                    'alabama': 'AL', 'alaska': 'AK', 'arizona': 'AZ', 'arkansas': 'AR',
+                                    'california': 'CA', 'colorado': 'CO', 'connecticut': 'CT', 'delaware': 'DE',
+                                    'florida': 'FL', 'georgia': 'GA', 'hawaii': 'HI', 'idaho': 'ID',
+                                    'illinois': 'IL', 'indiana': 'IN', 'iowa': 'IA', 'kansas': 'KS',
+                                    'kentucky': 'KY', 'louisiana': 'LA', 'maine': 'ME', 'maryland': 'MD',
+                                    'massachusetts': 'MA', 'michigan': 'MI', 'minnesota': 'MN', 'mississippi': 'MS',
+                                    'missouri': 'MO', 'montana': 'MT', 'nebraska': 'NE', 'nevada': 'NV',
+                                    'new hampshire': 'NH', 'new jersey': 'NJ', 'new mexico': 'NM', 'new york': 'NY',
+                                    'north carolina': 'NC', 'north dakota': 'ND', 'ohio': 'OH', 'oklahoma': 'OK',
+                                    'oregon': 'OR', 'pennsylvania': 'PA', 'rhode island': 'RI', 'south carolina': 'SC',
+                                    'south dakota': 'SD', 'tennessee': 'TN', 'texas': 'TX', 'utah': 'UT',
+                                    'vermont': 'VT', 'virginia': 'VA', 'washington': 'WA', 'west virginia': 'WV',
+                                    'wisconsin': 'WI', 'wyoming': 'WY', 'district of columbia': 'DC',
+                                };
+                                const normalized = parsedValue.trim().toLowerCase();
+                                if (stateCodeMap[normalized]) {
+                                    parsedValue = stateCodeMap[normalized];
+                                    console.log('[CHAT] State normalized:', { original: args.value, normalized: parsedValue });
+                                } else if (/^[A-Za-z]{2}$/.test(parsedValue.trim())) {
+                                    // Already a 2-letter code, uppercase it
+                                    parsedValue = parsedValue.trim().toUpperCase();
+                                }
+                            }
+
+                            // MONTHS EXTRACTION for time_in_home_state_months
+                            // Extract first numeric value from text like "his whole life to about 30 months"
+                            if (args.field === 'time_in_home_state_months' && typeof parsedValue === 'string') {
+                                const monthMatch = parsedValue.match(/(\d+)/);
+                                if (monthMatch) {
+                                    const extractedMonths = parseInt(monthMatch[1], 10);
+                                    console.log('[CHAT] Months extracted:', { original: args.value, extracted: extractedMonths });
+                                    parsedValue = extractedMonths;
+                                } else {
+                                    // No number found - log warning but keep original for AI to re-prompt
+                                    console.log('[CHAT] Months extraction failed (no number):', { original: args.value });
+                                }
+                            }
+
                             // ARRAY FIELD HANDLING for repeatable sections (children, assets, debts)
                             // These fields need to be stored as arrays, not single values
                             const arrayFields = [
@@ -463,6 +505,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         child_residence_count: Array.isArray(childResidence) ? childResidence.length : (childResidence ? 1 : 0),
                     });
                 }
+
+                // DEBUG: Log child_object step status for detail field persistence diagnosis
+                const childObjectStep = newOrchestratorResult.schemaSteps.find(s => s.key === 'child_object');
+                if (childObjectStep) {
+                    const biologicalRelation = unwrapAssertion(newPayload.biological_relation);
+                    const childHomeState = unwrapAssertion(newPayload.child_home_state);
+                    const timeInState = unwrapAssertion(newPayload.time_in_home_state_months);
+                    console.log('[ORCHESTRATOR] child_object status:', {
+                        status: childObjectStep.status,
+                        missing: childObjectStep.missingFields,
+                        biological_relation_count: Array.isArray(biologicalRelation) ? biologicalRelation.length : (biologicalRelation ? 1 : 0),
+                        child_home_state_count: Array.isArray(childHomeState) ? childHomeState.length : (childHomeState ? 1 : 0),
+                        time_in_home_state_months_count: Array.isArray(timeInState) ? timeInState.length : (timeInState ? 1 : 0),
+                        child_home_state_values: childHomeState,
+                        time_in_home_state_months_values: timeInState,
+                    });
+                }
             }
 
             // 10. If no text response, do second turn for tool confirmation
@@ -486,6 +545,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     temperature: 0.4,
                 });
                 finalResponse = secondCompletion.choices[0].message.content;
+            }
+        }
+
+        // MOVE-ON GUARD: Prevent AI from claiming completion when orchestrator hasn't advanced
+        // Check if AI response falsely claims to move on while current step still has missing fields
+        const currentStepStatus = orchestratorState.schemaSteps.find(
+            (s) => s.key === orchestratorState.currentSchemaStep
+        );
+        if (finalResponse && currentStepStatus && currentStepStatus.missingFields.length > 0) {
+            // Check for false completion/moving-on claims
+            const moveOnPatterns = [
+                /let'?s move on/i,
+                /moving on/i,
+                /now let'?s/i,
+                /completed?.*(?:step|section)/i,
+                /finished.*(?:step|section)/i,
+                /move to.*(?:custody|assets|finances|safety)/i,
+                /proceed to/i,
+                /we'?ve got.*(?:everything|all.*need)/i,
+            ];
+
+            const hasFalseCompletion = moveOnPatterns.some(pattern => pattern.test(finalResponse!));
+
+            if (hasFalseCompletion) {
+                console.log('[CHAT] MOVE-ON GUARD triggered:', {
+                    currentStep: orchestratorState.currentSchemaStep,
+                    missing: currentStepStatus.missingFields,
+                    originalResponse: finalResponse?.substring(0, 100) + '...',
+                });
+
+                // Replace with correct prompt for remaining fields
+                const stepLabels: Record<string, string> = {
+                    'child_object': "child's details",
+                    'children_gate': "children's information",
+                    'opposing_party': "spouse information",
+                    'custody_preferences': "custody preferences",
+                };
+                const stepLabel = stepLabels[orchestratorState.currentSchemaStep] || orchestratorState.currentSchemaStep;
+
+                finalResponse = `I still need a few more pieces of information for ${stepLabel}. ` +
+                    `Could you please provide: ${currentStepStatus.missingFields.slice(0, 2).join(' and ')}?`;
             }
         }
 
