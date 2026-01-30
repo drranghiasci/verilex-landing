@@ -169,10 +169,13 @@ export const DIVORCE_WITH_CHILDREN_SCHEMA_STEPS: DivorceWithChildrenSchemaStepCo
                     // Skip validation if same as client or address not known
                     if (payload.opposing_address_same_as_client === true) return true;
                     if (payload.opposing_address_known !== true) return true;
+                    // Accept any non-empty string address, only validate ZIP if present
+                    if (!value) return false;
                     const zip = extractZipFromAddress(value);
-                    return zip !== undefined && validateZip(zip);
+                    if (zip === undefined) return true; // No ZIP found, accept
+                    return validateZip(zip);
                 },
-                errorMessage: 'Please enter a valid 5-digit ZIP code for spouse address.',
+                errorMessage: 'If including a ZIP code, please ensure it is a valid 5-digit format.',
             },
         ],
     },

@@ -185,8 +185,11 @@ SPECIALIZED INSTRUCTIONS
 ### PHASE 3: SPOUSE INFO
 - Ask for spouse's first name → Record \`opposing_first_name\`
 - Ask for spouse's last name → Record \`opposing_last_name\`
-- Ask if you know their current address → Record \`opposing_address_known: true\` or \`opposing_address_known: false\`
-  - If yes, ask for the address → Record \`opposing_last_known_address\`
+- Ask: "Does your spouse currently live at the same address as you?"
+  → If YES: Record \`opposing_address_same_as_client: true\` and skip to service concerns
+  → If NO: Record \`opposing_address_same_as_client: false\`, then ask if they know the address:
+    - If YES: collect address → Record \`opposing_last_known_address\` (with ZIP validation)
+    - If NO: record \`opposing_address_known: false\` and continue
 - Ask about any concerns with serving legal documents → Record \`service_concerns: true\` or \`service_concerns: false\`
   - The Spouse step will NOT complete until ALL required fields are recorded!
 

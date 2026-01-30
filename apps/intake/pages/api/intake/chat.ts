@@ -9,7 +9,7 @@ import { transformDivorceNoChildrenSchemaToSystemPrompt } from '../../../../../l
 import { transformDivorceWithChildrenSchemaToSystemPrompt } from '../../../../../lib/intake/ai/prompts/divorce_with_children.system';
 import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schemas/ga/family_law/divorce_custody.v1';
 import type { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources/chat/completions';
-import { wrapAssertion } from '../../../../../lib/intake/assertionTypes';
+import { wrapAssertion, unwrapAssertion } from '../../../../../lib/intake/assertionTypes';
 import { orchestrateIntake, type OrchestratorResult } from '../../../../../lib/intake/orchestrator';
 import { orchestrateCustodyIntake, type CustodyOrchestratorResult } from '../../../../../lib/intake/orchestrator/core/custody_unmarried.orchestrator';
 import { orchestrateDivorceNoChildrenIntake, type DivorceNoChildrenOrchestratorResult } from '../../../../../lib/intake/orchestrator/core/divorce_no_children.orchestrator';
@@ -293,6 +293,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                     rawValue: args.value,
                                     parsedValue,
                                 });
+                            }
+
+                            // SAME-ADDRESS AUTO-POPULATION (Critical for spouse step completion)
+                            // When user confirms spouse lives at same address, auto-populate derived fields
+                            if (args.field === 'opposing_address_same_as_client' && parsedValue === true) {
+                                console.log('[CHAT] Same-address path detected, auto-populating derived fields');
+
+                                // Set opposing_address_known = true (required for spouse step)
+                                updates['opposing_address_known'] = wrapAssertion(true, {
+                                    source_type: 'chat',
+                                    transcript_reference: null,
+                                    evidence_support_level: 'none',
+                                    contradiction_flag: false,
+                                });
+
+                                // Copy client_address to opposing_last_known_address
+                                const clientAddress = unwrapAssertion(payload.client_address);
+                                if (clientAddress && typeof clientAddress === 'string') {
+                                    updates['opposing_last_known_address'] = wrapAssertion(clientAddress, {
+                                        source_type: 'chat',
+                                        transcript_reference: null,
+                                        evidence_support_level: 'none',
+                                        contradiction_flag: false,
+                                    });
+                                    console.log('[CHAT] Auto-populated opposing_last_known_address from client_address:', clientAddress);
+                                }
                             }
                         } else if (name === 'request_document_upload') {
                             documentRequest = {
