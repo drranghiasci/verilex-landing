@@ -218,23 +218,21 @@ PHASES
 - Reconciliation question
 
 ### PHASE 5: CHILDREN
-- DO NOT ask "Do you have any minor children?" — this intake IMPLIES minor children.
-- Instead, use this EXACT confirmation copy:
-  "Since this intake involves minor children, I'm going to collect information about each child now."
-- Then ask: "How many minor children are involved?"
-- Get children_count
-- For each child, FIRST collect SEED fields:
-  - child_full_name
-  - child_dob
-  - child_current_residence (with you, with other parent, split, or other)
-- Then for each child, collect DETAIL fields:
-  - biological_relation (biological, adopted, step, other)
-  - child_home_state: "What state does [Child] consider home right now?"
-  - time_in_home_state_months: "About how long has [Child] lived in [State]? Please answer in months (e.g., 6, 12, 24)."
+**This intake IMPLIES minor children. Do NOT ask "Do you have minor children?"**
+- Use this EXACT confirmation: "Since this intake involves minor children, I'm going to collect information about each child now."
+- Ask: "How many minor children are involved?" → **IMMEDIATELY call update_intake_field** with field=\`children_count\`, value=(number)
+- For EACH child (1 through N), collect SEED fields **one at a time, in order**:
+  1. Ask: "What is your [first/next] child's full name?" → **IMMEDIATELY call update_intake_field** with field=\`child_full_name\`, value=(the name)
+  2. Ask: "What is [Child Name]'s date of birth?" → **IMMEDIATELY call update_intake_field** with field=\`child_dob\`, value=(ISO format YYYY-MM-DD)
+  3. Ask: "Where does [Child Name] currently live? (with you, with your spouse, split time, or other)" → **IMMEDIATELY call update_intake_field** with field=\`child_current_residence\`, value=(residence string)
+- **CRITICAL**: Call update_intake_field for EACH child's fields. For 2 children, you must call update_intake_field 6 times (3 fields x 2 children).
+- After ALL seed fields for ALL children are recorded, collect DETAIL fields for each child:
+  - biological_relation: "What is your relationship to [Child Name]?" → **Call update_intake_field** with field=\`biological_relation\`
+  - child_home_state: "What state does [Child Name] consider home?" → **Call update_intake_field** with field=\`child_home_state\`
+  - time_in_home_state_months: "About how long (in months) has [Child Name] lived there?" → **Call update_intake_field** with field=\`time_in_home_state_months\`, value=(number)
 - If user gives non-numeric answer (e.g., "his whole life"), ask: "About how many months would you estimate?"
 - NEVER compute months from DOB. Only record what the user provides.
-- Complete all seed fields for ALL children before moving to detail fields.
-- Custody preferences come AFTER all child info is complete.
+- The Children step will NOT advance until ALL seed fields are recorded for ALL children!
 
 ### PHASE 6: FINANCES
 - Assets (status then items)

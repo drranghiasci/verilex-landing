@@ -100,9 +100,11 @@ function hasValue(value: unknown): boolean {
 }
 
 function toArray(value: unknown): unknown[] {
-    if (Array.isArray(value)) return value;
-    if (value === undefined || value === null || value === '') return [];
-    return [value];
+    // First unwrap assertion if wrapped
+    const unwrapped = unwrapValue(value);
+    if (Array.isArray(unwrapped)) return unwrapped;
+    if (unwrapped === undefined || unwrapped === null || unwrapped === '') return [];
+    return [unwrapped];
 }
 
 function getGatingFieldValue(gatingKey: keyof typeof GATING_FIELDS, payload: Payload): boolean | undefined {

@@ -278,13 +278,69 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                 parsedValue = parseInt(args.value, 10);
                             }
 
-                            // Wrap with assertion metadata for provenance
-                            updates[args.field] = wrapAssertion(parsedValue, {
-                                source_type: 'chat',
-                                transcript_reference: null,
-                                evidence_support_level: 'none',
-                                contradiction_flag: false,
-                            });
+                            // ARRAY FIELD HANDLING for repeatable sections (children, assets, debts)
+                            // These fields need to be stored as arrays, not single values
+                            const arrayFields = [
+                                // Children seed fields
+                                'child_full_name',
+                                'child_dob',
+                                'child_current_residence',
+                                // Children detail fields
+                                'biological_relation',
+                                'child_home_state',
+                                'time_in_home_state_months',
+                                // Asset fields
+                                'asset_type',
+                                'ownership',
+                                'estimated_value',
+                                'title_holder',
+                                'acquired_pre_marriage',
+                                // Debt fields
+                                'debt_type',
+                                'debt_amount',
+                                'responsible_party',
+                            ];
+
+                            if (arrayFields.includes(args.field)) {
+                                // Get existing array from payload or updates
+                                const existingFromPayload = payload[args.field];
+                                const existingFromUpdates = updates[args.field];
+
+                                // Unwrap existing values to get raw array
+                                let existingArray: unknown[] = [];
+                                if (existingFromUpdates) {
+                                    const unwrapped = unwrapAssertion(existingFromUpdates);
+                                    existingArray = Array.isArray(unwrapped) ? unwrapped : [unwrapped];
+                                } else if (existingFromPayload) {
+                                    const unwrapped = unwrapAssertion(existingFromPayload);
+                                    existingArray = Array.isArray(unwrapped) ? unwrapped : [unwrapped];
+                                }
+
+                                // Append new value to array
+                                existingArray.push(parsedValue);
+
+                                // Wrap the entire array as assertion
+                                updates[args.field] = wrapAssertion(existingArray, {
+                                    source_type: 'chat',
+                                    transcript_reference: null,
+                                    evidence_support_level: 'none',
+                                    contradiction_flag: false,
+                                });
+
+                                console.log('[CHAT] Array field appended:', {
+                                    field: args.field,
+                                    newValue: parsedValue,
+                                    arrayLength: existingArray.length,
+                                });
+                            } else {
+                                // Regular single-value field - wrap with assertion metadata
+                                updates[args.field] = wrapAssertion(parsedValue, {
+                                    source_type: 'chat',
+                                    transcript_reference: null,
+                                    evidence_support_level: 'none',
+                                    contradiction_flag: false,
+                                });
+                            }
 
                             // DEBUG: Log spouse address fields to diagnose completion issues
                             if (args.field.startsWith('opposing_')) {
@@ -389,6 +445,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     console.log('[ORCHESTRATOR] opposing_party status:', {
                         status: opposingPartyStep.status,
                         missing: opposingPartyStep.missingFields,
+                    });
+                }
+
+                // DEBUG: Log children_gate step status for child persistence diagnosis
+                const childrenGateStep = newOrchestratorResult.schemaSteps.find(s => s.key === 'children_gate');
+                if (childrenGateStep) {
+                    const childFullName = unwrapAssertion(newPayload.child_full_name);
+                    const childDob = unwrapAssertion(newPayload.child_dob);
+                    const childResidence = unwrapAssertion(newPayload.child_current_residence);
+                    console.log('[ORCHESTRATOR] children_gate status:', {
+                        status: childrenGateStep.status,
+                        missing: childrenGateStep.missingFields,
+                        children_count: unwrapAssertion(newPayload.children_count),
+                        child_full_name_count: Array.isArray(childFullName) ? childFullName.length : (childFullName ? 1 : 0),
+                        child_dob_count: Array.isArray(childDob) ? childDob.length : (childDob ? 1 : 0),
+                        child_residence_count: Array.isArray(childResidence) ? childResidence.length : (childResidence ? 1 : 0),
                     });
                 }
             }
