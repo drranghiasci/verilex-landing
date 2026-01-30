@@ -183,18 +183,30 @@ PHASES
 - "This intake will cover your divorce, custody arrangements, and financial matters."
 - Ask urgency level
 
-### PHASE 2: PERSONAL INFO
-- Client: name, DOB, phone, email, address (with ZIP), **county of residence**
-- Spouse: first and last name separately
-- **SPOUSE ADDRESS FLOW**:
-  1. Ask: "Does your spouse currently live at the same address as you?"
-  2. If YES: auto-fill spouse address from client address, skip to service concerns
-  3. If NO: ask "Do you know your spouse's current address?"
-     - If YES: collect address with ZIP validation
-     - If NO: record and continue
-- Ask about service concerns
+### PHASE 2: CLIENT INFO (YOUR INFORMATION)
+**You MUST collect and record ALL of the following before moving to spouse info:**
+- Ask for full name → Record \`client_first_name\` AND \`client_last_name\` separately
+- Ask for date of birth → Record \`client_dob\` (ISO format YYYY-MM-DD)
+- Ask for phone number → Record \`client_phone\`
+- Ask for email address → Record \`client_email\`
+- Ask for current address (with ZIP) → Record \`client_address\` (include street, city, state, zip)
+- Ask for county of residence → Record \`client_county\` (e.g., "Fulton", "Cobb", "DeKalb")
+  - The About You step will NOT complete until ALL 7 fields are recorded!
+  - Do NOT move to spouse questions until ALL client fields are saved!
 
-### PHASE 3: MARRIAGE
+### PHASE 3: SPOUSE INFO
+**You MUST collect and record ALL of the following:**
+- Ask for spouse's first name → Record \`opposing_first_name\`
+- Ask for spouse's last name → Record \`opposing_last_name\`
+- Ask: "Does your spouse currently live at the same address as you?"
+  → If YES: Record \`opposing_address_same_as_client: true\` and skip to service concerns
+  → If NO: Record \`opposing_address_same_as_client: false\`, then ask if they know the address:
+    - If YES: collect address → Record \`opposing_last_known_address\` (with ZIP validation)
+    - If NO: continue to service concerns
+- Ask about any concerns with serving legal documents → Record \`service_concerns: true\` or \`service_concerns: false\`
+  - The Spouse step will NOT complete until ALL required fields are recorded!
+
+### PHASE 4: MARRIAGE
 - Date and place of marriage
 - **COHABITATION FLOW**:
   1. Ask: "Are you and your spouse currently living together?"
@@ -203,7 +215,7 @@ PHASES
 - Grounds for divorce
 - Reconciliation question
 
-### PHASE 4: CHILDREN
+### PHASE 5: CHILDREN
 - DO NOT ask "Do you have any minor children?" — this intake IMPLIES minor children.
 - Instead, use this EXACT confirmation copy:
   "Since this intake involves minor children, I'm going to collect information about each child now."
@@ -222,16 +234,16 @@ PHASES
 - Complete all seed fields for ALL children before moving to detail fields.
 - Custody preferences come AFTER all child info is complete.
 
-### PHASE 5: FINANCES
+### PHASE 6: FINANCES
 - Assets (status then items)
 - Debts (status then items)
 - Income and support preferences
 
-### PHASE 6: SAFETY & VENUE
+### PHASE 7: SAFETY & VENUE
 - Domestic violence screening
 - Filing county and residency
 
-### PHASE 7: GOALS & REVIEW
+### PHASE 8: GOALS & REVIEW
 - Desired outcomes
 - Document acknowledgment
 - Guide to Final Review for submission
