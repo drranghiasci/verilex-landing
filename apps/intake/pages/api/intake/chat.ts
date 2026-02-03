@@ -307,16 +307,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             }
 
                             // MONTHS EXTRACTION for time_in_home_state_months
-                            // Extract first numeric value from text like "his whole life to about 30 months"
+                            // Handles: "2 years and 6 months" → 30, "3 years" → 36, "18 months" → 18, "30" → 30
                             if (args.field === 'time_in_home_state_months' && typeof parsedValue === 'string') {
-                                const monthMatch = parsedValue.match(/(\d+)/);
+                                let extractedMonths = 0;
+                                let foundTime = false;
+
+                                // Check for years (e.g., "2 years", "two years")
+                                const yearMatch = parsedValue.match(/(\d+)\s*(?:year|yr)s?/i);
+                                if (yearMatch) {
+                                    extractedMonths += parseInt(yearMatch[1], 10) * 12;
+                                    foundTime = true;
+                                }
+
+                                // Check for months (e.g., "6 months", "six months")
+                                const monthMatch = parsedValue.match(/(\d+)\s*(?:month|mo)s?/i);
                                 if (monthMatch) {
-                                    const extractedMonths = parseInt(monthMatch[1], 10);
-                                    console.log('[CHAT] Months extracted:', { original: args.value, extracted: extractedMonths });
+                                    extractedMonths += parseInt(monthMatch[1], 10);
+                                    foundTime = true;
+                                }
+
+                                // Fallback: if no "years" or "months" found, extract first number
+                                if (!foundTime) {
+                                    const rawNumber = parsedValue.match(/(\d+)/);
+                                    if (rawNumber) {
+                                        extractedMonths = parseInt(rawNumber[1], 10);
+                                        foundTime = true;
+                                    }
+                                }
+
+                                if (foundTime && extractedMonths > 0) {
+                                    console.log('[CHAT] Time extracted:', {
+                                        original: args.value,
+                                        extractedMonths,
+                                        formula: yearMatch ? `${yearMatch[1]}y*12${monthMatch ? ` + ${monthMatch[1]}m` : ''}` : `${extractedMonths}m`
+                                    });
                                     parsedValue = extractedMonths;
                                 } else {
                                     // No number found - log warning but keep original for AI to re-prompt
-                                    console.log('[CHAT] Months extraction failed (no number):', { original: args.value });
+                                    console.log('[CHAT] Time extraction failed (no number):', { original: args.value });
                                 }
                             }
 
