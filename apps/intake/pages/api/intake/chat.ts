@@ -740,6 +740,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     'client_county': "What Georgia county do you live in?",
                     // Urgency
                     'urgency_level': "How urgently do you need help with this matter?",
+                    // Referral (marketing attribution)
+                    'referral_source': "How did you hear about the firm? (Google/search, friend/family, referral, social media, or other)",
                 };
 
                 // Get the first missing field's question

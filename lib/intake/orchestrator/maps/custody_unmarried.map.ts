@@ -78,8 +78,8 @@ type CustodyUiStepConfig = {
 export const CUSTODY_SCHEMA_STEPS: CustodySchemaStepConfig[] = [
     {
         key: 'intake_metadata',
-        requiredFields: ['urgency_level', 'intake_channel'],
-        optionalFields: ['referral_source'], // "Where did you hear about us?" - optional marketing attribution
+        requiredFields: ['urgency_level', 'intake_channel', 'referral_source'], // intake_channel is system-set; referral_source is asked
+        optionalFields: [], // All optional fields moved to required or removed
         conditionalRequired: [],
         validations: [],
     },
