@@ -434,6 +434,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             if (Object.keys(updates).length > 0) {
                 const newPayload = { ...payload, ...updates };
 
+                // CHILD_BIND_PROOF: Log exactly what paths/values are being written for child fields
+                const childDetailFields = ['biological_relation', 'child_home_state', 'time_in_home_state_months'];
+                const writtenChildFields = Object.keys(updates).filter(k => childDetailFields.includes(k));
+                if (writtenChildFields.length > 0) {
+                    const childrenCount = unwrapAssertion(newPayload.children_count) || 0;
+                    console.log('[CHILD_BIND_PROOF] Pre-orchestrator field state:', {
+                        intake_id,
+                        intakeMode,
+                        currentSchemaStep: orchestratorState.currentSchemaStep,
+                        children_count: childrenCount,
+                        writtenFields: writtenChildFields,
+                        biological_relation: {
+                            raw: newPayload.biological_relation,
+                            unwrapped: unwrapAssertion(newPayload.biological_relation),
+                            count: Array.isArray(unwrapAssertion(newPayload.biological_relation))
+                                ? (unwrapAssertion(newPayload.biological_relation) as unknown[]).length
+                                : (unwrapAssertion(newPayload.biological_relation) ? 1 : 0),
+                        },
+                        child_home_state: {
+                            raw: newPayload.child_home_state,
+                            unwrapped: unwrapAssertion(newPayload.child_home_state),
+                            count: Array.isArray(unwrapAssertion(newPayload.child_home_state))
+                                ? (unwrapAssertion(newPayload.child_home_state) as unknown[]).length
+                                : (unwrapAssertion(newPayload.child_home_state) ? 1 : 0),
+                        },
+                        time_in_home_state_months: {
+                            raw: newPayload.time_in_home_state_months,
+                            unwrapped: unwrapAssertion(newPayload.time_in_home_state_months),
+                            count: Array.isArray(unwrapAssertion(newPayload.time_in_home_state_months))
+                                ? (unwrapAssertion(newPayload.time_in_home_state_months) as unknown[]).length
+                                : (unwrapAssertion(newPayload.time_in_home_state_months) ? 1 : 0),
+                        },
+                    });
+                }
+
                 // Re-run orchestrator with new payload to get new state (mode-specific!)
                 const newOrchestratorResult = runOrchestrator(intakeMode, newPayload);
 
@@ -553,29 +588,71 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const currentStepStatus = orchestratorState.schemaSteps.find(
             (s) => s.key === orchestratorState.currentSchemaStep
         );
+
+        // CHILD_BIND_POST_ORCH: Log orchestrator result for child_object step
+        if (orchestratorState.currentSchemaStep === 'child_object' ||
+            (currentStepStatus && currentStepStatus.key === 'child_object')) {
+            console.log('[CHILD_BIND_POST_ORCH] Orchestrator result:', {
+                intake_id,
+                currentSchemaStep: orchestratorState.currentSchemaStep,
+                child_object_status: currentStepStatus?.status,
+                child_object_missing: currentStepStatus?.missingFields || [],
+                stepDidAdvance: orchestratorState.currentSchemaStep !== 'child_object',
+            });
+        }
+
         if (finalResponse && currentStepStatus && currentStepStatus.missingFields.length > 0) {
-            // Check for false completion/moving-on claims
+            // Check for false completion/moving-on claims with expanded patterns
             const moveOnPatterns = [
                 /let'?s move on/i,
                 /moving on/i,
                 /now let'?s/i,
-                /completed?.*(?:step|section)/i,
+                /now,?\s+let'?s/i,
+                /completed?.*(?:step|section|details)/i,
                 /finished.*(?:step|section)/i,
                 /move to.*(?:custody|assets|finances|safety)/i,
                 /proceed to/i,
                 /we'?ve got.*(?:everything|all.*need)/i,
+                /thank you.*now/i,
+                /custody preferences/i,           // Direct mention of next step
+                /next section/i,
+                /move on to/i,
+                /that'?s all.*need/i,
+                /great.*(?:now|let'?s)/i,
             ];
 
-            const hasFalseCompletion = moveOnPatterns.some(pattern => pattern.test(finalResponse!));
+            // Also check if response mentions next step name when we're on child_object
+            const nextStepPatterns: Record<string, RegExp[]> = {
+                'child_object': [/custody/i, /parenting/i, /visitation/i],
+                'children_gate': [/child_object/i, /detail/i],
+                'opposing_party': [/marriage/i, /separation/i],
+            };
+            const stepSpecificPatterns = nextStepPatterns[orchestratorState.currentSchemaStep] || [];
+
+            const hasFalseCompletion = moveOnPatterns.some(pattern => pattern.test(finalResponse!)) ||
+                stepSpecificPatterns.some(pattern => pattern.test(finalResponse!));
 
             if (hasFalseCompletion) {
                 console.log('[CHAT] MOVE-ON GUARD triggered:', {
                     currentStep: orchestratorState.currentSchemaStep,
                     missing: currentStepStatus.missingFields,
-                    originalResponse: finalResponse?.substring(0, 100) + '...',
+                    originalResponse: finalResponse?.substring(0, 200) + '...',
+                    matchedPattern: moveOnPatterns.find(p => p.test(finalResponse!))?.toString() ||
+                        stepSpecificPatterns.find(p => p.test(finalResponse!))?.toString(),
                 });
 
-                // Replace with correct prompt for remaining fields
+                // Build human-readable field name mapping
+                const fieldLabels: Record<string, string> = {
+                    'biological_relation': 'your relationship to the child (biological parent, step-parent, etc.)',
+                    'child_home_state': 'the state where the child has lived for the past 6 months',
+                    'time_in_home_state_months': 'how many months the child has lived in that state',
+                };
+
+                const missingLabels = currentStepStatus.missingFields
+                    .slice(0, 2)
+                    .map(f => fieldLabels[f] || f)
+                    .join(' and ');
+
                 const stepLabels: Record<string, string> = {
                     'child_object': "child's details",
                     'children_gate': "children's information",
@@ -584,8 +661,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 };
                 const stepLabel = stepLabels[orchestratorState.currentSchemaStep] || orchestratorState.currentSchemaStep;
 
-                finalResponse = `I still need a few more pieces of information for ${stepLabel}. ` +
-                    `Could you please provide: ${currentStepStatus.missingFields.slice(0, 2).join(' and ')}?`;
+                finalResponse = `I still need a few more pieces of information about your ${stepLabel}. Could you please tell me ${missingLabels}?`;
             }
         }
 
