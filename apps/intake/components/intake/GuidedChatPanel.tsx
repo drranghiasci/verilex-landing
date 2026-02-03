@@ -6,6 +6,7 @@ import ChatReviewMessage from './ChatReviewMessage';
 import type { IntakeMessage, IntakeRecord } from '../../../../lib/intake/intakeApi';
 import { PromptLibrary } from '../../../../lib/intake/guidedChat/promptLibrary';
 import { SchemaDef } from '../../../../lib/intake/schemas/types';
+import { getIntakeUiConfig } from '../../../../lib/intake/ui/intakeUiConfig';
 
 
 type ChatStatus = 'idle' | 'saving' | 'saved' | 'error';
@@ -247,6 +248,17 @@ export default function GuidedChatPanel({
   return (
     <div className="chat-stream">
       <div className="transcript-container">
+        {/* Intake-type specific welcome header - shown until AI responds */}
+        {intakeType && transcript.length === 0 && !isAiTyping && (() => {
+          const config = getIntakeUiConfig(intakeType);
+          return (
+            <div className="welcome-header">
+              <h2 className="welcome-title">{config.welcomeTitle}</h2>
+              <p className="welcome-body">{config.welcomeBody}</p>
+            </div>
+          );
+        })()}
+
         {transcript.map((msg, i) => (
           <ChatMessage
             key={i}
@@ -356,6 +368,29 @@ export default function GuidedChatPanel({
           padding-bottom: 20px;
           display: flex;
           flex-direction: column;
+        }
+
+        .welcome-header {
+          padding: 32px 20px 24px;
+          text-align: center;
+          border-bottom: 1px solid var(--border);
+          margin-bottom: 16px;
+        }
+
+        .welcome-title {
+          font-size: 22px;
+          font-weight: 600;
+          color: var(--text-1);
+          margin: 0 0 8px 0;
+        }
+
+        .welcome-body {
+          font-size: 14px;
+          color: var(--text-2);
+          margin: 0;
+          line-height: 1.5;
+          max-width: 400px;
+          margin: 0 auto;
         }
 
         .typing-indicator {

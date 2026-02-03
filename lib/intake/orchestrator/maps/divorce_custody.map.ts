@@ -116,6 +116,7 @@ export type FieldValidation = {
 export type SchemaStepConfig = {
     key: SchemaStepKey;
     requiredFields: string[];
+    optionalFields?: string[]; // Fields that are collected but don't block step completion
     conditionalRequired: ConditionalRequirement[];
     validations: FieldValidation[];
     /** If set, this step is only required when the gating field is true */
@@ -129,6 +130,7 @@ export const SCHEMA_STEPS: SchemaStepConfig[] = [
     {
         key: 'matter_metadata',
         requiredFields: ['matter_type', 'urgency_level', 'intake_channel', 'has_children', 'assets_present', 'debts_present'],
+        optionalFields: ['referral_source'], // "Where did you hear about us?" - optional marketing attribution
         conditionalRequired: [],
         validations: [],
     },

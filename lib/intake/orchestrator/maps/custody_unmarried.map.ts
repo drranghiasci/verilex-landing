@@ -58,6 +58,7 @@ type FieldValidation = {
 type CustodySchemaStepConfig = {
     key: CustodySchemaStepKey;
     requiredFields: string[];
+    optionalFields?: string[]; // Fields that are collected but don't block step completion
     conditionalRequired: ConditionalRequirement[];
     validations: FieldValidation[];
     isRepeatable?: boolean;
@@ -78,6 +79,7 @@ export const CUSTODY_SCHEMA_STEPS: CustodySchemaStepConfig[] = [
     {
         key: 'intake_metadata',
         requiredFields: ['urgency_level', 'intake_channel'],
+        optionalFields: ['referral_source'], // "Where did you hear about us?" - optional marketing attribution
         conditionalRequired: [],
         validations: [],
     },

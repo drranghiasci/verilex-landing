@@ -102,6 +102,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const payload = (intake.raw_payload ?? {}) as Record<string, unknown>;
         const intakeTypeFromColumn = intake.intake_type as IntakeMode | null;
         const intakeTypeFromPayload = payload.intake_type as IntakeMode | undefined;
+
+        // CRITICAL: intake_type must be set from selector. If missing, this is a bug.
+        if (!intakeTypeFromColumn && !intakeTypeFromPayload) {
+            console.error('[CHAT] CRITICAL: intake_type missing for intake_id=' + intake_id);
+            return res.status(400).json({
+                error: 'Intake type not configured',
+                details: "We're setting up your intake session. Please refresh. If this continues, contact the firm.",
+            });
+        }
+
         const intakeMode: IntakeMode = intakeTypeFromColumn || intakeTypeFromPayload || 'divorce_custody';
 
         // 3.5 FAILSAFE: Auto-set system fields if missing (intake_channel, date_of_intake)
@@ -199,14 +209,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             systemPrompt = transformSchemaToSystemPrompt(GA_DIVORCE_CUSTODY_V1, payload, currentSectionId, missingFields);
         }
 
-        // Log for debugging
-        console.log('[ORCHESTRATOR]', {
-            intake_id,
-            intakeMode,
-            currentSchemaStep,
-            currentSectionId,
-            missingFields: missingFields.slice(0, 5),
-        });
+        // ORCH_TURN Debug logging (behind env flag)
+        const debugOrch = process.env.VERILEX_DEBUG_ORCH === 'true';
+        if (debugOrch) {
+            console.log('[ORCH_TURN]', {
+                intake_id,
+                intakeMode,
+                currentSchemaStep,
+                missingFields: missingFields.slice(0, 5),
+                completionPercent: orchestratorState.totalCompletionPercent,
+                readyForReview: orchestratorState.readyForReview,
+            });
+        }
 
         // Log which section has CURRENT FOCUS in the prompt
         const focusMatch = systemPrompt.match(/Section: ([^\n]+) \*CURRENT FOCUS\*/);
@@ -707,27 +721,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         stepSpecificPatterns.find(p => p.test(finalResponse!))?.toString(),
                 });
 
-                // Build human-readable field name mapping
-                const fieldLabels: Record<string, string> = {
-                    'biological_relation': 'your relationship to the child (biological parent, step-parent, etc.)',
-                    'child_home_state': 'the state where the child has lived for the past 6 months',
-                    'time_in_home_state_months': 'how many months the child has lived in that state',
+                // Map internal field names to natural questions
+                const fieldQuestions: Record<string, string> = {
+                    // Child fields
+                    'biological_relation': "What is your relationship to this child? (biological parent, step-parent, etc.)",
+                    'child_home_state': "What state has this child lived in for the past 6 months?",
+                    'time_in_home_state_months': "How long has this child lived in that state? (years and months is fine)",
+                    'child_full_name': "What is the child's full name?",
+                    'child_dob': "What is the child's date of birth?",
+                    'child_current_residence': "Who does the child currently live with?",
+                    // Client fields
+                    'client_first_name': "What is your first name?",
+                    'client_last_name': "What is your last name?",
+                    'client_dob': "What is your date of birth?",
+                    'client_phone': "What is the best phone number to reach you?",
+                    'client_email': "What is your email address?",
+                    'client_address': "What is your current address? (please include city, state, and ZIP)",
+                    'client_county': "What Georgia county do you live in?",
+                    // Urgency
+                    'urgency_level': "How urgently do you need help with this matter?",
                 };
 
-                const missingLabels = currentStepStatus.missingFields
-                    .slice(0, 2)
-                    .map(f => fieldLabels[f] || f)
-                    .join(' and ');
+                // Get the first missing field's question
+                const firstMissing = currentStepStatus.missingFields[0];
+                const question = fieldQuestions[firstMissing];
 
-                const stepLabels: Record<string, string> = {
-                    'child_object': "child's details",
-                    'children_gate': "children's information",
-                    'opposing_party': "spouse information",
-                    'custody_preferences': "custody preferences",
-                };
-                const stepLabel = stepLabels[orchestratorState.currentSchemaStep] || orchestratorState.currentSchemaStep;
-
-                finalResponse = `I still need a few more pieces of information about your ${stepLabel}. Could you please tell me ${missingLabels}?`;
+                if (question) {
+                    finalResponse = question;
+                } else {
+                    // Fallback: just ask for the field without robotic phrasing
+                    finalResponse = `Could you tell me about ${firstMissing.replace(/_/g, ' ')}?`;
+                }
             }
         }
 

@@ -70,6 +70,7 @@ type FieldValidation = {
 type DivorceNoChildrenSchemaStepConfig = {
     key: DivorceNoChildrenSchemaStepKey;
     requiredFields: string[];
+    optionalFields?: string[]; // Fields that are collected but don't block step completion
     conditionalRequired: ConditionalRequirement[];
     validations: FieldValidation[];
     /** If set, this step requires specific gating to pass */
@@ -94,6 +95,7 @@ export const DIVORCE_NO_CHILDREN_SCHEMA_STEPS: DivorceNoChildrenSchemaStepConfig
     {
         key: 'intake_metadata',
         requiredFields: ['urgency_level', 'intake_channel'],
+        optionalFields: ['referral_source'], // "Where did you hear about us?" - optional marketing attribution
         conditionalRequired: [],
         validations: [],
     },
