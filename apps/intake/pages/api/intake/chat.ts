@@ -104,6 +104,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const intakeTypeFromPayload = payload.intake_type as IntakeMode | undefined;
         const intakeMode: IntakeMode = intakeTypeFromColumn || intakeTypeFromPayload || 'divorce_custody';
 
+        // 3.5 FAILSAFE: Auto-set system fields if missing (intake_channel, date_of_intake)
+        // These should never be asked of the user - they are system-determined
+        let systemFieldsUpdated = false;
+
+        if (!payload.intake_channel) {
+            payload.intake_channel = wrapAssertion('web', {
+                source_type: 'manual', // 'manual' used for system-set fields
+                transcript_reference: null,
+                evidence_support_level: 'none',
+                contradiction_flag: false,
+            });
+            systemFieldsUpdated = true;
+            console.log('[CHAT] Auto-set intake_channel=web (system)');
+        }
+
+        if (!payload.date_of_intake) {
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            payload.date_of_intake = wrapAssertion(today, {
+                source_type: 'manual', // 'manual' used for system-set fields
+                transcript_reference: null,
+                evidence_support_level: 'none',
+                contradiction_flag: false,
+            });
+            systemFieldsUpdated = true;
+            console.log('[CHAT] Auto-set date_of_intake=' + today + ' (system)');
+        }
+
+        // Persist system field updates to DB immediately so they're available for future turns
+        if (systemFieldsUpdated) {
+            await supabaseAdmin
+                .from('intakes')
+                .update({
+                    raw_payload: payload,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', intake_id);
+        }
+
         // 4. Run appropriate orchestrator (SINGLE SOURCE OF TRUTH)
         let currentSchemaStep: string;
         let currentSectionId: string;

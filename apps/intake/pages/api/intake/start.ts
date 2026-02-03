@@ -70,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     firm_id: firm.id,
     status: 'draft',
     raw_payload: {},
-    intake_channel: toStringOrNull(body.intake_channel),
+    intake_channel: toStringOrNull(body.intake_channel) || 'web', // Default to 'web' for web-initiated intakes
     matter_type: toStringOrNull(body.matter_type),
     urgency_level: toStringOrNull(body.urgency_level),
     language_preference: toStringOrNull(body.language_preference),
