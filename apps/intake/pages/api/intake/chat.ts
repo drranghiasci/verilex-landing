@@ -10,6 +10,7 @@ import { transformDivorceWithChildrenSchemaToSystemPrompt } from '../../../../..
 import { GA_DIVORCE_CUSTODY_V1 } from '../../../../../lib/intake/schemas/ga/family_law/divorce_custody.v1';
 import type { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources/chat/completions';
 import { wrapAssertion, unwrapAssertion } from '../../../../../lib/intake/assertionTypes';
+import { getFieldQuestion, sanitizeSchemaKeys } from '../../../../../lib/intake/ai/promptCopyMap';
 import { orchestrateIntake, type OrchestratorResult } from '../../../../../lib/intake/orchestrator';
 import { orchestrateCustodyIntake, type CustodyOrchestratorResult } from '../../../../../lib/intake/orchestrator/core/custody_unmarried.orchestrator';
 import { orchestrateDivorceNoChildrenIntake, type DivorceNoChildrenOrchestratorResult } from '../../../../../lib/intake/orchestrator/core/divorce_no_children.orchestrator';
@@ -360,30 +361,73 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                             // MONTHS EXTRACTION for time_in_home_state_months
                             // Handles: "2 years and 6 months" → 30, "3 years" → 36, "18 months" → 18, "30" → 30
+                            // Also handles: "whole life", "since birth", "always", "entire life"
                             if (args.field === 'time_in_home_state_months' && typeof parsedValue === 'string') {
                                 let extractedMonths = 0;
                                 let foundTime = false;
 
-                                // Check for years (e.g., "2 years", "two years")
-                                const yearMatch = parsedValue.match(/(\d+)\s*(?:year|yr)s?/i);
-                                if (yearMatch) {
-                                    extractedMonths += parseInt(yearMatch[1], 10) * 12;
-                                    foundTime = true;
-                                }
-
-                                // Check for months (e.g., "6 months", "six months")
-                                const monthMatch = parsedValue.match(/(\d+)\s*(?:month|mo)s?/i);
-                                if (monthMatch) {
-                                    extractedMonths += parseInt(monthMatch[1], 10);
-                                    foundTime = true;
-                                }
-
-                                // Fallback: if no "years" or "months" found, extract first number
-                                if (!foundTime) {
-                                    const rawNumber = parsedValue.match(/(\d+)/);
-                                    if (rawNumber) {
-                                        extractedMonths = parseInt(rawNumber[1], 10);
+                                // Check for "whole life" / "since birth" / "always" / "entire life"
+                                const wholeLifePattern = /\b(whole\s*life|entire\s*life|since\s*birth|always|all\s*(their|his|her|my)\s*life|born\s*there)\b/i;
+                                if (wholeLifePattern.test(parsedValue)) {
+                                    // Try to compute from child_dob if available in payload
+                                    const childDob = payload.child_dob;
+                                    let dobValue: string | undefined;
+                                    if (childDob) {
+                                        // Unwrap if assertion-wrapped
+                                        if (typeof childDob === 'object' && childDob !== null && 'assertion_value' in (childDob as Record<string, unknown>)) {
+                                            dobValue = (childDob as Record<string, unknown>).assertion_value as string;
+                                        } else if (typeof childDob === 'string') {
+                                            dobValue = childDob;
+                                        } else if (Array.isArray(childDob) && childDob.length > 0) {
+                                            // Use the latest child's DOB for array fields
+                                            const lastDob = childDob[childDob.length - 1];
+                                            if (typeof lastDob === 'object' && lastDob !== null && 'assertion_value' in (lastDob as Record<string, unknown>)) {
+                                                dobValue = (lastDob as Record<string, unknown>).assertion_value as string;
+                                            } else if (typeof lastDob === 'string') {
+                                                dobValue = lastDob;
+                                            }
+                                        }
+                                    }
+                                    if (dobValue) {
+                                        const dobDate = new Date(dobValue);
+                                        if (!isNaN(dobDate.getTime())) {
+                                            const now = new Date();
+                                            extractedMonths = (now.getFullYear() - dobDate.getFullYear()) * 12 + (now.getMonth() - dobDate.getMonth());
+                                            if (extractedMonths < 1) extractedMonths = 1;
+                                            foundTime = true;
+                                            console.log('[CHAT] "Whole life" duration computed from DOB:', { dob: dobValue, months: extractedMonths });
+                                        }
+                                    }
+                                    if (!foundTime) {
+                                        // No DOB available; use sentinel that the orchestrator accepts
+                                        extractedMonths = 999;
                                         foundTime = true;
+                                        console.log('[CHAT] "Whole life" duration: no DOB available, using sentinel 999');
+                                    }
+                                }
+
+                                // Check for years (e.g., "2 years", "two years")
+                                if (!foundTime) {
+                                    const yearMatch = parsedValue.match(/(\d+)\s*(?:year|yr)s?/i);
+                                    if (yearMatch) {
+                                        extractedMonths += parseInt(yearMatch[1], 10) * 12;
+                                        foundTime = true;
+                                    }
+
+                                    // Check for months (e.g., "6 months", "six months")
+                                    const monthMatch = parsedValue.match(/(\d+)\s*(?:month|mo)s?/i);
+                                    if (monthMatch) {
+                                        extractedMonths += parseInt(monthMatch[1], 10);
+                                        foundTime = true;
+                                    }
+
+                                    // Fallback: if no "years" or "months" found, extract first number
+                                    if (!foundTime) {
+                                        const rawNumber = parsedValue.match(/(\d+)/);
+                                        if (rawNumber) {
+                                            extractedMonths = parseInt(rawNumber[1], 10);
+                                            foundTime = true;
+                                        }
                                     }
                                 }
 
@@ -391,7 +435,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                     console.log('[CHAT] Time extracted:', {
                                         original: args.value,
                                         extractedMonths,
-                                        formula: yearMatch ? `${yearMatch[1]}y*12${monthMatch ? ` + ${monthMatch[1]}m` : ''}` : `${extractedMonths}m`
                                     });
                                     parsedValue = extractedMonths;
                                 } else {
@@ -721,40 +764,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         stepSpecificPatterns.find(p => p.test(finalResponse!))?.toString(),
                 });
 
-                // Map internal field names to natural questions
-                const fieldQuestions: Record<string, string> = {
-                    // Child fields
-                    'biological_relation': "What is your relationship to this child? (biological parent, step-parent, etc.)",
-                    'child_home_state': "What state has this child lived in for the past 6 months?",
-                    'time_in_home_state_months': "How long has this child lived in that state? (years and months is fine)",
-                    'child_full_name': "What is the child's full name?",
-                    'child_dob': "What is the child's date of birth?",
-                    'child_current_residence': "Who does the child currently live with?",
-                    // Client fields
-                    'client_first_name': "What is your first name?",
-                    'client_last_name': "What is your last name?",
-                    'client_dob': "What is your date of birth?",
-                    'client_phone': "What is the best phone number to reach you?",
-                    'client_email': "What is your email address?",
-                    'client_address': "What is your current address? (please include city, state, and ZIP)",
-                    'client_county': "What Georgia county do you live in?",
-                    // Urgency
-                    'urgency_level': "How urgently do you need help with this matter?",
-                    // Referral (marketing attribution)
-                    'referral_source': "How did you hear about the firm? (Google/search, friend/family, referral, social media, or other)",
-                };
-
-                // Get the first missing field's question
+                // Use centralized prompt copy map (no inline field questions)
                 const firstMissing = currentStepStatus.missingFields[0];
-                const question = fieldQuestions[firstMissing];
-
-                if (question) {
-                    finalResponse = question;
-                } else {
-                    // Fallback: just ask for the field without robotic phrasing
-                    finalResponse = `Could you tell me about ${firstMissing.replace(/_/g, ' ')}?`;
-                }
+                finalResponse = getFieldQuestion(firstMissing);
             }
+        }
+
+        // SCHEMA SANITIZER: Strip any leaked schema keys from AI response
+        if (finalResponse) {
+            finalResponse = sanitizeSchemaKeys(finalResponse);
         }
 
         const safetyTrigger = finalResponse?.includes('WARNING: 911') || false;
