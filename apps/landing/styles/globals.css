@@ -1,60 +1,364 @@
-/* styles/globals.css ------------------------------------------------------ */
+/* styles/globals.css — VeriLex Premium Design System v2 */
 
-/* Tailwind v4: one import boots everything */
+/* Tailwind v4 */
 @import "tailwindcss";
 
-/* ---------- Theme tokens ---------- */
+/* ========================================================================== */
+/* TYPOGRAPHY — Inter from Google Fonts                                       */
+/* ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;700&display=swap');
+
+/* ========================================================================== */
+/* DESIGN TOKENS                                                              */
+/* ========================================================================== */
+
 :root {
-  /* Gradient (light) — stronger violet */
-  --g1: #faf7ff;   /* near-white lavender */
-  --g2: #e9d5ff;   /* violet-200 */
-  --g3: #c4b5fd;   /* violet-300 */
+  /* Background */
+  --bg: #F8F9FB;
+  --surface: #FFFFFF;
+  --surface-2: #F2F4F7;
+  --surface-3: #EBEEF3;
 
-  /* Surfaces (light) */
-  --surface-0: rgba(0, 0, 0, 0.05);  /* subtle shadow wash */
-  --surface-1: rgba(255, 255, 255, 0.65); /* card glass on light bg */
+  /* Text */
+  --text: #0E1116;
+  --text-secondary: #2E3744;
+  --muted: #5B6472;
 
-  /* Text (light) — darker for contrast */
-  --text-0: #0b0f1a;          /* headings */
-  --text-1: rgba(17,17,17,0.9);  /* body */
-  --text-2: rgba(17,17,17,0.7);  /* meta */
+  /* Borders */
+  --border: #E5E7EB;
+  --border-subtle: #F0F1F3;
 
-  /* Accent (light) */
-  --accent: #4f46e5;        /* Indigo 600 */
-  --accent-light: #6366f1;  /* Indigo 500 */
-  --accent-soft: #a5b4fc;   /* Indigo 300 */
+  /* Accent — Steel Blue */
+  --accent: #2F6FED;
+  --accent-hover: #1F4FD8;
+  --accent-muted: rgba(47, 111, 237, 0.08);
+  --accent-glow: rgba(47, 111, 237, 0.12);
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --shadow-accent: 0 4px 16px rgba(47, 111, 237, 0.18);
+
+  /* Header */
+  --header-bg: rgba(248, 249, 251, 0.82);
+
+  /* Dot pattern */
+  --dot-color: rgba(0, 0, 0, 0.04);
+  --dot-size: 1px;
+  --dot-gap: 24px;
+
+  /* Legacy compat (ThemeToggle, VerilexLogo) */
+  --surface-1: var(--surface);
+  --text-0: var(--text);
+  --text-1: var(--text);
+  --text-2: var(--muted);
+  --accent-soft: var(--accent);
+  --accent-light: var(--accent);
 }
 
 .dark {
-  /* Gradient (dark) — unchanged */
-  --g1: #000000;
-  --g2: #0a0014;
-  --g3: #190033;
+  /* Background */
+  --bg: #0E1116;
+  --surface: #151A23;
+  --surface-2: #1A2030;
+  --surface-3: #1F2739;
 
-  /* Surfaces (dark) */
-  --surface-0: rgba(0, 0, 0, 0.4);
-  --surface-1: rgba(255, 255, 255, 0.06);
+  /* Text */
+  --text: #F2F4F8;
+  --text-secondary: #CBD2DC;
+  --muted: #8894A6;
 
-  /* Text (dark) */
-  --text-0: #ffffff;
-  --text-1: rgba(255,255,255,0.88);  /* slightly brighter for readability */
-  --text-2: rgba(255,255,255,0.68);
+  /* Borders */
+  --border: #252D3B;
+  --border-subtle: #1C2333;
 
-  /* Accent (dark) */
-  --accent: #818cf8;        /* Indigo 400 */
-  --accent-light: #a5b4fc;  /* Indigo 300 */
-  --accent-soft: #c7d2fe;   /* Indigo 200 */
+  /* Accent */
+  --accent: #4B8AFF;
+  --accent-hover: #6BA0FF;
+  --accent-muted: rgba(75, 138, 255, 0.10);
+  --accent-glow: rgba(75, 138, 255, 0.15);
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
+  --shadow-accent: 0 4px 20px rgba(75, 138, 255, 0.2);
+
+  /* Header */
+  --header-bg: rgba(14, 17, 22, 0.85);
+
+  /* Dot pattern */
+  --dot-color: rgba(255, 255, 255, 0.03);
+
+  /* Legacy compat */
+  --surface-1: var(--surface);
+  --text-0: var(--text);
+  --text-1: var(--text);
+  --text-2: var(--muted);
+  --accent-soft: var(--accent-hover);
+  --accent-light: var(--accent);
 }
 
-/* ---------- Global sizing ---------- */
-html, body {
+/* ========================================================================== */
+/* BASE STYLES                                                                */
+/* ========================================================================== */
+
+html,
+body {
   height: 100%;
 }
 
-/* ---------- Background behavior ---------- */
 body {
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-color: #000;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* ========================================================================== */
+/* DOT PATTERN BACKGROUND                                                     */
+/* ========================================================================== */
+
+.bg-dots {
+  background-image: radial-gradient(var(--dot-color) var(--dot-size), transparent var(--dot-size));
+  background-size: var(--dot-gap) var(--dot-gap);
+}
+
+/* ========================================================================== */
+/* HERO GLOW                                                                  */
+/* ========================================================================== */
+
+.hero-glow {
+  position: absolute;
+  width: 600px;
+  height: 400px;
+  right: -80px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: radial-gradient(ellipse at center, var(--accent-glow) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-glow-top {
+  position: absolute;
+  width: 100%;
+  height: 500px;
+  top: 0;
+  left: 0;
+  background: radial-gradient(ellipse at 30% 0%, var(--accent-glow) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ========================================================================== */
+/* PREMIUM CARD                                                               */
+/* ========================================================================== */
+
+.card-premium {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+}
+
+.card-premium:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+/* ========================================================================== */
+/* CTA BUTTON                                                                 */
+/* ========================================================================== */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm), var(--shadow-accent);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  box-shadow: var(--shadow-md), 0 6px 22px rgba(47, 111, 237, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  background: var(--surface-2);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+/* ========================================================================== */
+/* ICON CONTAINER                                                             */
+/* ========================================================================== */
+
+.icon-container {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-muted);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.icon-container-lg {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+}
+
+/* ========================================================================== */
+/* SECTION DIVIDER                                                            */
+/* ========================================================================== */
+
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+
+/* ========================================================================== */
+/* SCROLLBAR                                                                  */
+/* ========================================================================== */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+/* ========================================================================== */
+/* FOCUS STATES                                                               */
+/* ========================================================================== */
+
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ========================================================================== */
+/* FAQ                                                                        */
+/* ========================================================================== */
+
+details summary::-webkit-details-marker,
+details summary::marker {
+  display: none;
+  content: '';
+}
+
+/* ========================================================================== */
+/* STEP NUMBER                                                                */
+/* ========================================================================== */
+
+.step-number {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-muted);
+  border: 1.5px solid var(--accent);
+  flex-shrink: 0;
+}
+
+/* ========================================================================== */
+/* BADGE                                                                      */
+/* ========================================================================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border-radius: 6px;
+  background: var(--accent-muted);
+  color: var(--accent);
+  border: 1px solid rgba(47, 111, 237, 0.15);
+}
+
+/* ========================================================================== */
+/* ROADMAP TIMELINE                                                           */
+/* ========================================================================== */
+
+.roadmap-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid;
+  flex-shrink: 0;
+}
+
+.roadmap-dot-active {
+  border-color: #22C55E;
+  background: #22C55E;
+}
+
+.roadmap-dot-next {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.roadmap-dot-later {
+  border-color: var(--muted);
+  background: transparent;
 }
