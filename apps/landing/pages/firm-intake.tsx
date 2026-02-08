@@ -187,8 +187,8 @@ export default function FirmIntakePage() {
   return (
     <>
       <Head>
-        <title>VeriLex AI | Firm Intake</title>
-        <meta name="description" content="Onboard your family law firm to VeriLex AI. Provide firm details, contacts, and migration needs to get started." />
+        <title>VeriLex | Firm Intake</title>
+        <meta name="description" content="Onboard your family law firm to VeriLex. Provide firm details, contacts, and migration needs to get started." />
       </Head>
       <div className="relative min-h-screen scroll-smooth bg-gradient-to-br from-[var(--g1)] via-[var(--g2)] to-[var(--g3)] text-[color:var(--text-1)]">
         <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[var(--surface-0)] backdrop-blur-sm">
@@ -298,9 +298,8 @@ export default function FirmIntakePage() {
                       return (
                         <label
                           key={option}
-                          className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm font-medium transition ${
-                            checked ? 'border-[color:var(--accent-light)] bg-[color:var(--surface-0)] text-[color:var(--text-0)]' : 'border-white/10 bg-transparent text-[color:var(--text-1)]'
-                          }`}
+                          className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm font-medium transition ${checked ? 'border-[color:var(--accent-light)] bg-[color:var(--surface-0)] text-[color:var(--text-0)]' : 'border-white/10 bg-transparent text-[color:var(--text-1)]'
+                            }`}
                         >
                           <input
                             type="checkbox"

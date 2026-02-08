@@ -9,7 +9,7 @@ export default function ComparisonsPage() {
   return (
     <>
       <Head>
-        <title>VeriLex AI | How VeriLex Compares</title>
+        <title>VeriLex | How VeriLex Compares</title>
         <meta
           name="description"
           content="A neutral, transparent view of how VeriLex compares with legacy legal platforms."

@@ -9,7 +9,7 @@ export default function SecurityPage() {
   return (
     <>
       <Head>
-        <title>VeriLex AI | Security by Design</title>
+        <title>VeriLex | Security by Design</title>
         <meta
           name="description"
           content="Security by design for law firms: access control, data isolation, and server-side enforcement."

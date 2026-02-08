@@ -14,7 +14,7 @@ export default function VerilexLogo({ className = '', ...props }: { className?: 
     <Image
       priority
       src={src}
-      alt="VeriLex AI"
+      alt="VeriLex"
       width={150}
       height={46}
       className={className}

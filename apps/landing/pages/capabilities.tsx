@@ -9,7 +9,7 @@ export default function CapabilitiesPage() {
   return (
     <>
       <Head>
-        <title>VeriLex AI | Platform Capabilities</title>
+        <title>VeriLex | Platform Capabilities</title>
         <meta
           name="description"
           content="Platform capabilities across phases: secure foundation today, workflow automation, and long-term vision."

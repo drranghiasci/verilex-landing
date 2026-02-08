@@ -9,8 +9,8 @@ export default function FeedbackPage() {
   return (
     <>
       <Head>
-        <title>VeriLex AI | Feedback</title>
-        <meta name="description" content="Share feedback with the VeriLex AI team." />
+        <title>VeriLex | Feedback</title>
+        <meta name="description" content="Share feedback with the VeriLex team." />
       </Head>
 
       <div className="relative min-h-screen scroll-smooth">
@@ -43,7 +43,7 @@ export default function FeedbackPage() {
             <p className="text-sm uppercase tracking-[0.2em] text-[color:var(--accent-soft)]">Feedback</p>
             <h1 className="mt-3 text-4xl font-bold tracking-tight text-[color:var(--text-0)]">We&apos;re listening.</h1>
             <p className="mt-4 text-lg text-[color:var(--text-2)]">
-              We&apos;re building VeriLex AI with early firm input. Share feedback below.
+              We&apos;re building VeriLex with early firm input. Share feedback below.
             </p>
             <p className="mt-6 text-base text-[color:var(--text-2)]">Feedback form coming soon.</p>
             <Link
